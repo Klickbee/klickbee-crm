@@ -5,7 +5,7 @@ import { Home, Settings } from 'lucide-react';
 
 export default function SideBar() {
     return (
-        <div className='w-[256px] min-h-screen flex flex-col border-r  border-[var(--border-gray)]'>
+        <div className='w-[256px] h-[100dvh] flex flex-col border-r  border-[var(--border-gray)]'>
             <div className='h-[68px] p-2  '>
                 <div className='flex w-[239px] h-[52px] p-2 items-center gap-2'>
                     <div className='w-10 h-8'>
