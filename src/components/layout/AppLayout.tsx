@@ -2,7 +2,7 @@
 import React from 'react'
 import SideBar from './SideBar'
 import NavBar from './NavBar'
-import DashBoard from '@/feature/DashBoard';
+import Deals from '@/feature/Deals';
 
 const AppLayout = () => {
   return (
@@ -13,8 +13,9 @@ const AppLayout = () => {
       {/* Main content */}
       <div className="flex flex-col flex-1">
         <NavBar />
-        <div className="p-6 overflow-y-auto flex-1 scrollbar-hide">
-         <DashBoard/>
+        <div className="overflow-y-auto flex-1 scrollbar-hide">
+         {/* <DashBoard/> */}
+         <Deals/>
         </div>
       </div>
     </div>
