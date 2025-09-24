@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar"
 import { cn } from "@/libs/utils"
 import type { Deal } from "../types"
 import { Badge } from "@/components/ui/Table"
+import { Calendar } from "lucide-react"
 
 type DealCardProps = {
   deal: Deal
@@ -35,7 +36,7 @@ export function DealCard({ deal, className }: DealCardProps) {
       <CardContent className="p-4 gap-3">
         {/* Stage badge */}
         <div className="mb-2">
-          <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium", badgeClass)}>
+          <span className={cn("inline-flex items-center rounded-md  py-0.5 text-xs font-medium", badgeClass)}>
             <Badge variant={deal.stage}>{labelForStage(deal.stage)}</Badge>
           </span>
         </div>
@@ -44,28 +45,22 @@ export function DealCard({ deal, className }: DealCardProps) {
         <h4 className="text-sm font-semibold text-pretty">{deal.dealName}</h4>
 
         {/* Amount + contact */}
-        <p className="mt-1 text-sm">
-          {currency(deal.amount)} <span className="opacity-60">• {deal.contact}</span>
+        <p className="mt-1 text-xs text-[var(--brand-gray)] ">
+          {currency(deal.amount)} <span className="">• {deal.contact}</span>
         </p>
 
         {/* Date / tags / activity */}
-        <div className=" text-xs">
+        <div className="text-xs mt-2  text-[var(--brand-gray)] ">
           {deal.date ? (
-            <div className="flex items-start gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-red/30" > icon</span>
+            <div className="flex items-center gap-2">
+              <Calendar className="h-3.5 w-3.5 " />
               <span>{deal.date}</span>
             </div>
           ) : null}
-          {deal.activity ? (
-            <div className="flex items-start gap-2">
-              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-foreground/30" />
-              <span>{deal.activity}</span>
-            </div>
-          ) : null}
-          {deal.tags ? (
-            <div className="flex items-start gap-2">
-              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-foreground/30" />
-              <span className="truncate">{deal.tags}</span>
+          {deal.priority ? (
+            <div className="flex mt-2 items-center gap-2">
+              <Calendar className="h-3.5 w-3.5 " />
+              <span>{deal.priority}</span>
             </div>
           ) : null}
         </div>
