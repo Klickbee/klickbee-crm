@@ -25,7 +25,7 @@ export const sidebarItems: SidebarLink[] = [
   { 
     label: "Meetings", 
     icon: "/sideBarIcons/presentation.svg", 
-    // route: "/meetings"
+    route: "/meetings"
    },
   { 
     label: "Prospects", 

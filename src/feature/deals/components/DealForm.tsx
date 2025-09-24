@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button"
 import { Trash2, UploadCloud } from "lucide-react"
 import SearchableDropdown from "@/components/ui/SearchableDropdown"
 import { companyOptions, contactOptions } from "../libs/companyData"
+import TagInput from "@/components/ui/TagInput"
 
 type DealFormValues = {
     dealName: string
@@ -63,22 +64,6 @@ export default function DealForm({
     onCancel: () => void
 }) {
     const [tagInput, setTagInput] = useState("")
-
-    function handleTagKeyDown(
-        e: KeyboardEvent<HTMLInputElement>,
-        values: DealFormValues,
-        setFieldValue: (field: string, value: any) => void,
-    ) {
-        if (e.key === "Enter" || e.key === ",") {
-            e.preventDefault()
-            const v = tagInput.trim()
-            if (!v) return
-            if (!values.tags.includes(v)) {
-                setFieldValue("tags", [...values.tags, v])
-            }
-            setTagInput("")
-        }
-    }
 
     return (
         <Formik<DealFormValues>
@@ -198,41 +183,7 @@ export default function DealForm({
                             />
                         </FieldBlock>
 
-                        <div className="space-y-1.5">
-                            <label className="text-sm font-medium">Tags</label>
-                            <div className="flex flex-wrap gap-2 rounded-md border border-dashed border-border p-2">
-                                {values.tags.map((t, idx) => (
-                                    <span
-                                        key={`${t}-${idx}`}
-                                        className="inline-flex items-center gap-2 rounded-md bg-gray-200 px-2 py-1 text-xs"
-                                    >
-                                        {t}
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                setFieldValue(
-                                                    "tags",
-                                                    values.tags.filter((_, i) => i !== idx),
-                                                )
-                                            }
-                                            className="text-muted-foreground hover:text-foreground"
-                                            aria-label={`Remove ${t}`}
-                                        >
-                                            ×
-                                        </button>
-                                    </span>
-                                ))}
-
-                                <input
-                                    value={tagInput}
-                                    onChange={(e) => setTagInput(e.target.value)}
-                                    onKeyDown={(e) => handleTagKeyDown(e, values, setFieldValue)}
-                                    placeholder="Add tags"
-                                    className="flex-1 min-w-24 px-2 py-1 outline-none bg-transparent"
-                                />
-                            </div>
-                            <Error name="tags" />
-                        </div>
+                        <TagInput name='Tags' values={values.tags} setValue={(values: string[]) => setFieldValue('tags', values)} input={tagInput}  setInput={(value: string) => setTagInput(value)} />
 
                         <FieldBlock name="notes" label="Notes">
                             <Field
