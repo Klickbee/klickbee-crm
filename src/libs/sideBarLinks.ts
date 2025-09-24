@@ -63,6 +63,6 @@ export const sidebarItems: SidebarLink[] = [
   { 
     label: "Settings", 
     lucideIcon: "settings", 
-    // route: "/settings" 
+    route: "/settings" 
   },
 ];
