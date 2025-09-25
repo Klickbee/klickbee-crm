@@ -66,7 +66,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
       </button>
 
       {hasChildren && isOpen && (
-        <div className="ml-4 mt-1  h-[64px] overflow-hidden flex flex-col gap-1 border-l border-[var(--border-gray)] pl-3">
+        <div className="ml-4 mt-1 overflow-hidden flex flex-col gap-1 border-l border-[var(--border-gray)] pl-3">
           {Children.map(children, (child) => {
             if (isValidElement(child)) {
               return cloneElement(child as React.ReactElement<SidebarItemProps>, {

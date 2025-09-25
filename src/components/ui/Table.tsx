@@ -229,7 +229,7 @@ export const Table = <T,>({
     className={`overflow-hidden ${className}`}
   >
     <div ref={scrollRef} className="relative custom-scrollbar  overflow-x-auto">
-      <table className="divide-y divide-[var(--border-gray)]">
+      <table className="divide-y w-full divide-[var(--border-gray)]">
           <thead className="">
             <tr>
               {selectable && (

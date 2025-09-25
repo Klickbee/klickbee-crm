@@ -19,7 +19,7 @@
 }
 .custom-scrollbar {
   /* Firefox */
-  scrollbar-width: thin;            /* "thin" or "none" */
+  scrollbar-width: thin;
 scrollbar-color: black transparent;
 }
 

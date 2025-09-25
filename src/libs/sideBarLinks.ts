@@ -1,34 +1,34 @@
 export interface SidebarLink {
   label: string;
-  icon?: string;      
+  icon?: string;
   route?: string;
   children?: SidebarLink[];
   lucideIcon?: "home" | "settings";
 }
 
 export const sidebarItems: SidebarLink[] = [
-  {  
-   label: "Dashboard",
-   lucideIcon: "home", 
-   route: "/"
-    },
-  { 
+  {
+    label: "Dashboard",
+    lucideIcon: "home",
+    route: "/"
+  },
+  {
     label: "Deals",
     icon: "/sideBarIcons/handshake.svg",
-    route: "/deals" 
-    },
-  { 
+    route: "/deals"
+  },
+  {
     label: "To-Do",
     icon: "/sideBarIcons/layout-list.svg",
-   route: "/todo" 
-    },
-  { 
-    label: "Meetings", 
-    icon: "/sideBarIcons/presentation.svg", 
+    route: "/todo"
+  },
+  {
+    label: "Meetings",
+    icon: "/sideBarIcons/presentation.svg",
     // route: "/meetings"
-   },
-  { 
-    label: "Prospects", 
+  },
+  {
+    label: "Prospects",
     icon: "/sideBarIcons/trending-up.svg",
     route: "/prospects"
    },
@@ -36,7 +36,7 @@ export const sidebarItems: SidebarLink[] = [
     label: "Contact",
     icon: "/sideBarIcons/mail.svg",
     children: [
-      { 
+      {
         label: "Customers",
         route: "/contact/customers"
        },
@@ -50,19 +50,33 @@ export const sidebarItems: SidebarLink[] = [
     label: "Tools & Analytics",
     icon: "/sideBarIcons/bar-chart.svg",
     children: [
-      { 
-        label: "Reports", 
+      {
+        label: "Reports",
         // route: "/tools/reports"
-       },
-      { 
-        label: "Automation", 
+      },
+      {
+        label: "Automation",
         // route: "/tools/automation" 
       },
     ],
   },
-  { 
-    label: "Settings", 
-    lucideIcon: "settings", 
-    // route: "/settings" 
+  {
+    label: "Settings",
+    lucideIcon: "settings",
+    children: [
+      {
+        label: "AI",
+        route: "/settings/ai"
+      },
+      {
+        label: "Users",
+        route: "/settings/users"
+      },
+      {
+        label: "Email",
+        route: "/settings/email"
+      },
+    ],
   },
+
 ];
