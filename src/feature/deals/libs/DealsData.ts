@@ -10,6 +10,7 @@ export interface DealData {
   activity ? :string
   tags ?:string
   date ?:string 
+  priority? : string
 }
 
 export const dealsData: DealData[] = [
@@ -24,7 +25,8 @@ export const dealsData: DealData[] = [
     ownerImage: 'https://i.pravatar.cc/32?img=1',
     activity: ' call-2 days' ,
     tags:'Desing,B2B',
-    date : '15 Sep,2025'
+    date : '15 Sep,2025',
+    priority: 'VIP, High Priority'
   },
   {
     id: '2',
@@ -37,6 +39,9 @@ export const dealsData: DealData[] = [
     ownerImage: 'https://i.pravatar.cc/32?img=2',
      activity: ' call-2 days' ,
     tags:'Desing,B2B',
+     date : '15 Sep,2025',
+    priority: 'VIP, High Priority'
+
 
   },
   {
@@ -50,7 +55,8 @@ export const dealsData: DealData[] = [
     ownerImage: 'https://i.pravatar.cc/32?img=3',
      activity: ' call-2 days' ,
     tags:'Desing,B2B',
-    date : '15 Sep,2025'
+    date : '15 Sep,2025',
+    priority: 'VIP, High Priority'
 
   },
   {
@@ -64,7 +70,8 @@ export const dealsData: DealData[] = [
     ownerImage: 'https://i.pravatar.cc/32?img=4',
      activity: ' call-2 days' ,
     tags:'Desing,B2B',
-    date : '15 Sep,2025'
+    date : '15 Sep,2025',
+    priority: 'VIP, High Priority'
   },
   {
     id: '5',
@@ -77,7 +84,8 @@ export const dealsData: DealData[] = [
     ownerImage: 'https://i.pravatar.cc/32?img=5',
      activity: ' call-2 days' ,
     tags:'Desing,B2B',
-    date : '15 Sep,2025'
+    date : '15 Sep,2025',
+    priority: 'VIP, High Priority'
   },
   {
     id: '6',
@@ -90,7 +98,8 @@ export const dealsData: DealData[] = [
     ownerImage: 'https://i.pravatar.cc/32?img=6',
     //  activity: ' call-2 days' ,
     tags:'Desing,B2B',
-    date : '15 Sep,2025'
+    date : '15 Sep,2025',
+    priority: 'VIP, High Priority'
   },
   {
     id: '7',
@@ -103,7 +112,8 @@ export const dealsData: DealData[] = [
     ownerImage: 'https://i.pravatar.cc/32?img=7',
      activity: ' call-2 days' ,
     tags:'Desing,B2B',
-    date : '15 Sep,2025'
+    date : '15 Sep,2025',
+    priority: 'VIP, High Priority'
   },
   {
     id: '8',
@@ -116,7 +126,8 @@ export const dealsData: DealData[] = [
     ownerImage: 'https://i.pravatar.cc/32?img=8',
      activity: ' call-2 days' ,
     tags:'Desing,B2B',
-    date : '15 Sep,2025'
+    date : '15 Sep,2025',
+    priority: 'VIP, High Priority'
   },
   {
     id: '9',
@@ -129,7 +140,8 @@ export const dealsData: DealData[] = [
     ownerImage: 'https://i.pravatar.cc/32?img=9',
      activity: ' call-2 days' ,
     tags:'Desing,B2B',
-    date : '15 Sep,2025'
+    date : '15 Sep,2025',
+    priority: 'VIP, High Priority'
   },
   {
     id: '10',
@@ -142,6 +154,7 @@ export const dealsData: DealData[] = [
     ownerImage: 'https://i.pravatar.cc/32?img=10',
      activity: ' call-2 days' ,
     tags:'Desing,B2B',
-    date : '15 Sep,2025'
+    date : '15 Sep,2025',
+    priority: 'VIP, High Priority'
   },
 ]

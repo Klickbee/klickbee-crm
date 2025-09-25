@@ -6,7 +6,12 @@ import { useState } from "react"
 
 const userOptions = [{ value: "Closed", label: "Closed Time" }]
 
-export function DealsHeader() {
+type DealsHeaderProps = {
+  view: 'table' | 'grid';
+  setView: (view: 'table' | 'grid') => void;
+}
+
+export function DealsHeader({ view, setView }: DealsHeaderProps) {
   const [selectedUser, setSelectedUser] = useState("Closed")
 
   return (
@@ -61,11 +66,20 @@ export function DealsHeader() {
       {/* Right section - View Switch + Action Buttons */}
       <div className="flex w-[422px] h-[36px] items-center gap-2">
         {/* List/Grid toggle */}
-        <div className="flex items-center border border-[var(--border-gray)] rounded-md bg-[#F4F4F5]">
-          <button className="p-2 border-r border-[var(--border-gray)] rounded-l-md hover:bg-muted">
+       <div className="flex h-[36px] items-center bg-[#F4F4F5] border border-[var(--border-gray)] rounded-md overflow-hidden">
+          <button
+            className={`flex h-7 w-9 ml-1 items-center justify-center rounded-md border-r border-[var(--border-gray)] hover:bg-muted cursor-pointer ${view === 'table' ? 'bg-white shadow-sm' : ''
+              }`}
+            onClick={() => setView('table')}
+          >
             <List className="h-4 w-4" />
           </button>
-          <button className="p-2 rounded-r-md hover:bg-muted">
+
+          <button
+            className={`flex h-7 rounded-md mr-1 w-9 items-center justify-center hover:bg-muted cursor-pointer ${view === 'grid' ? 'bg-white shadow-sm' : ''
+              }`}
+            onClick={() => setView('grid')}
+          >
             <LayoutGrid className="h-4 w-4" />
           </button>
         </div>

@@ -20,7 +20,7 @@ export const sidebarItems: SidebarLink[] = [
   { 
     label: "To-Do",
     icon: "/sideBarIcons/layout-list.svg",
-   // route: "/todo" 
+   route: "/todo" 
     },
   { 
     label: "Meetings", 

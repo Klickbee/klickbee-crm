@@ -52,7 +52,7 @@ const Badge: React.FC<{
   }
 
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${variantClasses[variant]}`}>
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium ${variantClasses[variant]}`}>
       {children}
     </span>
   )
@@ -226,7 +226,7 @@ export const Table = <T,>({
 
   return (
      <div
-    className={`bg-white shadow-sm rounded-lg border border-[var(--border-gray)] overflow-hidden ${className}`}
+    className={`overflow-hidden ${className}`}
   >
     <div ref={scrollRef} className="relative custom-scrollbar  overflow-x-auto">
       <table className="divide-y divide-[var(--border-gray)]">

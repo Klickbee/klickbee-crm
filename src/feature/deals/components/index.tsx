@@ -3,6 +3,7 @@ import React from 'react';
 import { DealsHeader } from './Deals-Header';
 import { Table, TableColumn, Badge } from '@/components/ui/Table';
 import { dealsData, DealData } from '../libs/DealsData';
+import GridView from './DealsGridView'
 
 const columns: TableColumn<DealData>[] = [
   { key: 'dealName', title: 'Deal Name', dataIndex: 'dealName', sortable: true },
@@ -19,12 +20,18 @@ const columns: TableColumn<DealData>[] = [
 ];
 
 const Deals = () => {
+  const [view, setView] = React.useState<'table' | 'grid'>('table');
   return (
    <div>
-    <DealsHeader/>
-    <div className='py-8 px-6 xl:w-[1015px] 2xl:w-full  '>
-    <Table columns={columns} data={dealsData} selectable={true} />
-
+    <DealsHeader view={view} setView={(view: 'table' | 'grid') => setView(view)} />
+    <div className='py-8 px-6 xl:w-[1015px] 2xl:w-full'>
+      <div className='rounded-lg border border-[var(--border-gray)] bg-white shadow-sm'>
+        {view === 'table' ? (
+          <Table columns={columns} data={dealsData} selectable={true} />
+        ) : (
+          <GridView  />
+        )}
+      </div>
     </div>
    </div>
   );
