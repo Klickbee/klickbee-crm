@@ -20,15 +20,15 @@ export const sidebarItems: SidebarLink[] = [
   {
     label: "To-Do",
     icon: "/sideBarIcons/layout-list.svg",
-    route: "/todo"
-  },
-  {
-    label: "Meetings",
-    icon: "/sideBarIcons/presentation.svg",
-    // route: "/meetings"
-  },
-  {
-    label: "Prospects",
+   route: "/todo" 
+    },
+  { 
+    label: "Meetings", 
+    icon: "/sideBarIcons/presentation.svg", 
+    route: "/meetings"
+   },
+  { 
+    label: "Prospects", 
     icon: "/sideBarIcons/trending-up.svg",
     route: "/prospects"
    },

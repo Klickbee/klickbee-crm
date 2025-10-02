@@ -46,20 +46,20 @@ export default function SearchableDropdown({
             onChange(e.target.value); // notify Formik
           }}
           onFocus={() => setIsOpen(true)}
-          onBlur={() => setTimeout(() => setIsOpen(false), 150)}
-          className={`w-full rounded-md border border-input bg-background ${showIcon ? 'pl-10' : 'pl-3'} pr-3 py-2 outline-none focus:ring-2 focus:ring-ring`}
+          className={`w-full rounded-md text-sm border border-[var(--border-gray)] shadow-sm bg-background ${showIcon ? 'pl-10' : 'pl-3'} pr-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none`}
         />
       </div>
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute z-50 mt-1 w-full rounded-md border bg-white shadow-lg max-h-48 overflow-y-auto">
+        <div className="absolute z-50 mt-1 w-full rounded-md border border-[var(--border-gray)] shadoww-sm bg-white shadow-lg max-h-48 overflow-y-auto">
           {filteredOptions.length > 0 ? (
             filteredOptions.map((option) => (
               <div
                 key={option.id}
-                className="px-3 py-2 cursor-pointer hover:bg-gray-100"
+                className="px-3 py-2 cursor-pointer text-sm hover:bg-gray-100"
                 onClick={() => {
+                  console.log('clicked on it')
                   onChange(option.label); // set Formik value
                   setQuery(option.label);
                   setIsOpen(false);

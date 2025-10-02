@@ -8,74 +8,72 @@ import * as Yup from "yup"
 import { Button } from "@/components/ui/Button"
 import { Trash2, UploadCloud } from "lucide-react"
 import SearchableDropdown from "@/components/ui/SearchableDropdown"
-import { companyOptions, contactOptions } from "../libs/companyData"
 import TagInput from "@/components/ui/TagInput"
 import UploadButton from "@/components/ui/UploadButton"
-import { options } from '../libs/currencyOptions'
 import InputWithDropDown from "@/components/ui/InputWithDropDown"
+import { companyOptions } from "@/feature/deals/libs/companyData"
 
-type DealFormValues = {
-    dealName: string
-    company: string
-    contact: string
-    stage: string
-    amount: number | ""
-    currency: string
+type CustomerFormValues = {
+    fullName: string
+    industry: string
+    email: string
+    status: string
+    phone: string
+    website: string
     owner: string
-    closeDate: string
     tags: string[]
+    assing: string[]
     notes: string
     files: File[]
 }
 
 const schema = Yup.object({
-    dealName: Yup.string().trim().required(""),
-    company: Yup.string().trim().required("Company is required"),
-    contact: Yup.string().trim(),
-    stage: Yup.string().oneOf(["New", "Qualified", "Proposal", "Won", "Lost"]).required("Stage is required"),
-    amount: Yup.number()
-        .typeError("Enter a valid number")
-        .min(0, "Amount cannot be negative")
-        .required("Amount is required"),
-    currency: Yup.string().oneOf(["USD", "EUR", "GBP"]).required("Currency is required"),
+    fullName: Yup.string().trim().required(""),
+    industry: Yup.string().trim().required("industry is required"),
+    email: Yup.string().trim(),
+    website: Yup.string().trim(),
+    status: Yup.string().oneOf(["Active", "FollowUp", "inactive"]).required("Stage is required"),
     owner: Yup.string().trim().required("Owner is required"),
-    closeDate: Yup.string().nullable(),
     tags: Yup.array().of(Yup.string().trim().min(1)).max(10, "Up to 10 tags"),
+    assing: Yup.array().of(Yup.string().trim().min(1)).max(10, "Up to 10 assing"),
     notes: Yup.string(),
     files: Yup.array().of(Yup.mixed<File>()),
+
 })
 
-const initialValues: DealFormValues = {
-    dealName: "",
-    company: "",
-    contact: "",
-    stage: "New",
-    amount: 0,
-    currency: "EUR",
+const initialValues: CustomerFormValues = {
+    fullName: "",
+    industry: "",
+    email: "",
+    website:"",
+    status: "Active",
+    phone: "",
     owner: "Claire Brunet",
-    closeDate: "",
     tags: [],
+    assing: [],
     notes: "",
     files: [],
 }
 
-export default function DealForm({
+export default function CustomerForm({
     onSubmit,
     onCancel,
 }: {
-    onSubmit: (values: DealFormValues) => void
+    onSubmit: (values: CustomerFormValues) => void
     onCancel: () => void
 }) {
     const [tagInput, setTagInput] = useState("")
+    const [assignInput, setAssignInput] = useState("")
 
     return (
-        <Formik<DealFormValues>
+        <Formik<CustomerFormValues>
             initialValues={initialValues}
             validationSchema={schema}
             onSubmit={(vals, { setSubmitting, resetForm }) => {
                 const cleaned = {
                     ...vals,
                     tags: vals.tags.map((t) => t.trim()).filter(Boolean),
+                    assing: vals.tags.map((t) => t.trim()).filter(Boolean),
                 }
                 onSubmit(cleaned)
                 setSubmitting(false)
@@ -86,56 +84,60 @@ export default function DealForm({
                 <Form className="flex min-h-full flex-col gap-4">
                     {/* Fields container */}
                     <div className="px-4 py-4 flex flex-col gap-4 ">
-                        <FieldBlock name="dealName" label="Deal Name">
+                        <FieldBlock name="fullName" label="Full Name">
                             <Field
-                                id="dealName"
-                                name="dealName"
+                                id="fullName"
+                                name="fullName"
                                 placeholder="Add a name"
                                 className="w-full font-medium rounded-md shadow-sm border border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
                             />
                         </FieldBlock>
 
-                        <FieldBlock name="company" label="Company">
-                            <SearchableDropdown
-                                name="company"
-                                value={values.company}
-                                options={companyOptions}
-                                onChange={(val) => setFieldValue("company", val)}
-                                placeholder="Search or create a company"
+                        <FieldBlock name="industry" label="Industry">
+                            <Field
+                                as="select"
+                                id="industry"
+                                name="industry"
+                                className="w-full text-sm rounded-md shadow-sm border  border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
+                            >
+                                <option>Claire Brunet</option>
+                                <option>Alex Kim</option>
+                                <option>Jordan Lee</option>
+                            </Field>
+                        </FieldBlock>
+
+                        <FieldBlock name="website" label="Website">
+                            <Field
+                                id="website"
+                                name="website"
+                                placeholder="www.example.com"
+                                className="w-full font-medium rounded-md shadow-sm border border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
                             />
                         </FieldBlock>
 
-                        <FieldBlock name="contact" label="Contact">
-                            <SearchableDropdown
-                                name="contact"
-                                value={values.contact}
-                                options={contactOptions}
-                                onChange={(val) => setFieldValue("contact", val)}
-                                placeholder="Add Contact"
-                                showIcon={false}
+
+                        <FieldBlock name="email" label="Email">
+                            <Field
+                                id="email"
+                                name="email"
+                                placeholder="eg . exapmle.com"
+                                className="w-full font-medium rounded-md shadow-sm border border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
                             />
                         </FieldBlock>
 
-                        <div className="grid grid-cols-2 gap-3">
-                            <FieldBlock name="stage" label="Stage">
-                                <Field
-                                    as="select"
-                                    id="stage"
-                                    name="stage"
-                                    className="w-full text-sm rounded-md shadow-sm border  border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
-                                >
-                                    <option value="New">New</option>
-                                    <option value="Qualified">Qualified</option>
-                                    <option value="Proposal">Proposal</option>
-                                    <option value="Won">Won</option>
-                                    <option value="Lost">Lost</option>
-                                </Field>
-                            </FieldBlock>
 
-                            <FieldBlock name="amount" label="Amount">
-                                <InputWithDropDown inputName='amount' optionName="currency" options={options} />
-                            </FieldBlock>
-                        </div>
+
+                        <FieldBlock name="phone" label="Phone">
+                            <Field
+                                id="phone"
+                                name="phone"
+                                placeholder="+33 45832812"
+                                className="w-full font-medium rounded-md shadow-sm border border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
+                            />
+                        </FieldBlock>
+
+                        <TagInput name='Assign People' values={values.tags} setValue={(values: string[]) => setFieldValue('assing', values)} input={assignInput} setInput={(value: string) => setTagInput(value)} />
+
 
                         <FieldBlock name="owner" label="Owner">
                             <Field
@@ -150,16 +152,23 @@ export default function DealForm({
                             </Field>
                         </FieldBlock>
 
-                        <FieldBlock name="closeDate" label="Close Date">
+                        <FieldBlock name="status" label="Status">
                             <Field
-                                id="closeDate"
-                                name="closeDate"
-                                type="date"
-                                className="w-full rounded-md text-sm shadow-sm border  border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
-                            />
+                                as="select"
+                                id="status"
+                                name="status"
+                                className="w-full text-sm rounded-md shadow-sm border  border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
+                            >
+                                <option value="Active">Active</option>
+                                <option value="FollowUp">Follow Up</option>
+                                <option value="inactive">inactive</option>
+
+
+                            </Field>
                         </FieldBlock>
 
-                        <TagInput name='Tags' values={values.tags} setValue={(values: string[]) => setFieldValue('tags', values)} input={tagInput}  setInput={(value: string) => setTagInput(value)} />
+
+                        <TagInput name='Tags' values={values.tags} setValue={(values: string[]) => setFieldValue('tags', values)} input={tagInput} setInput={(value: string) => setTagInput(value)} />
 
                         <FieldBlock name="notes" label="Notes">
                             <Field
@@ -172,6 +181,7 @@ export default function DealForm({
                             />
                         </FieldBlock>
                         <UploadButton values={values.files} setValue={(values) => setFieldValue('files', values)} />
+
                     </div>
 
                     {/* Footer: sticky to panel bottom */}
@@ -187,7 +197,7 @@ export default function DealForm({
                             Cancel
                         </Button>
                         <Button type="submit" className="flex-1 bg-black text-white" disabled={isSubmitting || !isValid || !dirty}>
-                            Save Deal
+                            Save Customer
                         </Button>
                     </div>
                 </Form>

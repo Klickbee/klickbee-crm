@@ -17,7 +17,7 @@
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;     /* Firefox */
 }
-.custom-scrollbar {
+ *{
   /* Firefox */
   scrollbar-width: thin;
 scrollbar-color: black transparent;
@@ -41,6 +41,9 @@ scrollbar-color: black transparent;
 /* Remove arrows/buttons completely */
 .custom-scrollbar::-webkit-scrollbar-button {
   display: none !important;
+}
+Button{
+   cursor: pointer;
 }
 
 

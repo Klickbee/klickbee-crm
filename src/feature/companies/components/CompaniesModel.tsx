@@ -2,16 +2,16 @@
 
 import { X } from "lucide-react"
 import { Button } from "@/components/ui/Button"
-import DealForm from "./DealForm"
 import { cn } from "@/libs/utils"
 import Modal from "@/components/ui/Modal"
+import CompaniesrForm from "./CompaniesForm"
 
 type DealSlideOverProps = {
   open: boolean
   onClose: () => void
 }
 
-export default function DealSlideOver({ open, onClose }: DealSlideOverProps) {
+export default function CompanySlideOver({ open, onClose }: DealSlideOverProps) {
   return (
     <Modal open={open} onClose={onClose}>
       <aside
@@ -28,7 +28,7 @@ export default function DealSlideOver({ open, onClose }: DealSlideOverProps) {
         {/* Header */}
         <header className="flex items-center justify-between gap-4 p-4 border-b border-[var(--border-gray)]">
           <h2 id="deal-slide-title" className="text-base font-semibold leading-[28px] text-pretty">
-            Add New Deal
+            Add New Company
           </h2>
           <button onClick={onClose} aria-label="Close">
             <X className="size-4" />
@@ -37,7 +37,7 @@ export default function DealSlideOver({ open, onClose }: DealSlideOverProps) {
 
         {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto ">
-          <DealForm
+          <CompaniesrForm
             onCancel={onClose}
             onSubmit={(values) => {
               console.log("[v0] Deal submitted:", values)

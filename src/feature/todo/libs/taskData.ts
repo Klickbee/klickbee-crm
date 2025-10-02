@@ -89,4 +89,4 @@ export const tasksData: TaskData[] = [
     dueDate: 'June 01, 2025',
     lastUpdate: '2h ago',
   },
-]
+];

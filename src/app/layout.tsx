@@ -10,6 +10,10 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'Klickbee CMS',
   description: 'A modern CMS built with Next.js',
+   icons: {
+    icon: '/icons/Logo.svg',
+  },
+  
 }
 
 export default function RootLayout({

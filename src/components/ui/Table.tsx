@@ -84,7 +84,7 @@ const TableRow = <T,>({
               type="checkbox"
               checked={selected}
               onChange={(e) => onSelect?.(e.target.checked)}
-              className={`h-4 w-4 rounded focus:ring-black appearance-none border-2 ${selected ? 'bg-black border-black' : 'bg-white border-gray-300'}`}
+              className={`h-4 w-4 rounded focus:ring-1 focus:ring-gray-400 focus:outline-none appearance-none border-2 ${selected ? 'bg-black border-black' : 'bg-white border-gray-300'}`}
             />
             {selected && (
               <div className="absolute top-0.5 left-0 w-4 h-4 flex items-center justify-center pointer-events-none">
@@ -242,7 +242,7 @@ export const Table = <T,>({
                         if (input) input.indeterminate = false // Hide minus/indeterminate state
                       }}
                       onChange={(e) => handleSelectAll(e.target.checked)}
-                      className={`h-4 w-4 rounded focus:ring-black appearance-none border-2 ${allSelected ? 'bg-black border-black' : 'bg-white border-gray-300'}`}
+                      className={`h-4 w-4 rounded focus:ring-1 focus:ring-gray-400 focus:outline-none appearance-none border-2 ${allSelected ? 'bg-black border-black' : 'bg-white border-gray-300'}`}
                     />
                     {allSelected && (
                       <div className="absolute top-0.5 left-0 w-4 h-4 flex items-center justify-center pointer-events-none">

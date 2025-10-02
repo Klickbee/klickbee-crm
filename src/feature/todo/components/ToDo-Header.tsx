@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/Button"
 import { DropDown } from "@/components/ui/DropDown"
 import { Search, LayoutGrid, List, Plus, Calendar } from "lucide-react"
 import { useState } from "react"
+import TodoModel from "./TodoModel"
 
 // Filter options
 const statusOptions = [
@@ -36,6 +37,8 @@ export function TodoHeader({ view, setView }: TodoHeaderProps) {
   const [statusOptionsUser, setstatusOptionsUser] = useState('all-status')
   const [ownerOptionsUser, setownerOptionsUser] = useState('all-owner')
   const [priorityOptionsUser, setpriorityOptionsUser] = useState('all-priority')
+    const [showNewTask, setShowNewTask] = useState<boolean>(false);
+
   return (
     <div
       className="
@@ -115,11 +118,12 @@ export function TodoHeader({ view, setView }: TodoHeaderProps) {
 
 
         {/* New Task */}
-        <Button className="whitespace-nowrap bg-black">
+        <Button className="whitespace-nowrap bg-black" onClick={() => setShowNewTask(true)}>
           <Plus className="text-[#FAFAFA] h-4 w-4 " />
           <span className="text-[#FAFAFA]"> New Task</span>
         </Button>
       </div>
+      <TodoModel open={showNewTask} onClose={() => setShowNewTask(false)} />
     </div>
   )
 }

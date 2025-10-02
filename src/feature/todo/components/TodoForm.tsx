@@ -6,70 +6,69 @@ import { useState, type KeyboardEvent } from "react"
 import { Formik, Form, Field, ErrorMessage } from "formik"
 import * as Yup from "yup"
 import { Button } from "@/components/ui/Button"
-import { Trash2, UploadCloud } from "lucide-react"
+import { AlertTriangle, ArrowUp, ChevronUp, Minus, Trash2, UploadCloud } from "lucide-react"
 import SearchableDropdown from "@/components/ui/SearchableDropdown"
-import { companyOptions, contactOptions } from "../libs/companyData"
 import TagInput from "@/components/ui/TagInput"
 import UploadButton from "@/components/ui/UploadButton"
-import { options } from '../libs/currencyOptions'
 import InputWithDropDown from "@/components/ui/InputWithDropDown"
+import { options } from "@/feature/deals/libs/currencyOptions"
 
-type DealFormValues = {
-    dealName: string
-    company: string
-    contact: string
-    stage: string
-    amount: number | ""
-    currency: string
+type TodoFormValues = {
+    taskName: string
+    linkto: string
+    assigned: string
+    status: string
+    priority: string
     owner: string
-    closeDate: string
+    dueDate: string
     tags: string[]
     notes: string
     files: File[]
 }
+const priorities = [
+  { value: "high", label: "High", icon: ArrowUp },
+  { value: "urgent", label: "Urgent", icon: AlertTriangle },
+  { value: "medium", label: "Medium", icon: ChevronUp },
+  { value: "low", label: "Low", icon: Minus },
+];
 
 const schema = Yup.object({
-    dealName: Yup.string().trim().required(""),
-    company: Yup.string().trim().required("Company is required"),
-    contact: Yup.string().trim(),
-    stage: Yup.string().oneOf(["New", "Qualified", "Proposal", "Won", "Lost"]).required("Stage is required"),
-    amount: Yup.number()
-        .typeError("Enter a valid number")
-        .min(0, "Amount cannot be negative")
-        .required("Amount is required"),
-    currency: Yup.string().oneOf(["USD", "EUR", "GBP"]).required("Currency is required"),
+    taskName: Yup.string().trim().required(""),
+    linkto: Yup.string().trim().required("Company is required"),
+    assigned: Yup.string().trim(),
+    status: Yup.string().oneOf(["todo", "inprogress",  "onhold", "done"]).required("status is required"),
+    priority: Yup.string().oneOf(["high", "urgent",  "medium", "low"]).required("status is required"),
     owner: Yup.string().trim().required("Owner is required"),
-    closeDate: Yup.string().nullable(),
+    dueDate: Yup.string().nullable(),
     tags: Yup.array().of(Yup.string().trim().min(1)).max(10, "Up to 10 tags"),
     notes: Yup.string(),
     files: Yup.array().of(Yup.mixed<File>()),
 })
 
-const initialValues: DealFormValues = {
-    dealName: "",
-    company: "",
-    contact: "",
-    stage: "New",
-    amount: 0,
-    currency: "EUR",
+const initialValues: TodoFormValues = {
+    taskName: "",
+    linkto: "",
+    assigned: "",
+    status: "todo",
+    priority: "high",
     owner: "Claire Brunet",
-    closeDate: "",
+    dueDate: "",
     tags: [],
     notes: "",
     files: [],
 }
 
-export default function DealForm({
+export default function TodoForm({
     onSubmit,
     onCancel,
 }: {
-    onSubmit: (values: DealFormValues) => void
+    onSubmit: (values: TodoFormValues) => void
     onCancel: () => void
 }) {
     const [tagInput, setTagInput] = useState("")
 
     return (
-        <Formik<DealFormValues>
+        <Formik<TodoFormValues>
             initialValues={initialValues}
             validationSchema={schema}
             onSubmit={(vals, { setSubmitting, resetForm }) => {
@@ -86,62 +85,20 @@ export default function DealForm({
                 <Form className="flex min-h-full flex-col gap-4">
                     {/* Fields container */}
                     <div className="px-4 py-4 flex flex-col gap-4 ">
-                        <FieldBlock name="dealName" label="Deal Name">
+                        <FieldBlock name="taskName" label="Task Name">
                             <Field
-                                id="dealName"
-                                name="dealName"
+                                id="taskName"
+                                name="taskName"
                                 placeholder="Add a name"
                                 className="w-full font-medium rounded-md shadow-sm border border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
                             />
                         </FieldBlock>
 
-                        <FieldBlock name="company" label="Company">
-                            <SearchableDropdown
-                                name="company"
-                                value={values.company}
-                                options={companyOptions}
-                                onChange={(val) => setFieldValue("company", val)}
-                                placeholder="Search or create a company"
-                            />
-                        </FieldBlock>
-
-                        <FieldBlock name="contact" label="Contact">
-                            <SearchableDropdown
-                                name="contact"
-                                value={values.contact}
-                                options={contactOptions}
-                                onChange={(val) => setFieldValue("contact", val)}
-                                placeholder="Add Contact"
-                                showIcon={false}
-                            />
-                        </FieldBlock>
-
-                        <div className="grid grid-cols-2 gap-3">
-                            <FieldBlock name="stage" label="Stage">
-                                <Field
-                                    as="select"
-                                    id="stage"
-                                    name="stage"
-                                    className="w-full text-sm rounded-md shadow-sm border  border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
-                                >
-                                    <option value="New">New</option>
-                                    <option value="Qualified">Qualified</option>
-                                    <option value="Proposal">Proposal</option>
-                                    <option value="Won">Won</option>
-                                    <option value="Lost">Lost</option>
-                                </Field>
-                            </FieldBlock>
-
-                            <FieldBlock name="amount" label="Amount">
-                                <InputWithDropDown inputName='amount' optionName="currency" options={options} />
-                            </FieldBlock>
-                        </div>
-
-                        <FieldBlock name="owner" label="Owner">
+                        <FieldBlock name="linkto" label="Linked To">
                             <Field
                                 as="select"
-                                id="owner"
-                                name="owner"
+                                id="linkto"
+                                name="linkto"
                                 className="w-full text-sm rounded-md shadow-sm border  border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
                             >
                                 <option>Claire Brunet</option>
@@ -150,17 +107,57 @@ export default function DealForm({
                             </Field>
                         </FieldBlock>
 
-                        <FieldBlock name="closeDate" label="Close Date">
+                        <FieldBlock name="assigned" label="Assigned To">
                             <Field
-                                id="closeDate"
-                                name="closeDate"
+                                as="select"
+                                id="assigned"
+                                name="linkto"
+                                className="w-full text-sm rounded-md shadow-sm border  border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
+                            >
+                                <option>Claire Brunet</option>
+                                <option>Alex Kim</option>
+                                <option>Jordan Lee</option>
+                            </Field>
+                        </FieldBlock>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <FieldBlock name="status" label="Status">
+                                <Field
+                                    as="select"
+                                    id="status"
+                                    name="status"
+                                    className="w-full text-sm rounded-md shadow-sm border  border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
+                                >
+                                    <option value="todo">Todo</option>
+                                    <option value="inprogress">In Progress</option>
+                                    <option value="onhold">On Hold</option>
+                                    <option value="done">Done</option>
+                                </Field>
+                            </FieldBlock>
+
+                            <FieldBlock name="priority" label="Priority">
+                                <Field
+                                    as="select"
+                                    id="priority"
+                                    name="priority"
+                                    className="w-full text-sm rounded-md shadow-sm border  border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
+                                >
+                                    <option value="high">High</option>
+                                    <option value="urgent">Urgent</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="low">Low</option>
+                                </Field>
+                            </FieldBlock>
+                        </div>
+
+                        <FieldBlock name="dueDate" label="Due Date">
+                            <Field
+                                id="dueDate"
+                                name="dueDate"
                                 type="date"
                                 className="w-full rounded-md text-sm shadow-sm border  border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
                             />
                         </FieldBlock>
-
-                        <TagInput name='Tags' values={values.tags} setValue={(values: string[]) => setFieldValue('tags', values)} input={tagInput}  setInput={(value: string) => setTagInput(value)} />
-
                         <FieldBlock name="notes" label="Notes">
                             <Field
                                 as="textarea"
@@ -187,7 +184,7 @@ export default function DealForm({
                             Cancel
                         </Button>
                         <Button type="submit" className="flex-1 bg-black text-white" disabled={isSubmitting || !isValid || !dirty}>
-                            Save Deal
+                            Save Task
                         </Button>
                     </div>
                 </Form>

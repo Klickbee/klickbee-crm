@@ -6,7 +6,7 @@ import { sidebarItems } from '@/libs/sideBarLinks';
 
 export default function SideBar() {
     return (
-        <div className='w-[256px] h-[100dvh] flex flex-col border-r  border-[var(--border-gray)]'>
+        <div className='w-[256px] h-[100dvh]  flex flex-col border-r  border-[var(--border-gray)]'>
             <div className='h-[68px] p-2  '>
                 <div className='flex w-[239px] h-[52px] p-2 items-center gap-2'>
                     <div className='w-10 h-8'>
@@ -19,7 +19,7 @@ export default function SideBar() {
                     </div>
                 </div>
             </div>
-            <div className='w-full flex-1 p-2 overflow-auto'>
+            <div className='w-full flex-1 p-2 overflow-auto scrollbar-hide'>
                 <div className='space-y-1 '>
                     {sidebarItems.map((item) => {
                         const lucideIconMap = {
