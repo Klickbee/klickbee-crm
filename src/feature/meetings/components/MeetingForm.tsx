@@ -49,10 +49,12 @@ type formProps = {
 export default function MeetingForm({ onSubmit, onClose }: formProps) {
   const [tagInput, setTagInput] = useState("")
   const [participantsInput, setParticipantsInput] = useState("")
+  const [uploading, setUploading] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
 
   const renderDuration = (frequency: string | undefined) => {
-    if(!frequency) return;
-    switch(frequency){
+    if (!frequency) return;
+    switch (frequency) {
       case 'Daily': return 'Day (s)';
       case 'Weekly': return 'Weeks (s)';
       case 'Monthly': return 'Month (s)';
@@ -60,12 +62,37 @@ export default function MeetingForm({ onSubmit, onClose }: formProps) {
       default: return 'Day (s)';
     }
   }
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    const form = new FormData();
+    for (let i = 0; i < files.length; i++) form.append("file", files[i]);
+
+    setUploading(true);
+    const res = await fetch("/api/uploadFile", { method: "POST", body: form });
+    setUploading(false);
+    if (res.ok) {
+      const json = await res.json();
+      setUploadedFiles(prev => [...prev, ...json.files]);
+    } else {
+      alert("Upload failed");
+    }
+  };
+
   return (
     <Formik<Meeting>
       initialValues={initialValues}
       validationSchema={MeetingSchema}
-      onSubmit={(values) => {
-        onSubmit(values);
+      onSubmit={(vals, { setSubmitting, resetForm }) => {
+        const payload = {
+          ...vals,
+          tags: vals.tags ? vals.tags.map((t) => t.trim()).filter(Boolean) : [],
+          files: uploadedFiles
+      };
+        onSubmit(payload);
+        setSubmitting(false)
+        resetForm()
       }}
     >
       {({ values, setFieldValue }) => (
@@ -73,7 +100,7 @@ export default function MeetingForm({ onSubmit, onClose }: formProps) {
           {/* Title */}
           <div className="p-4">
 
-          <TextInput label="Meeting Title" name="title" placeholder="e.g. Call with ADE Construction" />
+            <TextInput label="Meeting Title" name="title" placeholder="e.g. Call with ADE Construction" />
           </div>
 
           {/* Date & Time */}
@@ -116,36 +143,36 @@ export default function MeetingForm({ onSubmit, onClose }: formProps) {
               </div>
             )}
           </div>
-<div className="p-4 flex flex-col gap-4">
+          <div className="p-4 flex flex-col gap-4">
 
-          {/* Linked To */}
-          <TextInput label="Linked To" name="linkedTo" placeholder="Deal, Company or Contact" />
+            {/* Linked To */}
+            <TextInput label="Linked To" name="linkedTo" placeholder="Deal, Company or Contact" />
 
-          {/* Location */}
-          <TextInput label="Location / Format" name="location" placeholder="Zoom / Meet link" />
+            {/* Location */}
+            <TextInput label="Location / Format" name="location" placeholder="Zoom / Meet link" />
 
-          {/* Assigned To */}
-          <TextInput label="Assigned To" name="assignedTo" placeholder="Team member" />
+            {/* Assigned To */}
+            <TextInput label="Assigned To" name="assignedTo" placeholder="Team member" />
 
-          {/* Participants */}
-          <TagInput name='Participants' values={values.participants} setValue={(values: string[]) => setFieldValue('participants', values)} input={participantsInput} setInput={(value: string) => setParticipantsInput(value)} />
+            {/* Participants */}
+            <TagInput name='Participants' values={values.participants} setValue={(values: string[]) => setFieldValue('participants', values)} input={participantsInput} setInput={(value: string) => setParticipantsInput(value)} />
 
-          {/* Status */}
-          <SelectInput label="Status" name="status">
-            <option value="scheduled">Scheduled</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="cancelled">Cancelled</option>
-          </SelectInput>
+            {/* Status */}
+            <SelectInput label="Status" name="status">
+              <option value="scheduled">Scheduled</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="cancelled">Cancelled</option>
+            </SelectInput>
 
-          {/* Tags */}
-          {/* <TextInput label="Tags (optional)" name="tags" placeholder="Add tags" /> */}
-          <TagInput name='Tags' values={values.tags} setValue={(values: string[]) => setFieldValue('tags', values)} input={tagInput} setInput={(value: string) => setTagInput(value)} />
+            {/* Tags */}
+            {/* <TextInput label="Tags (optional)" name="tags" placeholder="Add tags" /> */}
+            <TagInput name='Tags' values={values.tags} setValue={(values: string[]) => setFieldValue('tags', values)} input={tagInput} setInput={(value: string) => setTagInput(value)} />
 
-          {/* Notes */}
-          <TextareaInput label="Notes" name="notes" rows={4} placeholder="Additional notes..." />
+            {/* Notes */}
+            <TextareaInput label="Notes" name="notes" rows={4} placeholder="Additional notes..." />
 
-          <UploadButton values={values.files} setValue={(values) => setFieldValue('files', values)} />
-</div>
+            <UploadButton values={values.files} setValue={(values) => setFieldValue('files', values)} uploading={uploading} uploadFile={(e) => handleFileChange(e)} />
+          </div>
 
           {/* Actions */}
           <div className="flex items-center justify-center gap-4 p-4 border-t border-[var(--border-gray)]">

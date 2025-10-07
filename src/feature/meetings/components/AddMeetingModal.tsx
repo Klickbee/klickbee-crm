@@ -18,6 +18,27 @@ export const AddMeetingModal: React.FC<AddMeetingModalProps> = ({
   onSave,
 }) => {
   if (!isOpen) return null;
+  const handleSubmit = async (values: any) => {
+    try {
+      // Call your API to create a new deal
+      const response = await fetch("/api/admin/meetings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(values),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create meeting");
+      }
+
+      const data = await response.json();
+      console.log("Meeting created successfully:", data);
+    } catch (error) {
+      console.error("Error creating meeting:", error);
+    }
+  }
 
   return (
     <Modal open={isOpen} onClose={onClose}>
@@ -44,9 +65,9 @@ export const AddMeetingModal: React.FC<AddMeetingModalProps> = ({
 
         <MeetingForm
           onSubmit={(values: any) => {
-            console.log("Meeting saved:", values);
+            handleSubmit(values);
           }}
-          onClose={() => console.log("Closed")}
+          onClose={onClose}
         />
 
       </aside>

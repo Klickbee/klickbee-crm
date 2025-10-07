@@ -77,7 +77,7 @@ export default function DealForm({
         for (let i = 0; i < files.length; i++) form.append("file", files[i]);
 
         setUploading(true);
-        const res = await fetch("/api/uploads", { method: "POST", body: form });
+        const res = await fetch("/api/uploadFile", { method: "POST", body: form });
         setUploading(false);
         if (res.ok) {
             const json = await res.json();

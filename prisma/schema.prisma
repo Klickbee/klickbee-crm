@@ -16,8 +16,12 @@ model User {
   updatedAt DateTime @default(now())
 
   deals         Deal[]
+  todo          Todo[]
   linkedTodos   Todo[] @relation("linkedUser")
   assignedTodos Todo[] @relation("assignedUser")
+  meetings      Meeting[]
+  linkedMeetings   Meeting[] @relation("linkedUser")
+  assignedMeetings Meeting[] @relation("assignedUser")
 }
 
 enum DealStage {
@@ -47,7 +51,7 @@ model Deal {
   closeDate DateTime?
   tags      String[]  @default([])
   notes     String?
-  files     Json? // array of file metadata objects (name, url, size, etc.)
+  files     Json?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
@@ -80,9 +84,63 @@ model Todo {
   dueDate    DateTime?
   notes      String?
   files      Json?
+  ownerId       String
+  owner         User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   createdAt  DateTime     @default(now())
   updatedAt  DateTime     @updatedAt
 
+  @@index([ownerId])
   @@index([linkedId])
   @@index([assignedId])
+}
+
+enum MeetingStatus {
+  Scheduled
+  Confirmed
+  Cancelled
+}
+
+enum MeetingFrequency {
+  Daily
+  Weekly
+  Monthly
+  Yearly
+}
+
+enum MeetingEnds {
+  Never
+  After
+  OnDate
+}
+
+model Meeting {
+  id            String           @id @default(uuid())
+  title         String
+  startDate     DateTime?
+  startTime     DateTime?
+  endTime       DateTime?
+  repeatMeeting Boolean          @default(false)
+  frequency     MeetingFrequency @default(Daily)
+  repeatOn      String?
+  repeatEvery   Int              @default(0)
+  ends          MeetingEnds      @default(Never)
+  location      String?
+  linkedTo   User         @relation("linkedUser", fields: [linkedId], references: [id], onDelete: Cascade)
+  linkedId   String
+  assignedTo User?        @relation("assignedUser", fields: [assignedId], references: [id], onDelete: Cascade)
+  assignedId String?
+  participants  String[]         @default([])
+  status        MeetingStatus    @default(Scheduled)
+  tags          String[]         @default([])
+  notes         String?
+  files         Json?
+  ownerId       String
+  owner         User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([ownerId])
+  @@index([linkedId])
+  @@index([assignedId])
+  
 }
