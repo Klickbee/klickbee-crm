@@ -4,33 +4,148 @@ import TextInput from "@/components/ui/TextInput";
 import SelectInput from "@/components/ui/SelectInput";
 import TextareaInput from "@/components/ui/TextareaInput";
 import CheckboxInput from "@/components/ui/CheckboxInput";
-import { Meeting } from "../types/meeting";
 import TagInput from "@/components/ui/TagInput";
 import { useState } from "react";
 import UploadButton from "@/components/ui/UploadButton";
 import { Button } from "@/components/ui/Button";
 
-// ✅ Yup validation
+// ✅ Enhanced Yup validation with comprehensive rules
 const MeetingSchema = Yup.object().shape({
-  title: Yup.string().required("Meeting title is required"),
-  startDate: Yup.date().required("Date is required"),
-  startTime: Yup.string().required("Start time is required"),
-  endTime: Yup.string().required("End time is required"),
-  location: Yup.string(),
-  assignedTo: Yup.string(),
-  participants: Yup.array().of(Yup.string().required("Participant name required")),
+  title: Yup.string()
+    .trim()
+    .min(2, "Meeting title must be at least 2 characters")
+    .max(100, "Meeting title must not exceed 100 characters")
+    .required("Meeting title is required"),
+
+  startDate: Yup.date()
+    .required("Date is required")
+    .min(new Date(), "Meeting date cannot be in the past"),
+
+  startTime: Yup.string()
+    .required("Start time is required")
+    .test("is-valid-time", "Start time must be a valid time", (value) => {
+      if (!value) return false;
+      const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+      return timeRegex.test(value);
+    }),
+
+  endTime: Yup.string()
+    .required("End time is required")
+    .test("is-valid-time", "End time must be a valid time", (value) => {
+      if (!value) return false;
+      const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+      return timeRegex.test(value);
+    })
+    .test("is-after-start", "End time must be after start time", function(value) {
+      const { startTime } = this.parent;
+      if (!startTime || !value) return true;
+      return value > startTime;
+    }),
+
+  location: Yup.string()
+    .max(200, "Location must not exceed 200 characters")
+    .test("is-valid-url", "Location must be a valid URL if provided", (value) => {
+      if (!value) return true;
+      try {
+        new URL(value);
+        return true;
+      } catch {
+        // Allow non-URL formats like "Conference Room A"
+        return value.length >= 2;
+      }
+    }),
+
+  assignedTo: Yup.string()
+    .max(100, "Assigned to must not exceed 100 characters"),
+
+  linkedTo: Yup.string()
+    .max(100, "Linked to must not exceed 100 characters"),
+
+  participants: Yup.array()
+    .of(
+      Yup.string()
+        .trim()
+        .min(1, "Participant name cannot be empty")
+        .max(100, "Participant name must not exceed 100 characters")
+        .test("is-valid-email-or-name", "Must be a valid email or name", (value) => {
+          if (!value) return false;
+          // Allow email format or simple names
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          const nameRegex = /^[a-zA-Z\s]+$/;
+          return emailRegex.test(value) || (nameRegex.test(value) && value.length >= 2);
+        })
+    ),
+
+  status: Yup.string()
+    .oneOf(["scheduled", "confirmed", "cancelled"], "Invalid status")
+    .required("Status is required"),
+
+  tags: Yup.array()
+    .of(
+      Yup.string()
+        .trim()
+        .min(1, "Tag cannot be empty")
+        .max(30, "Tag must not exceed 30 characters")
+    ),
+
+  notes: Yup.string()
+    .max(1000, "Notes must not exceed 1000 characters"),
+
+  repeatMeeting: Yup.boolean(),
+
+  frequency: Yup.string()
+    .when("repeatMeeting", {
+      is: true,
+      then: (schema) => schema
+        .oneOf(["Daily", "Weekly", "Monthly", "Yearly"], "Invalid frequency")
+        .required("Frequency is required for repeating meetings"),
+      otherwise: (schema) => schema.optional(),
+    }),
+
+  repeatEvery: Yup.number()
+    .when("repeatMeeting", {
+      is: true,
+      then: (schema) => schema
+        .min(1, "Repeat every must be at least 1")
+        .max(365, "Repeat every cannot exceed 365")
+        .required("Repeat interval is required for repeating meetings"),
+      otherwise: (schema) => schema.optional(),
+    }),
+
+  repeatOn: Yup.string()
+    .when(["repeatMeeting", "frequency"], {
+      is: (repeatMeeting: boolean, frequency: string) =>
+        repeatMeeting && frequency === "Weekly",
+      then: (schema) => schema
+        .required("Repeat on day is required for weekly meetings")
+        .oneOf(
+          ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+          "Please select a valid day of the week"
+        ),
+      otherwise: (schema) => schema.optional(),
+    }),
+
+  ends: Yup.string()
+    .when("repeatMeeting", {
+      is: true,
+      then: (schema) => schema
+        .oneOf(["Never", "After", "OnDate"], "Invalid end condition")
+        .required("End condition is required for repeating meetings"),
+      otherwise: (schema) => schema.optional(),
+    }),
+
   files: Yup.array().of(Yup.mixed<File>()),
 });
 
-const initialValues: Meeting = {
+const initialValues = {
   title: "",
   startDate: new Date(),
-  startTime: new Date(),
-  endTime: new Date(),
+  startTime: "09:00", // Default start time
+  endTime: "10:00",   // Default end time
   repeatMeeting: false,
   frequency: "Daily",
   repeatOn: "",
-  repeatEvery: 0,
+  repeatEvery: 1,
   ends: "Never",
   linkedTo: "",
   location: "",
@@ -81,15 +196,30 @@ export default function MeetingForm({ onSubmit, onClose }: formProps) {
   };
 
   return (
-    <Formik<Meeting>
+    <Formik<any>
       initialValues={initialValues}
       validationSchema={MeetingSchema}
       onSubmit={(vals, { setSubmitting, resetForm }) => {
+        // Convert time strings to Date objects for API compatibility
+        const now = new Date();
+        const currentDate = vals.startDate || now;
+
+        const startDateTime = new Date(currentDate);
+        const [startHour, startMinute] = (vals.startTime || "09:00").split(':');
+        startDateTime.setHours(parseInt(startHour), parseInt(startMinute), 0, 0);
+
+        const endDateTime = new Date(currentDate);
+        const [endHour, endMinute] = (vals.endTime || "10:00").split(':');
+        endDateTime.setHours(parseInt(endHour), parseInt(endMinute), 0, 0);
+
         const payload = {
           ...vals,
-          tags: vals.tags ? vals.tags.map((t) => t.trim()).filter(Boolean) : [],
+          startDate: startDateTime,
+          startTime: startDateTime,
+          endTime: endDateTime,
+          tags: vals.tags ? vals.tags.map((t: string) => t.trim()).filter(Boolean) : [],
           files: uploadedFiles
-      };
+        };
         onSubmit(payload);
         setSubmitting(false)
         resetForm()
