@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/Button"
 import { cn } from "@/libs/utils"
 import Modal from "@/components/ui/Modal"
 import CompaniesrForm from "./CompaniesForm"
+import toast from "react-hot-toast"
+import { useCompaniesStore } from "../stores/useCompaniesStore"
 
 type DealSlideOverProps = {
   open: boolean
@@ -12,6 +14,20 @@ type DealSlideOverProps = {
 }
 
 export default function CompanySlideOver({ open, onClose }: DealSlideOverProps) {
+  const { addCompany } = useCompaniesStore();
+  const handleSubmit = async (values: any) => {
+    try {
+      toast.loading("Creating customer...", { id: "create-customer" });
+      // Use the store's addCustomer method instead of direct API call
+      await addCompany(values);
+      toast.success("Customer created successfully!", { id: "create-customer" });
+      onClose();
+    } catch (error) {
+      toast.error("Failed to create customer. Please try again.", { id: "create-customer" });
+      console.error("Error creating customer:", error);
+      // Error handling is already done in the store with toast notifications
+    }
+  }
   return (
     <Modal open={open} onClose={onClose}>
       <aside
@@ -39,10 +55,7 @@ export default function CompanySlideOver({ open, onClose }: DealSlideOverProps) 
         <div className="flex-1 overflow-y-auto ">
           <CompaniesrForm
             onCancel={onClose}
-            onSubmit={(values) => {
-              console.log("[v0] Deal submitted:", values)
-              onClose()
-            }}
+            onSubmit={(values) => handleSubmit(values)}
           />
         </div>
       </aside>

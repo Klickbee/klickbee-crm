@@ -1,11 +1,11 @@
 "use client";
 import React from "react";
 import DetailModal from "@/components/detailPage";
-import type { Companie } from "../types/types";
+import type { Company } from "../types/types";
 
 // Helper function to render status badge
-const renderStatusBadge = (status?: Companie['status']) => {
-  const cls: Record<NonNullable<Companie['status']>, string> = {
+const renderStatusBadge = (status?: Company['status']) => {
+  const cls: Record<NonNullable<Company['status']>, string> = {
     Active: 'bg-green-100 text-green-700',
     'Follow Up': 'bg-[#FEF3C7] text-[#92400E]',
     'inactive': 'bg-[#FEE2E2] text-[#B91C1C]',
@@ -22,7 +22,7 @@ const renderStatusBadge = (status?: Companie['status']) => {
 
 interface CompanieDetailProps {
   isOpen: boolean;
-  company: Companie | null;
+  company: Company | null;
   onClose: () => void;
   onDelete?: (id: string) => void;
   onEdit?: (id: string) => void;
@@ -43,27 +43,30 @@ export default function CompanieDetail({
 
   const details = [
     { label: "Industry", value: company.industry ?? "-" },
-        { label: "Status", value: renderStatusBadge(company.status) },
+    { label: "Status", value: renderStatusBadge(company.status) },
 
     { label: "Website", value: company.website ?? "-" },
-   
+
     {
       label: "Owner",
       value: (
         <span className="flex items-center gap-2">
-          {company.ownerAvatar && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={company.ownerAvatar}
-              alt={company.owner ?? "Owner"}
-              className="w-6 h-6 rounded-full"
-            />
+          {company.owner && (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={company.ownerAvatar}
+                alt={company.owner.name || company.owner.email}
+                className="w-6 h-6 rounded-full"
+              />
+              {company.owner.name || company.owner.email}
+            </>
           )}
-          {company.owner ?? "-"}
+          {!company.owner && "-"}
         </span>
       ),
     },
-     { label: "Email", value: company.email ?? "-" },
+    { label: "Email", value: company.email ?? "-" },
     { label: "Phone", value: company.phone ?? "-" },
     company.tags && { label: "Tags", value: company.tags },
   ].filter(Boolean) as { label: string; value: React.ReactNode }[];
@@ -71,7 +74,7 @@ export default function CompanieDetail({
   return (
     <DetailModal
       isOpen={isOpen}
-      title={company.companyname ?? "Company Details"}
+      title={company.fullName ?? "Company Details"}
       details={details}
       onClose={onClose}
       onDelete={onDelete ? () => onDelete(company.id) : undefined}

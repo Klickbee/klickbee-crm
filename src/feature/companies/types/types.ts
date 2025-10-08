@@ -1,16 +1,22 @@
-export type Companie = {
-  id: string; 
+export type Company = {
+  id: string;
   industry?: string;
   website?: string;
-  companyname?: string;
+  fullName?: string;  // Changed from companyname to match prisma schema
   email?: string;
   phone?: string;
-  owner?: string;
+  owner?: {
+    id: string;
+    name?: string;
+    email: string;
+  };  // Changed from string to object to match prisma relation
   ownerAvatar?: string;
-  status ?:
+  status?:
     | 'Active'
     | 'Follow Up'
-    | 'inactive'
-  lastContact ?: string;
-  tags ?: string;
+    | 'inactive';
+  lastContact?: string;
+  tags?: string;
+  createdAt?: string;
+  updatedAt?: string;
 };

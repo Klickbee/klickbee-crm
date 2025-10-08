@@ -2,18 +2,16 @@
 
 import type React from "react"
 
-import { useState, type KeyboardEvent } from "react"
+import { useEffect, useState, type KeyboardEvent } from "react"
 import { Formik, Form, Field, ErrorMessage } from "formik"
 import * as Yup from "yup"
 import { Button } from "@/components/ui/Button"
-import { Trash2, UploadCloud } from "lucide-react"
-import SearchableDropdown from "@/components/ui/SearchableDropdown"
 import TagInput from "@/components/ui/TagInput"
 import UploadButton from "@/components/ui/UploadButton"
-import InputWithDropDown from "@/components/ui/InputWithDropDown"
-import { companyOptions } from "@/feature/deals/libs/companyData"
+import { useUserStore } from "@/feature/user/store/userStore"
+import SearchableDropdown from "@/components/ui/SearchableDropdown"
 
-type CustomerFormValues = {
+type CompanyFormValues = {
     fullName: string
     industry: string
     email: string
@@ -28,25 +26,25 @@ type CustomerFormValues = {
 }
 
 const schema = Yup.object({
-    fullName: Yup.string().trim().required(""),
-    industry: Yup.string().trim().required("industry is required"),
-    email: Yup.string().trim(),
-    website: Yup.string().trim(),
-    status: Yup.string().oneOf(["Active", "FollowUp", "inactive"]).required("Stage is required"),
+    fullName: Yup.string().trim().required("Company name is required"),
+    industry: Yup.string().trim().required("Industry is required"),
+    email: Yup.string().trim().email("Please enter a valid email address"),
+    website: Yup.string().trim().url("Please enter a valid website URL"),
+    status: Yup.string().oneOf(["Active", "Follow Up", "inactive"]).required("Status is required"),
+    phone: Yup.string().trim().matches(/^[\+]?[1-9][\d]{0,15}$/, "Please enter a valid phone number"),
     owner: Yup.string().trim().required("Owner is required"),
-    tags: Yup.array().of(Yup.string().trim().min(1)).max(10, "Up to 10 tags"),
-    assing: Yup.array().of(Yup.string().trim().min(1)).max(10, "Up to 10 assing"),
+    tags: Yup.array().of(Yup.string().trim().min(1)).max(10, "Up to 10 tags allowed"),
+    assing: Yup.array().of(Yup.string().trim().min(1)).max(10, "Up to 10 assignments allowed"),
     notes: Yup.string(),
     files: Yup.array().of(Yup.mixed<File>()),
-
 })
 
-const initialValues: CustomerFormValues = {
+const initialValues: CompanyFormValues = {
     fullName: "",
     industry: "",
     email: "",
-    website:"",
-    status: "Active",
+    website: "",
+    status: "",
     phone: "",
     owner: "Claire Brunet",
     tags: [],
@@ -59,21 +57,57 @@ export default function CustomerForm({
     onSubmit,
     onCancel,
 }: {
-    onSubmit: (values: CustomerFormValues) => void
+    onSubmit: (values: CompanyFormValues) => void
     onCancel: () => void
 }) {
     const [tagInput, setTagInput] = useState("")
     const [assignInput, setAssignInput] = useState("")
+    const [uploading, setUploading] = useState(false);
+    const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
+
+    const { users, loading: usersLoading, fetchUsers } = useUserStore();
+
+    useEffect(() => {
+        if (users.length === 0) {
+            fetchUsers();
+        }
+    }, [users]);
+
+
+    // Create user options for the dropdown
+    const userOptions = users.map((user: any) => ({
+        id: user.id,
+        value: user.id,
+        label: user.name || user.email
+    }));
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+        const form = new FormData();
+        for (let i = 0; i < files.length; i++) form.append("file", files[i]);
+
+        setUploading(true);
+        const res = await fetch("/api/uploadFile", { method: "POST", body: form });
+        setUploading(false);
+        if (res.ok) {
+            const json = await res.json();
+            setUploadedFiles(prev => [...prev, ...json.files]);
+        } else {
+            alert("Upload failed");
+        }
+    };
 
     return (
-        <Formik<CustomerFormValues>
+        <Formik<CompanyFormValues>
             initialValues={initialValues}
             validationSchema={schema}
             onSubmit={(vals, { setSubmitting, resetForm }) => {
                 const cleaned = {
                     ...vals,
-                    tags: vals.tags.map((t) => t.trim()).filter(Boolean),
-                    assing: vals.tags.map((t) => t.trim()).filter(Boolean),
+                    assing: vals.assing ? vals.assing.map((t) => t.trim()).filter(Boolean) : [],
+                    tags: vals.tags ? vals.tags.map((t) => t.trim()).filter(Boolean) : [],
+                    files: uploadedFiles
                 }
                 onSubmit(cleaned)
                 setSubmitting(false)
@@ -100,9 +134,15 @@ export default function CustomerForm({
                                 name="industry"
                                 className="w-full text-sm rounded-md shadow-sm border  border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
                             >
-                                <option>Claire Brunet</option>
-                                <option>Alex Kim</option>
-                                <option>Jordan Lee</option>
+                                <option value="" disabled>Select Industry</option>
+                                <option value="Technology">Technology</option>
+                                <option value="Healthcare">Healthcare</option>
+                                <option value="Finance">Finance</option>
+                                <option value="Education">Education</option>
+                                <option value="Retail">Retail</option>
+                                <option value="Manufacturing">Manufacturing</option>
+                                <option value="Real Estate">Real Estate</option>
+                                <option value="Other">Other</option>
                             </Field>
                         </FieldBlock>
 
@@ -120,7 +160,7 @@ export default function CustomerForm({
                             <Field
                                 id="email"
                                 name="email"
-                                placeholder="eg . exapmle.com"
+                                placeholder="eg. example@company.com"
                                 className="w-full font-medium rounded-md shadow-sm border border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
                             />
                         </FieldBlock>
@@ -136,20 +176,19 @@ export default function CustomerForm({
                             />
                         </FieldBlock>
 
-                        <TagInput name='Assign People' values={values.tags} setValue={(values: string[]) => setFieldValue('assing', values)} input={assignInput} setInput={(value: string) => setTagInput(value)} />
+                        <TagInput name='Assign People' values={values.assing} setValue={(values: string[]) => setFieldValue('assing', values)} input={assignInput} setInput={(value: string) => setAssignInput(value)} />
 
 
                         <FieldBlock name="owner" label="Owner">
-                            <Field
-                                as="select"
-                                id="owner"
+                            <SearchableDropdown
                                 name="owner"
-                                className="w-full text-sm rounded-md shadow-sm border  border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
-                            >
-                                <option>Claire Brunet</option>
-                                <option>Alex Kim</option>
-                                <option>Jordan Lee</option>
-                            </Field>
+                                value={values.owner}
+                                options={userOptions}
+                                onChange={(val) => setFieldValue("owner", val)}
+                                placeholder="Select Owner"
+                                showIcon={false}
+                                maxOptions={20}
+                            />
                         </FieldBlock>
 
                         <FieldBlock name="status" label="Status">
@@ -159,6 +198,8 @@ export default function CustomerForm({
                                 name="status"
                                 className="w-full text-sm rounded-md shadow-sm border  border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
                             >
+                                  <option value="" disabled>Select Status</option>
+
                                 <option value="Active">Active</option>
                                 <option value="FollowUp">Follow Up</option>
                                 <option value="inactive">inactive</option>
@@ -180,7 +221,7 @@ export default function CustomerForm({
                                 className="w-full text-sm resize-y shadow-sm rounded-md border  border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
                             />
                         </FieldBlock>
-                        <UploadButton values={values.files} setValue={(values) => setFieldValue('files', values)} />
+                        <UploadButton values={values.files} setValue={(values) => setFieldValue('files', values)} uploading={uploading} uploadFile={(e) => handleFileChange(e)} />
 
                     </div>
 
@@ -196,8 +237,8 @@ export default function CustomerForm({
                         >
                             Cancel
                         </Button>
-                        <Button type="submit" className="flex-1 bg-black text-white" disabled={isSubmitting || !isValid || !dirty}>
-                            Save Customer
+                        <Button type="submit" className="flex-1 bg-black text-white">
+                            Save Company
                         </Button>
                     </div>
                 </Form>
@@ -231,7 +272,7 @@ function Error({ name }: { name: string }) {
         <ErrorMessage
             name={name}
             render={(msg) => (
-                <p role="alert" className="text-sm text-destructive">
+                <p role="alert" className="text-sm text-red-600">
                     {msg}
                 </p>
             )}

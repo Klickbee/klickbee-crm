@@ -26,6 +26,8 @@ model User {
   prospectsOwner       Prospect[] @relation("ownerId")
   customers     Customer[] @relation("customer_user")
   customersOwner     Customer[] @relation("customer_owner")
+  companiesByUser   Company[] @relation("company_user")
+  companiesByOwner  Company[] @relation("company_owner")
 }
 
 enum DealStage {
@@ -200,6 +202,35 @@ model Customer {
   owner     User            @relation("customer_owner", fields: [ownerId], references: [id], onDelete: Cascade)
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
+
+  @@index([ownerId])
+  @@index([userId])
+}
+
+enum CompanyStatus {
+  Active
+  FollowUp
+  inactive
+}
+
+model Company {
+  id        String         @id @default(uuid())
+  userId    String
+  user      User           @relation("company_user", fields: [userId], references: [id], onDelete: Cascade)
+  fullName  String
+  industry  String
+  email     String?
+  phone     String?
+  website   String?
+  status    CompanyStatus  @default(Active)
+  tags      String[]       @default([])
+  assing    String[]       @default([])
+  notes     String?
+  files     Json?
+  ownerId   String
+  owner     User           @relation("company_owner", fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 
   @@index([ownerId])
   @@index([userId])
