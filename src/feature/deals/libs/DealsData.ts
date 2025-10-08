@@ -3,14 +3,14 @@ export interface DealData {
   dealName: string
   company: string
   contact: string
-  stage: 'new' | 'contacted' | 'proposal' | 'won' | 'lost'
+  stage: 'New' | 'Contacted' | 'Proposal' | 'Won' | 'Lost'
   amount: number
   owner: string
   ownerImage?: string
-  activity ? :string
-  tags ?:string
-  date ?:string 
-  priority? : string
+  activity?: string
+  tags?: string
+  date?: string 
+  priority?: string
   notes?: string
   attachments?: string[]
 }
@@ -21,7 +21,7 @@ export const dealsData: DealData[] = [
     dealName: 'Maison Dupont - Construction',
     company: 'SARL Dumas',
     contact: 'Marc Dupont',
-    stage: 'new',
+    stage: 'New',
     amount: 18400,
     owner: 'Thomas Dad.',
     ownerImage: 'https://i.pravatar.cc/32?img=1',
@@ -38,7 +38,7 @@ export const dealsData: DealData[] = [
     dealName: 'Projet Alpha - Design Phase',
     company: 'La Fabrique',
     contact: 'Julien Perrot',
-    stage: 'contacted',
+    stage: 'Contacted',
     amount: 12700,
     owner: 'Claire Brunet..',
     ownerImage: 'https://i.pravatar.cc/32?img=2',
@@ -55,7 +55,7 @@ export const dealsData: DealData[] = [
     dealName: 'Résidence Moreau',
     company: 'AEC Partners',
     contact: 'Isabelle Moreau',
-    stage: 'proposal',
+    stage: 'Proposal',
     amount: 24900,
     owner: 'Thomas De...',
     ownerImage: 'https://i.pravatar.cc/32?img=3',
@@ -72,7 +72,7 @@ export const dealsData: DealData[] = [
     dealName: 'Projet Résidence Rennes',
     company: 'Indépendant',
     contact: 'Marc Lefebvre',
-    stage: 'won',
+    stage: 'Won',
     amount: 8000,
     owner: 'Claire Brunet',
     ownerImage: 'https://i.pravatar.cc/32?img=4',
@@ -88,7 +88,7 @@ export const dealsData: DealData[] = [
     dealName: 'Villa Leclerc - Phase 2',
     company: 'Groupe Orion',
     contact: 'Sophie Lambert',
-    stage: 'lost',
+    stage: 'Lost',
     amount: 42500,
     owner: 'Thomas De...',
     ownerImage: 'https://i.pravatar.cc/32?img=5',
@@ -104,7 +104,7 @@ export const dealsData: DealData[] = [
     dealName: 'Villa Leclerc - Phase 2',
     company: 'Groupe Orion',
     contact: 'Sophie Lambert',
-    stage: 'lost',
+    stage: 'Lost',
     amount: 42500,
     owner: 'Thomas De...',
     ownerImage: 'https://i.pravatar.cc/32?img=6',
@@ -120,7 +120,7 @@ export const dealsData: DealData[] = [
     dealName: 'Villa Leclerc - Phase 2',
     company: 'Groupe Orion',
     contact: 'Sophie Lambert',
-    stage: 'lost',
+    stage: 'Lost',
     amount: 42500,
     owner: 'Thomas De...',
     ownerImage: 'https://i.pravatar.cc/32?img=7',
@@ -136,7 +136,7 @@ export const dealsData: DealData[] = [
     dealName: 'Villa Leclerc - Phase 2',
     company: 'Groupe Orion',
     contact: 'Sophie Lambert',
-    stage: 'lost',
+    stage: 'Lost',
     amount: 42500,
     owner: 'Thomas De...',
     ownerImage: 'https://i.pravatar.cc/32?img=8',
@@ -152,7 +152,7 @@ export const dealsData: DealData[] = [
     dealName: 'Villa Leclerc - Phase 2',
     company: 'Groupe Orion',
     contact: 'Sophie Lambert',
-    stage: 'lost',
+    stage: 'Lost',
     amount: 42500,
     owner: 'Thomas De...',
     ownerImage: 'https://i.pravatar.cc/32?img=9',
@@ -168,7 +168,7 @@ export const dealsData: DealData[] = [
     dealName: 'Villa Leclerc - Phase 2',
     company: 'Groupe Orion',
     contact: 'Sophie Lambert',
-    stage: 'lost',
+    stage: 'Lost',
     amount: 42500,
     owner: 'Thomas De...',
     ownerImage: 'https://i.pravatar.cc/32?img=10',

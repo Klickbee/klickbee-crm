@@ -1,9 +1,32 @@
 "use client";
+import { useState, useEffect, useRef } from "react";
+import { signOut } from "next-auth/react";
 import IconButton from "../ui/IconButton"
 
 export default function NavBar() {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const handleLogout = () => {
+    signOut({ callbackUrl: "/auth" });
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   return (
-    <header className="flex items-center h-[84px] w-full justify-between px-8 py-4  border-b  border-[var(--border-gray)]">
+    <header className="flex items-center h-[84px] w-full justify-between px-8 py-4  border-b  border-[var(--border-gray)] relative">
       <div className="flex flex-col w-full h-[52px] gap-[4px] ">
         <h1 className="text-xl font-semibold leading-[28px] text-[var(--foreground)]">Dashboard</h1>
         <p className="text-sm  leading-[20px] text-[var(--brand-gray)]">Your leads. Your tasks. Your momentum — in one view.</p>
@@ -25,19 +48,36 @@ export default function NavBar() {
 
         <div className="h-[40px] w-px bg-[var(--border-gray)]"></div>
 
-        <div className="flex items-center gap-2">
-          <div className="h-10 w-10 rounded-full  flex items-center justify-center">
+        <div className="flex items-center gap-2 relative" ref={dropdownRef}>
+          <div className="h-10 w-10 rounded-full flex items-center justify-center">
             <img src="\icons\ProfileIcon.svg" alt="Profile" />
           </div>
 
           <div className="w-5">
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="h-5 w-5 p-0 flex items-center justify-center hover:bg-gray-100 rounded transition-colors"
+            >
+              <img src="\icons\Down-Arrow.svg" alt="Menu" className="h-5 w-5" />
+            </button>
 
-            <IconButton className="h-5 w-5 p-0 "
-              icon={
-                <img src="\icons\Down-Arrow.svg"
-                  alt="Message"
-                  className="h-5 w-5" />}
-            />
+            {/* Dropdown Menu */}
+            {isDropdownOpen && (
+              <div className="absolute top-full right-0 mt-2 w-48  border border-[var(--border-gray)]
+              rounded-lg shadow-lg z-50">
+                <div className="py-1">
+                  <button
+                    onClick={handleLogout}
+                    className="w-full px-4 py-2 text-left bg-white text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                  >
+                    <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                   <span className="text-red-500"> Logout</span>  
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

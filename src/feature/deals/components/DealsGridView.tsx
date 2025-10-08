@@ -1,25 +1,99 @@
 'use client'
 import GridView from "@/components/ui/GridView"
 import { DealCard } from "./DealCard"
-import { dealsData as initialDeals, type DealData as Deal } from "../libs/DealsData"
+import { type DealData as Deal } from "../libs/DealsData"
 import * as React from "react"
 import { Plus } from "lucide-react"
-import DealDetail from "./DealDetail"   // ✅ import your modal
+import DealDetail from "./DealDetail"
+import { useDealStore } from '../stores/useDealStore'
+import { useEffect } from 'react';
+import toast from "react-hot-toast"
+
 
 export default function DealsGridView() {
-  const [deals, setDeals] = React.useState<Deal[]>(() => initialDeals as Deal[])
-  const [selectedDeal, setSelectedDeal] = React.useState<Deal | null>(null)   // ✅
-  const [isDetailOpen, setIsDetailOpen] = React.useState(false)               // ✅
+  const [selectedDeal, setSelectedDeal] = React.useState<Deal | null>(null)
+  const [isDetailOpen, setIsDetailOpen] = React.useState(false)
+  const { deals, fetchDeals, loading,  deleteDeal ,updateDeal } = useDealStore();
 
-  const handleMove = React.useCallback(({ itemId, fromKey, toKey }: { itemId: string | number; fromKey: string; toKey: string }) => {
-    setDeals((prev) =>
-      prev.map((d) =>
-        String(d.id) === String(itemId)
-          ? { ...d, stage: toStageFromColumn(toKey, d.stage) }
-          : d
-      )
-    )
-  }, [])
+useEffect(() => {
+    fetchDeals();
+  }, [fetchDeals])
+  
+// const handleMove = React.useCallback(
+//   async ({ itemId, fromKey, toKey }: { itemId: string | number; fromKey: string; toKey: string }) => {
+//     const dealToUpdate = deals.find((d) => String(d.id) === String(itemId));
+//     if (!dealToUpdate) return;
+
+//     const newStage = toStageFromColumn(toKey, dealToUpdate.stage);
+//     if (!newStage || newStage === dealToUpdate.stage) return;
+//    const stageLabelMap: Record<string, string> = {
+//       New: "Early Stage",
+//       Proposal: "In Progress",
+//       Contacted: "In Progress",
+//       Won: "Won",
+//       Lost: "Lost",
+//     };
+
+//     const readableStage = stageLabelMap[newStage] || newStage;
+//     try {
+//       // Optimistically update the deal’s stage in Zustand
+//       useDealStore.setState((state) => ({
+//         deals: state.deals.map((d) =>
+//           d.id === dealToUpdate.id ? { ...d, stage: newStage } : d
+//         ),
+//       }));
+
+//       // Persist change via API
+//       await updateDeal(dealToUpdate.id, { ...dealToUpdate, stage: newStage });
+
+//       toast.success(`Deal moved to ${readableStage}`);
+//     } catch (err: any) {
+//       toast.error(`Failed to move deal: ${err.message}`);
+//       console.error("handleMove error:", err);
+//     }
+//   },
+//   [deals, updateDeal]
+// );
+
+let moveInProgress = false;
+
+const handleMove = React.useCallback(async  ({ itemId, fromKey, toKey }: { itemId: string | number; fromKey: string; toKey: string }) => {
+  if (moveInProgress) return; // prevent double fire in Strict Mode
+  moveInProgress = true;
+
+  const dealToUpdate = deals.find((d) => String(d.id) === String(itemId));
+  if (!dealToUpdate) return;
+
+  const newStage = toStageFromColumn(toKey, dealToUpdate.stage);
+  if (!newStage || newStage === dealToUpdate.stage) return;
+
+  const stageLabelMap: Record<string, string> = {
+    New: "Early Stage",
+    Proposal: "In Progress",
+    Contacted: "In Progress",
+    Won: "Won",
+    Lost: "Lost",
+  };
+
+  const readableStage = stageLabelMap[newStage] || newStage;
+
+  try {
+    useDealStore.setState((state) => ({
+      deals: state.deals.map((d) =>
+        d.id === dealToUpdate.id ? { ...d, stage: newStage } : d
+      ),
+    }));
+
+    await updateDeal(dealToUpdate.id, { ...dealToUpdate, stage: newStage });
+
+    toast.success(`Deal moved to ${readableStage}`);
+  } catch (err: any) {
+    toast.error(`Failed to move deal: ${err.message}`);
+    console.error("handleMove error:", err);
+  } finally {
+    moveInProgress = false;
+  }
+}, [deals, updateDeal]);
 
   const openDetail = (deal: Deal) => {
     setSelectedDeal(deal)
@@ -37,14 +111,15 @@ export default function DealsGridView() {
         items={deals as Deal[]}
         groupBy={(d: Deal) => {
           switch (d.stage) {
-            case "new":
+            case "New":
               return "early-stage"
-            case "contacted":
-            case "proposal":
+                          case "Proposal":
+
+            case "Contacted":
               return "in-progress"
-            case "won":
+            case "Won":
               return "won"
-            case "lost":
+            case "Lost":
               return "lost"
             default:
               return String(d.stage)
@@ -96,8 +171,8 @@ export default function DealsGridView() {
         deal={selectedDeal}
         onClose={closeDetail}
 
-        onDelete={(id) => {
-          setDeals((prev) => prev.filter((d) => d.id !== id))
+        onDelete={async (id) => {
+          await deleteDeal(id)
           closeDetail()
         }}
         onEdit={(id) => {
@@ -115,13 +190,20 @@ export default function DealsGridView() {
 function toStageFromColumn(columnKey: string, currentStage: Deal["stage"]): Deal["stage"] {
   switch (columnKey) {
     case "early-stage":
-      return "new"
+      return "New";
+
     case "in-progress":
-      return currentStage === "contacted" || currentStage === "proposal" ? currentStage : "contacted"
+      // Decide intelligently what "in-progress" means
+      if (currentStage === "New") return "Proposal"; // move up
+      if (currentStage === "Proposal") return "Proposal";
+      if (currentStage === "Contacted") return "Contacted";
+      return "Proposal"; // default for unknown cases
+
     case "won":
-      return "won"
+      return "Won";
+
     case "lost":
-      return "lost"
+      return "Lost";
     default:
       return currentStage
   }

@@ -4,6 +4,7 @@ import './globals.css'
 import { QueryProvider } from '@/providers/QueryProvider'
 import AuthProvider from "@/providers/SessionProvider"
 import ProtectedLayout from "@/components/ProtectedLayout"
+import { Toaster } from 'react-hot-toast'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -27,6 +28,8 @@ export default function RootLayout({
         <QueryProvider>
           <AuthProvider>
             <ProtectedLayout>{children}</ProtectedLayout>
+                  <Toaster position="top-right"  reverseOrder={false} />
+
           </AuthProvider>
         </QueryProvider>
       </body>

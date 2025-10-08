@@ -43,14 +43,14 @@ export interface TableRowProps<T = any> {
 // Badge component for stage indicators
 const Badge: React.FC<{ 
   children: React.ReactNode
-  variant: 'new' | 'contacted' | 'proposal' | 'won' | 'lost'
+  variant: 'New' | 'Contacted' | 'Proposal' | 'Won' | 'Lost'
 }> = ({ children, variant }) => {
   const variantClasses = {
-    new: 'bg-blue-100 text-blue-800',
-    contacted: 'bg-purple-100 text-purple-800',
-    proposal: 'bg-orange-100 text-orange-800',
-    won: 'bg-green-100 text-green-800',
-    lost: 'bg-red-100 text-red-800'
+    New: 'bg-blue-100 text-blue-800',
+    Contacted: 'bg-purple-100 text-purple-800',
+    Proposal: 'bg-orange-100 text-orange-800',
+    Won: 'bg-green-100 text-green-800',
+    Lost: 'bg-red-100 text-red-800'
   }
 
   return (

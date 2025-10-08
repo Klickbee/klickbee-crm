@@ -29,7 +29,7 @@ const InputWithDropDown = ({inputName, optionName, options}: inputProps) => {
                     className="rounded-md text-sm bg-transparent outline-none pr-2"
                 >
                     {options?.map((option, index) => (
-                        <option value={option.value}> {option.symbol} </option>
+                        <option key={`${option.value}-${index}`} value={option.value}> {option.symbol} </option>
                     ))}
                 </Field>
             </div>

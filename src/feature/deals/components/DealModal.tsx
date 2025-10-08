@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button"
 import DealForm from "./DealForm"
 import { cn } from "@/libs/utils"
 import Modal from "@/components/ui/Modal"
+import { useDealStore } from '../stores/useDealStore'
 
 type DealSlideOverProps = {
   open: boolean
@@ -12,27 +13,16 @@ type DealSlideOverProps = {
 }
 
 export default function DealSlideOver({ open, onClose }: DealSlideOverProps) {
+ const addDeal = useDealStore((s) => s.addDeal);
+
   const handleSubmit = async (values: any) => {
     try {
-      // Call your API to create a new deal
-      const response = await fetch("/api/admin/deals", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(values),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to create deal");
-      }
-
-      const data = await response.json();
-      console.log("Deal created successfully:", data);
+      await addDeal(values); 
+      onClose();
     } catch (error) {
       console.error("Error creating deal:", error);
     }
-  }
+  };
   return (
     <Modal open={open} onClose={onClose}>
       <aside

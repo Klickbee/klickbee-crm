@@ -21,7 +21,15 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
     }, [status])
 
     if (status === "loading") {
-        return <p>Loading...</p> // Or skeleton loader
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-gray-50">
+                <div className="flex space-x-1">
+                    <div className="w-3 h-3 bg-black rounded-full animate-bounce"></div>
+                    <div className="w-3 h-3 bg-black rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-3 h-3 bg-black rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                </div>
+            </div>
+        )
     }
 
     return (

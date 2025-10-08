@@ -13,6 +13,7 @@ interface SearchableDropdownProps {
   options: Option[];
   onChange: (value: string) => void;
   showIcon?: boolean;
+  maxOptions?: number;
 }
 
 export default function SearchableDropdown({
@@ -22,13 +23,14 @@ export default function SearchableDropdown({
   options,
   onChange,
   showIcon=true,
+  maxOptions,
 }: SearchableDropdownProps) {
   const [query, setQuery] = useState(value || "");
   const [isOpen, setIsOpen] = useState(false);
 
   const filteredOptions = options.filter((opt) =>
     opt.label.toLowerCase().includes(query.toLowerCase())
-  );
+  ).slice(0, maxOptions);
 
   return (
     <div className="w-full relative">

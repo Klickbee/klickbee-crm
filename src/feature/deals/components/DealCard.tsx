@@ -27,6 +27,16 @@ const currency = (v: number) =>
     maximumFractionDigits: 0,
   }).format(v)
 
+const formatDate = (dateString?: string) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
+};
+
 export function DealCard({ deal, className }: DealCardProps) {
   console.log(deal.stage, 'deal stage', stageBadgeClass[deal.stage]);
   const badgeClass = stageBadgeClass[deal.stage] ?? "bg-muted text-muted-foreground"
@@ -46,15 +56,15 @@ export function DealCard({ deal, className }: DealCardProps) {
 
         {/* Amount + contact */}
         <p className="mt-1 text-xs text-[var(--brand-gray)] ">
-          {currency(deal.amount)} <span className="">• {deal.contact}</span>
+          {currency(deal.amount)} <span className=""> - {deal.contact}</span>
         </p>
 
         {/* Date / tags / activity */}
         <div className="text-xs mt-2  text-[var(--brand-gray)] ">
-          {deal.date ? (
+          {deal.closeDate ? (
             <div className="flex items-center gap-2">
               <Calendar className="h-3.5 w-3.5 " />
-              <span>{deal.date}</span>
+              <span>{formatDate(deal.closeDate)}</span>
             </div>
           ) : null}
           {deal.priority ? (
@@ -80,15 +90,15 @@ export function DealCard({ deal, className }: DealCardProps) {
 
 function labelForStage(stage: Deal["stage"]) {
   switch (stage) {
-    case "new":
+    case "New":
       return "New"
-    case "contacted":
+    case "Contacted":
       return "Contacted"
-    case "proposal":
+    case "Proposal":
       return "Proposal Sent"
-    case "won":
+    case "Won":
       return "Won"
-    case "lost":
+    case "Lost":
       return "Lost"
     default:
       return stage

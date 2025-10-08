@@ -1,0 +1,1 @@
+export { GET } from "@/feature/user/api/userApi";

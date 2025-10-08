@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/feature/auth/lib/auth";
 import { prisma } from "@/libs/prisma";
 import { createDealSchema, updateDealSchema } from "../schema/dealSchema";
+import { includes } from "zod";
 
 export async function POST(req: Request) {
   try {
@@ -63,6 +64,7 @@ export async function GET(req: Request) {
     const where = ownerId ? { ownerId } : undefined;
     const deals = await prisma.deal.findMany({
       where,
+      include: { owner: true },
       orderBy: { createdAt: "desc" },
       take: Math.min(limit, 200),
     });
