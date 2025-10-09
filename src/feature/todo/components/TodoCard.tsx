@@ -73,6 +73,7 @@ export function TodoCard({ task, className }: TodoCardProps) {
           </span>
           {task.priority ? (
             <div className="flex gap-2">
+              <PriorityPill priority={task.priority}/>
             </div>
           ) : null}
         </div>
@@ -82,7 +83,7 @@ export function TodoCard({ task, className }: TodoCardProps) {
         {task.dueDate && (
           <div className="text-xs mt-2 text-[var(--brand-gray)] flex items-center gap-2">
             <Calendar className="h-3.5 w-3.5" />
-            <span className={cn(isOverdue && "text-red-600 font-medium")}>
+            <span className={cn(isOverdue && " font-medium")}>
               {formatDate(task.dueDate,)}
             </span>
           </div>

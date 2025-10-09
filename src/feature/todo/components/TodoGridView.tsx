@@ -7,6 +7,7 @@ import { Plus } from 'lucide-react'
 import TodoDetail from './TodoDetail'
 import { useTodoStore } from '../stores/useTodoStore'
 import type { TaskData } from '../types/types'
+import TodoModel from './TodoModel'
 
 import toast from 'react-hot-toast'
 
@@ -14,6 +15,8 @@ export default function TodoGridView() {
   const { todos, fetchTodos, loading, updateTodo ,deleteTodo } = useTodoStore()
   const [selectedTask, setSelectedTask] = React.useState<TaskData | null>(null)
   const [isDetailOpen, setIsDetailOpen] = React.useState(false)
+    const [showModal, setShowModal] = React.useState<boolean>(false);
+    const [editTask, setEditTask] = React.useState<TaskData | null>(null);
 
   React.useEffect(() => {
     fetchTodos()
@@ -23,6 +26,11 @@ export default function TodoGridView() {
     setSelectedTask(task)
     setIsDetailOpen(true)
   }
+   const handleEditTask = (task: TaskData) => {
+      setEditTask(task);
+      setShowModal(true);
+      setIsDetailOpen(false);
+    };
 
   const closeDetail = () => {
     setIsDetailOpen(false)
@@ -44,6 +52,7 @@ export default function TodoGridView() {
   const handleMove = React.useCallback(async ({ itemId, fromKey, toKey }: { itemId: string | number; fromKey: string; toKey: string }) => {
     if (moveInProgress) return; // prevent double fire in Strict Mode
     moveInProgress = true;
+console.log("fromKey:", fromKey, "toKey:", toKey);
 
     const taskToUpdate = todos.find((t) => String(t.id) === String(itemId));
     if (!taskToUpdate) {
@@ -147,10 +156,11 @@ export default function TodoGridView() {
                   await deleteTodo(id)
                   closeDetail()
                 }}
-        onEdit={() => {}}
+        onEdit={handleEditTask}
         onAddNotes={() => {}}
         onExport={() => {}}
       />
+      <TodoModel open={showModal} onClose={() => setShowModal(false)} mode={editTask ? 'edit' : 'add'} task={editTask || undefined} />
     </main>
   )
 }

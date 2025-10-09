@@ -5,22 +5,33 @@ import { cn } from "@/libs/utils"
 import Modal from "@/components/ui/Modal"
 import TodoForm from "./TodoForm"
 import { useTodoStore } from "../stores/useTodoStore"
+import { TaskData } from "../types/types"
+import toast from "react-hot-toast"
 
 type TodoSlideOverProps = {
   open: boolean
   onClose: () => void
+   mode?: 'add' | 'edit'
+     task?: TaskData
+   
 }
 
-export default function TodoSlideOver({ open, onClose }: TodoSlideOverProps) {
+export default function TodoSlideOver({ open, onClose,  mode = 'add', task }: TodoSlideOverProps) {
   const { addTodo } = useTodoStore()
-  const handleSubmit = async (values: any) => {
+  const { updateTodo } = useTodoStore()
+
+   const handleSubmit = async (values: any) => {
     try {
-      await addTodo(values); 
+      if (mode === 'edit' && task) {
+        await updateTodo(task.id, values);
+      } else {
+        await addTodo(values);
+      }
       onClose();
     } catch (error) {
-      console.error("Error creating todo:", error);
+      toast.error(`Error ${mode === 'edit' ? 'updating' : 'creating'} task:`);
     }
-  }
+  };
   return (
     <Modal open={open} onClose={onClose}>
       <aside
@@ -37,7 +48,8 @@ export default function TodoSlideOver({ open, onClose }: TodoSlideOverProps) {
         {/* Header */}
         <header className="flex items-center justify-between gap-4 p-4 border-b border-[var(--border-gray)]">
           <h2 id="deal-slide-title" className="text-base font-semibold leading-[28px] text-pretty">
-            Add New Task
+            
+             {mode === 'edit' ? 'Update Task' : 'Add New Task'}
           </h2>
           <button onClick={onClose} aria-label="Close">
             <X className="size-4" />
@@ -52,6 +64,8 @@ export default function TodoSlideOver({ open, onClose }: TodoSlideOverProps) {
               handleSubmit(values)
               onClose()
             }}
+              mode={mode}
+            initialData={task}
           />
         </div>
       </aside>

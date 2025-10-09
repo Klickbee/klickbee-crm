@@ -19,7 +19,11 @@ export const createTodoSchema = z
     ...data,
     // Map form values to Prisma enum casing
     status:
-      data.status === "to-do"
+      data.status === undefined
+        ? undefined
+        : ["Todo", "InProgress", "OnHold", "Done"].includes(data.status)
+        ? data.status
+        : data.status === "to-do"
         ? "Todo"
         : data.status === "in-progress"
         ? "InProgress"
@@ -27,7 +31,7 @@ export const createTodoSchema = z
         ? "OnHold"
         : data.status === "done"
         ? "Done"
-        : "Todo", // default fallback
+        : "Todo", // still a safe fallback
     priority:
       data.priority === "urgent"
         ? "Urgent"
@@ -55,9 +59,11 @@ export const updateTodoSchema = z
   .transform((data) => ({
     ...data,
     // Map form values to Prisma enum casing - handle both camelCase and lowercase inputs
-    status:
+     status:
       data.status === undefined
         ? undefined
+        : ["Todo", "InProgress", "OnHold", "Done"].includes(data.status)
+        ? data.status
         : data.status === "to-do"
         ? "Todo"
         : data.status === "in-progress"
@@ -66,7 +72,7 @@ export const updateTodoSchema = z
         ? "OnHold"
         : data.status === "done"
         ? "Done"
-        : "Todo", // default fallback
+        : "Todo", // still a safe fallback
     priority:
       data.priority === undefined
         ? undefined

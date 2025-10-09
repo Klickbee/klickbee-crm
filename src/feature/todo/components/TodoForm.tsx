@@ -10,6 +10,7 @@ import UploadButton from "@/components/ui/UploadButton"
 import { useUserStore } from "@/feature/user/store/userStore"
 import SearchableDropdown from "@/components/ui/SearchableDropdown"
 import toast from "react-hot-toast"
+import { TaskData } from "../types/types"
 
 type TodoFormValues = {
     taskName: string
@@ -49,9 +50,13 @@ const initialValues: TodoFormValues = {
 export default function TodoForm({
     onSubmit,
     onCancel,
+    mode = 'add',
+    initialData,
 }: {
     onSubmit: (values: TodoFormValues) => void
     onCancel: () => void
+    mode?: 'add' | 'edit'
+    initialData?: TaskData
 }) {
     const [uploading, setUploading] = useState(false);
     const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
@@ -91,9 +96,37 @@ const userOptions = users.map((user: any) => ({
     label: user.name || user.email
 }));
 
+    // Get initial values based on mode and initial data
+    const getInitialValues = (): TodoFormValues => {
+        if (mode === 'edit' && initialData) {
+            const initialVals: TodoFormValues = {
+                taskName: initialData.taskName || '',
+                linkedTo: typeof initialData.linkedTo === 'string'
+                    ? initialData.linkedTo
+                    : (initialData.linkedTo as { name: string })?.name || '',
+                assignedTo: typeof initialData.assignedTo === 'string'
+                    ? initialData.assignedTo
+                    : (initialData.assignedTo as { name: string })?.name || '',
+                status: initialData.status === 'Todo' ? 'to-do'
+                    : initialData.status === 'InProgress' ? 'in-progress'
+                    : initialData.status === 'OnHold' ? 'on-hold'
+                    : initialData.status.toLowerCase(),
+                priority: initialData.priority.toLowerCase(),
+                dueDate: initialData.dueDate
+                    ? new Date(initialData.dueDate).toISOString().split('T')[0]
+                    : '',
+                notes: initialData.notes || '',
+                files: [], // Files are not pre-populated in edit mode for now
+            };
+            return initialVals;
+        }
+        return initialValues;
+    };
+
     return (
         <Formik<TodoFormValues>
-            initialValues={initialValues}
+            enableReinitialize
+            initialValues={getInitialValues()}
             validationSchema={schema}
             onSubmit={async (vals, { setSubmitting, resetForm }) => {
                 try {
@@ -104,7 +137,11 @@ const userOptions = users.map((user: any) => ({
 
                     onSubmit(payload);
                     toast.success("Task saved successfully!");
-                    resetForm();
+
+                    // Only reset form in add mode, not in edit mode
+                    if (mode === 'add') {
+                        resetForm();
+                    }
                 } catch (error: any) {
                     toast.error("Failed to save task. Please try again.");
                 } finally {
@@ -121,7 +158,7 @@ const userOptions = users.map((user: any) => ({
                                 id="taskName"
                                 name="taskName"
                                 placeholder="Add a name"
-                                className="w-full font-medium rounded-md shadow-sm border border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
+                                className="w-full text-sm rounded-md shadow-sm border border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
                             />
                         </FieldBlock>
 
@@ -229,7 +266,7 @@ const userOptions = users.map((user: any) => ({
                             Cancel
                         </Button>
                         <Button type="submit" className="flex-1 bg-black text-white" >
-                            Save Task
+                            {mode === 'edit' ? 'Update Task' : 'Save Task'}
                         </Button>
                     </div>
                 </Form>

@@ -10,7 +10,7 @@ import TodoGridView from './TodoGridView';
 import TodoDetail from './TodoDetail';
 import { useTodoStore } from '../stores/useTodoStore';
 import { useUserStore } from '@/feature/user/store/userStore';
-
+import TodoModel from './TodoModel'
 const taskColumns: TableColumn<TaskData>[] = [
   {
     key: 'taskName',
@@ -35,7 +35,7 @@ const taskColumns: TableColumn<TaskData>[] = [
     dataIndex: 'assignedTo',
     sortable: false,
     avatar: { srcIndex: 'assignedImage', altIndex: 'assignedTo', size: 32 },
-    render:(assignedTo)=>{
+    render: (assignedTo) => {
       return (
         <div>{assignedTo?.name}</div>
       )
@@ -118,11 +118,12 @@ const taskColumns: TableColumn<TaskData>[] = [
 ]
 
 
-export  default  function TODO  () {
+export default function TODO() {
   const [view, setView] = React.useState<'table' | 'grid'>('table');
   const [selectedTask, setSelectedTask] = React.useState<TaskData | null>(null)
   const [isDetailOpen, setIsDetailOpen] = React.useState(false)
-
+  const [showModal, setShowModal] = React.useState<boolean>(false);
+  const [editTask, setEditTask] = React.useState<TaskData | null>(null);
   const { todos, fetchTodos, loading, deleteTodo } = useTodoStore();
   const { users } = useUserStore();
 
@@ -134,11 +135,16 @@ export  default  function TODO  () {
     setSelectedTask(task)
     setIsDetailOpen(true)
   }
+  const handleEditTask = (task: TaskData) => {
+    setEditTask(task);
+    setShowModal(true);
+    setIsDetailOpen(false);
+  };
   const closeDetail = () => {
     setIsDetailOpen(false)
     setSelectedTask(null)
   }
-   
+
 
   return (
     <div className='overflow-x-hidden'>
@@ -165,9 +171,9 @@ export  default  function TODO  () {
                       await deleteTodo(id)
                       closeDetail()
                     }}
-                    onEdit={() => {}}
-                    onAddNotes={() => {}}
-                    onExport={() => {}}
+                    onEdit={handleEditTask}
+                    onAddNotes={() => { }}
+                    onExport={() => { }}
                   />
                 )}
               </>
@@ -176,6 +182,7 @@ export  default  function TODO  () {
         ) : (
           <TodoGridView />
         )}
+        <TodoModel open={showModal} onClose={() => setShowModal(false)} mode={editTask ? 'edit' : 'add'} task={editTask || undefined} />
       </div>
     </div>
   )

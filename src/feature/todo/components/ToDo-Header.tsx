@@ -6,6 +6,7 @@
   import TodoModel from "./TodoModel"
   import { useSearchParams } from "next/navigation"
   import { CalendarDropDown } from "@/components/ui/CalendarDropDown"
+import { TaskData } from "../types/types"
 
 // Filter options
 const statusOptions = [
@@ -45,6 +46,7 @@ export function TodoHeader({ view, setView }: TodoHeaderProps) {
       const dateLabel = dueDate
         ? new Intl.DateTimeFormat('en-US', { month: 'long', day: '2-digit', year: 'numeric' }).format(dueDate)
         : 'Select date'
+      const [editTask, setEditTask] = useState<TaskData | null>(null);
     
      useEffect(() => {
         const newParam = searchParams.get("new")
@@ -52,7 +54,15 @@ export function TodoHeader({ view, setView }: TodoHeaderProps) {
           setShowNewTask(true)
         }
       }, [searchParams])
+    const handleEditTask = (Task: TaskData) => {
+        setEditTask(Task);
+        setShowNewTask(true);
+      };
     
+      const handleCloseModal = () => {
+        setShowNewTask(false);
+        setEditTask(null);
+      };
 
   return (
     <div
@@ -138,7 +148,7 @@ export function TodoHeader({ view, setView }: TodoHeaderProps) {
           <span className="text-[#FAFAFA]"> New Task</span>
         </Button>
       </div>
-      <TodoModel open={showNewTask} onClose={() => setShowNewTask(false)} />
+      <TodoModel open={showNewTask} onClose={handleCloseModal} mode={editTask ? 'edit' : 'add'} task={editTask || undefined} />
     </div>
   )
 }

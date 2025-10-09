@@ -20,7 +20,7 @@ interface TodoDetailProps {
   task: TaskData | null;
   onClose: () => void;
   onDelete?: (id: string) => void;
-  onEdit?: (id: string) => void;
+  onEdit?: (task: TaskData) => void;
   onAddNotes?: (id: string) => void;
   onExport?: (id: string) => void;
 }
@@ -117,7 +117,7 @@ export default function TodoDetail({
       details={details}
       onClose={onClose}
       onDelete={onDelete ? () => onDelete(task.id) : undefined}
-      onEdit={onEdit ? () => onEdit(task.id) : undefined}
+      onEdit={onEdit ? () => onEdit(task as TaskData) : undefined}
     />
   );
 }
