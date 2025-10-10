@@ -2,6 +2,7 @@ import { create } from "zustand";
 import toast from "react-hot-toast";
 import { Customer } from "../types/types";
 import { exportCustomersToExcel, exportCustomersWithColumns, exportSingleCustomerToExcel } from "../libs/excelExport";
+import { importCustomersFromExcel, generateCustomerImportTemplate } from "../libs/excelImport";
 interface CustomerStore {
   customers: Customer[];
   loading: boolean;
@@ -15,6 +16,8 @@ interface CustomerStore {
   exportSelectedCustomers: (customerIds: string[], filename?: string) => void;
   exportSingleCustomer: (customerId: string, filename?: string) => void;
   exportCustomersWithColumns: (columns: (keyof Customer)[], filename?: string) => void;
+  importCustomersFromExcel: (file: File) => Promise<void>;
+  downloadImportTemplate: (filename?: string) => void;
 }
 
 export const useCustomersStore = create<CustomerStore>((set, get) => ({
@@ -157,6 +160,105 @@ export const useCustomersStore = create<CustomerStore>((set, get) => ({
     const result = exportCustomersWithColumns(customers, columns, filename);
     if (result.success) {
       toast.success(`Customers exported successfully!`);
+    } else {
+      toast.error(result.message);
+    }
+  },
+
+  // 📥 Import customers from Excel
+  importCustomersFromExcel: async (file: File) => {
+    try {
+      const result = await importCustomersFromExcel(file);
+      
+      if (!result.success) {
+        toast.error(result.message);
+        if (result.errors && result.errors.length > 0) {
+          console.error('Import errors:', result.errors);
+        }
+        return;
+      }
+
+      if (!result.data || result.data.length === 0) {
+        toast.error('No valid customer data found in the file');
+        return;
+      }
+
+      // Process each customer through the API
+      let successCount = 0;
+      let errorCount = 0;
+      const errors: string[] = [];
+
+      for (const customerData of result.data) {
+        try {
+          // Prepare customer data with required fields
+          const customerPayload = {
+            ...customerData,
+            // Ensure required fields have default values if missing
+            company: customerData.company || 'Unknown Company',
+            status: customerData.status || 'Active',
+            tags: customerData.tags 
+              ? (typeof customerData.tags === 'string' 
+                  ? (customerData.tags as string).split(',').map((t: string) => t.trim()) 
+                  : customerData.tags as string[])
+              : [],
+            // Note: userId and ownerId should be set by the API based on the authenticated user
+          };
+
+          console.log('Importing customer:', customerPayload);
+
+          const res = await fetch('/api/admin/customers', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(customerPayload),
+          });
+
+          if (!res.ok) {
+            const errorResponse = await res.json();
+            console.error('API Error Response:', errorResponse);
+            throw new Error(errorResponse.error || errorResponse.message || 'Failed to create customer');
+          }
+
+          const created: Customer = await res.json();
+          // Add to local state
+          set({ customers: [...get().customers, created] });
+          successCount++;
+        } catch (err: any) {
+          errorCount++;
+          const errorMessage = err.message || 'Unknown error';
+          errors.push(`${customerData.fullName}: ${errorMessage}`);
+          console.error(`Failed to import ${customerData.fullName}:`, err);
+        }
+      }
+
+      // Show results
+      if (successCount > 0) {
+        toast.success(`Successfully imported ${successCount} customers!`);
+      }
+      
+      if (errorCount > 0) {
+        toast.error(`Failed to import ${errorCount} customers. Check console for details.`);
+        console.error('Import errors:', errors);
+      }
+
+      // Show import warnings if any
+      if (result.errors && result.errors.length > 0) {
+        console.warn('Import warnings:', result.errors);
+        toast(`Import completed with ${result.errors.length} warnings. Check console for details.`, {
+          duration: 5000,
+        });
+      }
+
+    } catch (err: any) {
+      console.error('Import error:', err);
+      toast.error('Failed to import customers from Excel file');
+    }
+  },
+
+  // 📥 Download import template
+  downloadImportTemplate: (filename?: string) => {
+    const result = generateCustomerImportTemplate(filename);
+    if (result.success) {
+      toast.success('Import template downloaded successfully!');
     } else {
       toast.error(result.message);
     }

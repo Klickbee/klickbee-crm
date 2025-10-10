@@ -89,6 +89,8 @@ export default function Customers () {
   const [open, setOpen] = React.useState(false)
   const [editCustomer, setEditCustomer] = React.useState<Customer | null>(null)
   const [showEditModal, setShowEditModal] = React.useState(false)
+  const [selectedCustomers, setSelectedCustomers] = React.useState<string[]>([])
+  const [selectedCustomerRows, setSelectedCustomerRows] = React.useState<Customer[]>([])
 
   const { customers, fetchCustomers, loading, deleteCustomer, exportSingleCustomer } = useCustomersStore();
 
@@ -110,15 +112,32 @@ export default function Customers () {
     setEditCustomer(null)
   }
 
+  const handleSelectionChange = (selectedKeys: string[], selectedRows: Customer[]) => {
+    setSelectedCustomers(selectedKeys);
+    setSelectedCustomerRows(selectedRows);
+  };
+
   return (
     <div className='overflow-x-hidden'>
-      <CustomerHeader editCustomer={editCustomer} showEditModal={showEditModal} onEditCustomer={handleEditCustomer} onCloseEditModal={closeEditModal} />
+      <CustomerHeader 
+        editCustomer={editCustomer} 
+        showEditModal={showEditModal} 
+        onEditCustomer={handleEditCustomer} 
+        onCloseEditModal={closeEditModal}
+        selectedCustomers={selectedCustomers}
+        selectedCustomerRows={selectedCustomerRows}
+        onClearSelection={() => {
+          setSelectedCustomers([]);
+          setSelectedCustomerRows([]);
+        }}
+      />
  <div className='py-8 px-6 overflow-x-hidden'>
              
                 <Table 
                   columns={customerColumns} 
                   data={customers} 
                   selectable={true}
+                  onSelectionChange={handleSelectionChange}
                   onRowClick={(record) => openDetail(record as Customer)}
                 />
                 <CustomerDetail 

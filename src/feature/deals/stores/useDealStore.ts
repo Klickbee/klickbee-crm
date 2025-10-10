@@ -2,6 +2,7 @@ import { create } from "zustand";
 import toast from "react-hot-toast";
 import { Deal } from "../types";
 import { exportDealsToExcel, exportDealsWithColumns, exportSingleDealToExcel } from "../libs/excelExport";
+import { importDealsFromExcel, generateDealImportTemplate } from "../libs/excelImport";
 
 
 interface DealStore {
@@ -17,6 +18,8 @@ interface DealStore {
   exportSelectedDeals: (dealIds: string[], filename?: string) => void;
   exportSingleDeal: (dealId: string, filename?: string) => void;
   exportDealsWithColumns: (columns: (keyof Deal)[], filename?: string) => void;
+  importDealsFromExcel: (file: File) => Promise<void>;
+  downloadImportTemplate: (filename?: string) => void;
 }
 
 export const useDealStore = create<DealStore>((set, get) => ({
@@ -161,6 +164,75 @@ export const useDealStore = create<DealStore>((set, get) => ({
     const result = exportDealsWithColumns(deals, columns, filename);
     if (result.success) {
       toast.success(`Deals exported successfully!`);
+    } else {
+      toast.error(result.message);
+    }
+  },
+
+  // 📥 Import deals from Excel
+  importDealsFromExcel: async (file: File) => {
+    try {
+      const result = await importDealsFromExcel(file);
+      
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
+      if (!result.data || result.data.length === 0) {
+        toast.error('No valid deal data found in the file');
+        return;
+      }
+
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const dealData of result.data) {
+        try {
+          const dealPayload = {
+            ...dealData,
+            company: dealData.company || 'Unknown Company',
+            contact: dealData.contact || 'Unknown Contact',
+            stage: dealData.stage || 'New',
+            amount: dealData.amount || 0,
+          };
+
+          const res = await fetch('/api/admin/deals', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dealPayload),
+          });
+
+          if (!res.ok) {
+            throw new Error('Failed to create deal');
+          }
+
+          const created: Deal = await res.json();
+          set({ deals: [...get().deals, created] });
+          successCount++;
+        } catch (err: any) {
+          errorCount++;
+        }
+      }
+
+      if (successCount > 0) {
+        toast.success(`Successfully imported ${successCount} deals!`);
+      }
+      
+      if (errorCount > 0) {
+        toast.error(`Failed to import ${errorCount} deals.`);
+      }
+
+    } catch (err: any) {
+      toast.error('Failed to import deals from Excel file');
+    }
+  },
+
+  // 📥 Download import template
+  downloadImportTemplate: (filename?: string) => {
+    const result = generateDealImportTemplate(filename);
+    if (result.success) {
+      toast.success('Import template downloaded successfully!');
     } else {
       toast.error(result.message);
     }

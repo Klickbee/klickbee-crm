@@ -1,11 +1,81 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import IconButton from "../ui/IconButton"
 
 export default function NavBar() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
+
+  // Get the current page info based on pathname
+  const getPageInfo = () => {
+    // Remove leading slash and get the full path for nested routes
+    const fullPath = pathname.startsWith('/') ? pathname.slice(1) : pathname;
+    const path = fullPath || 'dashboard'; // Default to dashboard for root path
+    
+    switch (path) {
+      case 'dashboard':
+      case '':
+        return {
+          title: 'Dashboard',
+          description: 'Your leads. Your tasks. Your momentum — in one view.'
+        };
+      case 'deals':
+        return {
+          title: 'Deals',
+          description: 'Track and manage all your commercial opportunities in one place.'
+        };
+      case 'todo':
+        return {
+          title: 'To-Do',
+          description: 'Organize and follow all your daily actions, from client calls to internal steps.'
+        };
+      case 'meetings':
+        return {
+          title: 'Meetings',
+          description: 'Organize and follow all your daily actions, from client calls to internal steps.'
+        };
+      case 'contact/customers':
+        return {
+          title: 'Customers',
+          description: 'Keep track of every customer interaction, from onboarding to retention.'
+        };
+      case 'contact/companies':
+        return {
+          title: 'Companies',
+          description: 'Keep track of every companies interaction, from onboarding to retention.'
+        };
+      case 'prospects':
+        return {
+          title: 'Prospects',
+          description: 'Manage and track all your prospect interactions, from first contact to qualification.'
+        };
+      case 'settings/ai':
+        return {
+          title: 'AI Settings',
+          description: 'Edit the content and SEO of your page.'
+        };
+      case 'settings/users':
+        return {
+          title: 'User Settings',
+          description: 'Manage all users of the platform.'
+        };
+      case 'settings/email':
+        return {
+          title: 'E-Mail Settings',
+          description: 'Configure email sending and receiving.'
+        };
+      default:
+        return {
+          title: 'Dashboard',
+          description: 'Your leads. Your tasks. Your momentum — in one view.'
+        };
+    }
+  };
+
+  const pageInfo = getPageInfo();
 
   const handleLogout = () => {
     signOut({ callbackUrl: "/auth" });
@@ -28,8 +98,8 @@ export default function NavBar() {
   return (
     <header className="flex items-center h-[84px] w-full justify-between px-8 py-4  border-b  border-[var(--border-gray)] relative">
       <div className="flex flex-col w-full h-[52px] gap-[4px] ">
-        <h1 className="text-xl font-semibold leading-[28px] text-[var(--foreground)]">Dashboard</h1>
-        <p className="text-sm  leading-[20px] text-[var(--brand-gray)]">Your leads. Your tasks. Your momentum — in one view.</p>
+        <h1 className="text-xl font-semibold leading-[28px] text-[var(--foreground)]">{pageInfo.title}</h1>
+        <p className="text-sm  leading-[20px] text-[var(--brand-gray)]">{pageInfo.description}</p>
       </div>
 
       <div className="flex items-center h-[40px] gap-4">

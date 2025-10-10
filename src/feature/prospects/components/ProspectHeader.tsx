@@ -1,7 +1,7 @@
 "use client"
 import { Button } from "@/components/ui/Button"
 import { DropDown } from "@/components/ui/DropDown"
-import { Search, LayoutGrid, List, Download, Upload, Plus } from "lucide-react"
+import { Search, LayoutGrid, List, Download, Upload, Plus, ChevronDown } from "lucide-react"
 import { useState } from "react"
 import Filter from "@/components/filter"
 import { filterData, type FilterData } from "../libs/filterData"
@@ -19,7 +19,13 @@ const statusOptions = [
 ]
 const searchableCategories: (keyof FilterData)[] = ["owner", "tags"];
 
-export function ProspectHeader() {
+interface ProspectHeaderProps {
+  selectedProspects?: string[];
+  selectedProspectRows?: Prospect[];
+  onClearSelection?: () => void;
+}
+
+export function ProspectHeader({ selectedProspects = [], selectedProspectRows = [], onClearSelection }: ProspectHeaderProps = {}) {
   const [selectedUser, setSelectedUser] = useState("all")
    const [showFilter, setShowFilter] = useState(false)
     const [filters, setFilters] = useState(filterData);
@@ -27,8 +33,9 @@ export function ProspectHeader() {
         const [showNewProspect, setShowNewProspect] = useState<boolean>(false);
   const [editProspect, setEditProspect] = useState<Prospect | null>(null);
   
-  // Get export function from store
-  const { exportAllProspects } = useProspectsStore();
+  // Get export and import functions from store
+  const { exportAllProspects, importProspectsFromExcel, exportSelectedProspects, deleteProspect } = useProspectsStore();
+  const [showActionDropdown, setShowActionDropdown] = useState(false);
 
        const handleEditDeal = (prospect: Prospect) => {
          setEditProspect(prospect);
@@ -43,6 +50,19 @@ export function ProspectHeader() {
   const handleExportProspects = () => {
     exportAllProspects();
   };
+
+  const handleImportProspects = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.xlsx,.xls';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        importProspectsFromExcel(file);
+      }
+    };
+    input.click();
+  };
   
   const handleToggle = (category: keyof FilterData, id: string) => {
       setFilters((prev) => ({
@@ -52,6 +72,40 @@ export function ProspectHeader() {
         ),
       }));
     };
+
+  const handleBulkAction = (action: string) => {
+    switch (action) {
+      case 'export':
+        if (selectedProspects.length > 0) {
+          exportSelectedProspects(selectedProspects);
+        }
+        break;
+      case 'delete':
+        if (selectedProspects.length > 0 && confirm(`Are you sure you want to delete ${selectedProspects.length} prospect(s)?`)) {
+          selectedProspects.forEach(async (id) => {
+            await deleteProspect(id);
+          });
+          onClearSelection?.();
+        }
+        break;
+      case 'assign-owner':
+        // TODO: Implement assign owner functionality
+        console.log('Assign owner to selected prospects:', selectedProspects);
+        break;
+      case 'change-status':
+        // TODO: Implement change status functionality
+        console.log('Change status for selected prospects:', selectedProspects);
+        break;
+    }
+    setShowActionDropdown(false);
+  };
+
+  const actionOptions = [
+    { value: 'assign-owner', label: 'Assign Owner' },
+    { value: 'change-status', label: 'Change Status' },
+    { value: 'export', label: 'Export' },
+    { value: 'delete', label: 'Delete' },
+  ];
     
 
   return (
@@ -106,6 +160,33 @@ export function ProspectHeader() {
 
       {/* Right section - View Switch + Action Buttons */}
       <div className="flex w-auto h-[36px] items-center gap-2">
+        {/* Action Dropdown - Show when prospects are selected */}
+        {selectedProspects.length > 0 && (
+          <div className="flex items-center gap-2 mr-2">
+            <div className="relative">
+              <Button
+                onClick={() => setShowActionDropdown(!showActionDropdown)}
+                className="flex items-center gap-1 h-[36px] px-3 ml-2"
+              >
+                Action
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+              {showActionDropdown && (
+                <div className="absolute top-full left-0 mt-1 z-20 bg-white border border-gray-200 rounded-md shadow-lg py-1 min-w-[150px]">
+                  {actionOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => handleBulkAction(option.value)}
+                      className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center gap-2"
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
         {/* Export */}
          <Button
           leadingIcon={<img src="\icons\File.svg" alt="export-file" className="w-[17px] h-4 "/>}
@@ -116,7 +197,8 @@ export function ProspectHeader() {
 
         {/* Import */}
         <Button 
-         leadingIcon={<img src="\icons\upload.svg" alt="upload" className="w-[17px] h-4 "/>} 
+         leadingIcon={<img src="\icons\upload.svg" alt="upload" className="w-[17px] h-4 "/>}
+         onClick={handleImportProspects}
         >
          Import
         </Button>

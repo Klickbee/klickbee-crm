@@ -2,6 +2,7 @@ import { create } from "zustand";
 import toast from "react-hot-toast";
 import { Company } from "../types/types";
 import { exportCompaniesToExcel, exportCompaniesWithColumns, exportSingleCompanyToExcel } from "../libs/excelExport";
+import { importCompaniesFromExcel, generateCompanyImportTemplate } from "../libs/excelImport";
 
 interface CompanyStore {
   companies: Company[];
@@ -16,6 +17,8 @@ interface CompanyStore {
   exportSelectedCompanies: (companyIds: string[], filename?: string) => void;
   exportSingleCompany: (companyId: string, filename?: string) => void;
   exportCompaniesWithColumns: (columns: (keyof Company)[], filename?: string) => void;
+  importCompaniesFromExcel: (file: File) => Promise<void>;
+  downloadImportTemplate: (filename?: string) => void;
 }
 
 export const useCompaniesStore = create<CompanyStore>((set, get) => ({
@@ -157,6 +160,100 @@ export const useCompaniesStore = create<CompanyStore>((set, get) => ({
     const result = exportCompaniesWithColumns(companies, columns, filename);
     if (result.success) {
       toast.success(`Companies exported successfully!`);
+    } else {
+      toast.error(result.message);
+    }
+  },
+
+  // 📥 Import companies from Excel
+  importCompaniesFromExcel: async (file: File) => {
+    try {
+      const result = await importCompaniesFromExcel(file);
+      
+      if (!result.success) {
+        toast.error(result.message);
+        if (result.errors && result.errors.length > 0) {
+          console.error('Import errors:', result.errors);
+        }
+        return;
+      }
+
+      if (!result.data || result.data.length === 0) {
+        toast.error('No valid company data found in the file');
+        return;
+      }
+
+      // Process each company through the API
+      let successCount = 0;
+      let errorCount = 0;
+      const errors: string[] = [];
+
+      for (const companyData of result.data) {
+        try {
+          // Prepare company data with required fields
+          const companyPayload = {
+            ...companyData,
+            // Ensure required fields have default values if missing
+            industry: companyData.industry || 'Unknown Industry',
+            status: companyData.status || 'Active',
+            // Note: owner fields should be set by the API based on the authenticated user
+          };
+
+          console.log('Importing company:', companyPayload);
+
+          const res = await fetch('/api/admin/companies', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(companyPayload),
+          });
+
+          if (!res.ok) {
+            const errorResponse = await res.json();
+            console.error('API Error Response:', errorResponse);
+            throw new Error(errorResponse.error || errorResponse.message || 'Failed to create company');
+          }
+
+          const created: Company = await res.json();
+          // Add to local state
+          set({ companies: [...get().companies, created] });
+          successCount++;
+        } catch (err: any) {
+          errorCount++;
+          const errorMessage = err.message || 'Unknown error';
+          errors.push(`${companyData.fullName}: ${errorMessage}`);
+          console.error(`Failed to import ${companyData.fullName}:`, err);
+        }
+      }
+
+      // Show results
+      if (successCount > 0) {
+        toast.success(`Successfully imported ${successCount} companies!`);
+      }
+      
+      if (errorCount > 0) {
+        toast.error(`Failed to import ${errorCount} companies. Check console for details.`);
+        console.error('Import errors:', errors);
+      }
+
+      // Show import warnings if any
+      if (result.errors && result.errors.length > 0) {
+        console.warn('Import warnings:', result.errors);
+        toast(`Import completed with ${result.errors.length} warnings. Check console for details.`, {
+          duration: 5000,
+        });
+      }
+
+    } catch (err: any) {
+      console.error('Import error:', err);
+      toast.error('Failed to import companies from Excel file');
+    }
+  },
+
+  // 📥 Download import template
+  downloadImportTemplate: (filename?: string) => {
+    const result = generateCompanyImportTemplate(filename);
+    if (result.success) {
+      toast.success('Import template downloaded successfully!');
     } else {
       toast.error(result.message);
     }

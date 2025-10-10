@@ -11,6 +11,8 @@ interface TodoStore {
   addTodo: (todo: Omit<TaskData, "id" | "ownerId" | "createdAt" | "updatedAt">) => Promise<void>;
   updateTodo: (id: string, todo: Partial<TaskData>) => Promise<void>;
   deleteTodo: (id: string) => Promise<void>;
+  bulkDeleteTodos: (ids: string[]) => Promise<void>;
+  bulkUpdateTodos: (ids: string[], updates: Partial<TaskData>) => Promise<void>;
 }
 
 export const useTodoStore = create<TodoStore>((set, get) => ({
@@ -18,7 +20,7 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
   loading: false,
   error: null,
 
-  // 🧠 Fetch todos from API
+  //  Fetch todos from API
   fetchTodos: async (ownerId?: string) => {
     set({ loading: true });
     try {
@@ -35,7 +37,7 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
     }
   },
 
-  // ➕ Add a new todo
+  //  Add a new todo
   addTodo: async (todo) => {
     try {
       const res = await fetch(`/api/admin/todos`, {
@@ -59,7 +61,7 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
     }
   },
 
-  // ✏️ Update a todo
+  //  Update a todo
   updateTodo: async (id, todo) => {
     try {
       const res = await fetch(`/api/admin/todos/${id}`, {
@@ -85,7 +87,7 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
     }
   },
 
-  // ❌ Delete a todo
+  //  Delete a todo
   deleteTodo: async (id) => {
     try {
       const res = await fetch(`/api/admin/todos/${id}`, {
@@ -99,6 +101,63 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
       toast.success("Todo deleted successfully!");
     } catch (err: any) {
       console.error("deleteTodo error:", err);
+      toast.error(err.message);
+      set({ error: err.message });
+    }
+  },
+
+  //  Bulk delete todos
+  bulkDeleteTodos: async (ids) => {
+    try {
+      const deletePromises = ids.map(id => 
+        fetch(`/api/admin/todos/${id}`, { method: "DELETE" })
+      );
+      
+      const results = await Promise.allSettled(deletePromises);
+      const failures = results.filter(result => result.status === 'rejected');
+      
+      if (failures.length > 0) {
+        throw new Error(`Failed to delete ${failures.length} todos`);
+      }
+
+      set({
+        todos: get().todos.filter((t) => !ids.includes(t.id)),
+      });
+      toast.success(`${ids.length} todos deleted successfully!`);
+    } catch (err: any) {
+      console.error("bulkDeleteTodos error:", err);
+      toast.error(err.message);
+      set({ error: err.message });
+    }
+  },
+
+  //  Bulk update todos
+  bulkUpdateTodos: async (ids, updates) => {
+    try {
+      const updatePromises = ids.map(id => 
+        fetch(`/api/admin/todos/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updates),
+        })
+      );
+      
+      const results = await Promise.allSettled(updatePromises);
+      const failures = results.filter(result => result.status === 'rejected');
+      
+      if (failures.length > 0) {
+        throw new Error(`Failed to update ${failures.length} todos`);
+      }
+
+      // Update local state
+      set({
+        todos: get().todos.map((t) => 
+          ids.includes(t.id) ? { ...t, ...updates } : t
+        ),
+      });
+      toast.success(`${ids.length} todos updated successfully!`);
+    } catch (err: any) {
+      console.error("bulkUpdateTodos error:", err);
       toast.error(err.message);
       set({ error: err.message });
     }

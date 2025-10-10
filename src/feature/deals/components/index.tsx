@@ -38,6 +38,8 @@ const Deals = () => {
   const [isDetailOpen, setIsDetailOpen] = React.useState(false)
   const [showModal, setShowModal] = React.useState<boolean>(false);
   const [editDeal, setEditDeal] = React.useState<Deal | null>(null);
+  const [selectedDeals, setSelectedDeals] = React.useState<string[]>([]);
+  const [selectedDealRows, setSelectedDealRows] = React.useState<Deal[]>([]);
 
     const { deals, fetchDeals, loading, deleteDeal, exportSingleDeal } = useDealStore();
 
@@ -59,9 +61,23 @@ const Deals = () => {
     setIsDetailOpen(false)
     setSelectedDeal(null)
   }
+
+  const handleSelectionChange = (selectedKeys: string[], selectedRows: Deal[]) => {
+    setSelectedDeals(selectedKeys);
+    setSelectedDealRows(selectedRows);
+  };
   return (
    <div className='overflow-x-hidden'>
-    <DealsHeader view={view} setView={(view: 'table' | 'grid') => setView(view)} />
+    <DealsHeader 
+      view={view} 
+      setView={(view: 'table' | 'grid') => setView(view)}
+      selectedDeals={selectedDeals}
+      selectedDealRows={selectedDealRows}
+      onClearSelection={() => {
+        setSelectedDeals([]);
+        setSelectedDealRows([]);
+      }}
+    />
     <div className='py-8 px-6 overflow-x-hidden'>
 
         {view === 'table' ? (
@@ -70,6 +86,7 @@ const Deals = () => {
               columns={columns} 
               data={deals} 
               selectable={true}
+              onSelectionChange={handleSelectionChange}
               onRowClick={(record) => openDetail(record as Deal)}
             />
             <DealDetail 
