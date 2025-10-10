@@ -47,7 +47,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
 
   return (
     <Modal open={isOpen} onClose={onClose}>
-      <div className="bg-white w-[450px] fixed right-0 top-0 h-full shadow-lg overflow-y-auto">
+      <div className="bg-white w-[455px] fixed right-0 top-0 h-full shadow-lg overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-[var(--border-gray)]">
           <h2 className="text-lg font-semibold text-gray-900">{title}</h2>

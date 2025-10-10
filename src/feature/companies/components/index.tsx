@@ -84,8 +84,10 @@ export default function Companies () {
   const [open, setOpen] = React.useState(false)
   const [editCompany, setEditCompany] = React.useState<Company | null>(null)
   const [showEditModal, setShowEditModal] = React.useState(false)
+  const [selectedCompanies, setSelectedCompanies] = React.useState<string[]>([])
+  const [selectedCompanyRows, setSelectedCompanyRows] = React.useState<Company[]>([])
 
-  const { companies, fetchCompanies, loading, deleteCompany } = useCompaniesStore();
+  const { companies, fetchCompanies, loading, deleteCompany, exportSingleCompany } = useCompaniesStore();
 
   useEffect(() => {
     fetchCompanies();
@@ -105,15 +107,32 @@ export default function Companies () {
     setEditCompany(null)
   }
 
+  const handleSelectionChange = (selectedKeys: string[], selectedRows: Company[]) => {
+    setSelectedCompanies(selectedKeys);
+    setSelectedCompanyRows(selectedRows);
+  };
+
   return (
     <div className='overflow-x-hidden'>
-      <CompaniesHeader editCompany={editCompany} showEditModal={showEditModal} onEditCompany={handleEditCompany} onCloseEditModal={closeEditModal} />
+      <CompaniesHeader 
+        editCompany={editCompany} 
+        showEditModal={showEditModal} 
+        onEditCompany={handleEditCompany} 
+        onCloseEditModal={closeEditModal}
+        selectedCompanies={selectedCompanies}
+        selectedCompanyRows={selectedCompanyRows}
+        onClearSelection={() => {
+          setSelectedCompanies([]);
+          setSelectedCompanyRows([]);
+        }}
+      />
       <div className='py-8 px-6 overflow-x-hidden'>
 
         <Table
           columns={customerColumns}
           data={companies}
           selectable={true}
+          onSelectionChange={handleSelectionChange}
           onRowClick={(record) => openDetail(record as Company)}
         />
         <CompanieDetail
@@ -132,8 +151,7 @@ export default function Companies () {
             console.log('Add notes for company:', id);
           }}
           onExport={(id: string) => {
-            // Handle export logic here
-            console.log('Export company:', id);
+            exportSingleCompany(id);
           }}
         />
       </div>

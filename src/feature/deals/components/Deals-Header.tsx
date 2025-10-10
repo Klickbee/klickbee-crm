@@ -1,20 +1,25 @@
 "use client"
 import { Button } from "@/components/ui/Button"
 import { CalendarDropDown } from "@/components/ui/CalendarDropDown"
-import { Search, LayoutGrid, List, Download, Upload, Plus } from "lucide-react"
+import { DropDown } from "@/components/ui/DropDown"
+import { Search, LayoutGrid, List, Download, Upload, Plus, ChevronDown } from "lucide-react"
 import { useState, useEffect } from "react"
 import Filter from "@/components/filter"
 import { filterData, type FilterData } from "@/feature/deals/libs/filterData"
 import DealModal from "./DealModal"
 import { useSearchParams } from "next/navigation"
 import { Deal } from '../types'
+import { useDealStore } from "../stores/useDealStore"
 
 type DealsHeaderProps = {
   view: 'table' | 'grid';
   setView: (view: 'table' | 'grid') => void;
+  selectedDeals?: string[];
+  selectedDealRows?: Deal[];
+  onClearSelection?: () => void;
 }
 const searchableCategories: (keyof FilterData)[] = ["owner", "tags"];
-export function DealsHeader({ view, setView }: DealsHeaderProps) {
+export function DealsHeader({ view, setView, selectedDeals = [], selectedDealRows = [], onClearSelection }: DealsHeaderProps) {
   const [selectedUser, setSelectedUser] = useState("Closed")
   const [showFilter, setShowFilter] = useState(false)
   const [filters, setFilters] = useState(filterData);
@@ -23,6 +28,10 @@ export function DealsHeader({ view, setView }: DealsHeaderProps) {
   const [editDeal, setEditDeal] = useState<Deal | null>(null);
   const [closedDate, setClosedDate] = useState<Date | null>(null);
   const searchParams = useSearchParams()
+  
+  // Get export and import functions from store
+  const { exportAllDeals, importDealsFromExcel, exportSelectedDeals, deleteDeal } = useDealStore();
+  const [showActionDropdown, setShowActionDropdown] = useState(false);
 
   useEffect(() => {
     const newParam = searchParams.get("new")
@@ -40,6 +49,57 @@ export function DealsHeader({ view, setView }: DealsHeaderProps) {
     setShowNewDealer(false);
     setEditDeal(null);
   };
+
+  const handleExportDeals = () => {
+    exportAllDeals();
+  };
+
+  const handleImportDeals = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.xlsx,.xls';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        importDealsFromExcel(file);
+      }
+    };
+    input.click();
+  };
+
+  const handleBulkAction = (action: string) => {
+    switch (action) {
+      case 'export':
+        if (selectedDeals.length > 0) {
+          exportSelectedDeals(selectedDeals);
+        }
+        break;
+      case 'delete':
+        if (selectedDeals.length > 0 && confirm(`Are you sure you want to delete ${selectedDeals.length} deal(s)?`)) {
+          selectedDeals.forEach(async (id) => {
+            await deleteDeal(id);
+          });
+          onClearSelection?.();
+        }
+        break;
+      case 'assign-owner':
+        // TODO: Implement assign owner functionality
+        console.log('Assign owner to selected deals:', selectedDeals);
+        break;
+      case 'change-stage':
+        // TODO: Implement change stage functionality
+        console.log('Change stage for selected deals:', selectedDeals);
+        break;
+    }
+    setShowActionDropdown(false);
+  };
+
+  const actionOptions = [
+    { value: 'assign-owner', label: 'Assign Owner' },
+    { value: 'change-stage', label: 'Change Stage' },
+    { value: 'export', label: 'Export' },
+    { value: 'delete', label: 'Delete' },
+  ];
 
   // ✅ Toggle checkbox
   const handleToggle = (category: keyof FilterData, id: string) => {
@@ -102,6 +162,34 @@ export function DealsHeader({ view, setView }: DealsHeaderProps) {
 
       {/* Right section - View Switch + Action Buttons */}
       <div className="flex w-[422px] h-[36px] items-center gap-2">
+        {/* Action Dropdown - Show when deals are selected */}
+        {selectedDeals.length > 0 && (
+          <div className="flex items-center gap-2 mr-2">
+            <div className="relative">
+              <Button
+                onClick={() => setShowActionDropdown(!showActionDropdown)}
+                className="flex items-center gap-1 h-[36px] px-3"
+              >
+                Action
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+              {showActionDropdown && (
+                <div className="absolute top-full left-0 mt-1 z-20 bg-white border border-gray-200 rounded-md shadow-lg py-1 min-w-[150px]">
+                  {actionOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => handleBulkAction(option.value)}
+                      className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center gap-2"
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        
         {/* List/Grid toggle */}
        <div className="flex h-[36px] items-center bg-[#F4F4F5] border border-[var(--border-gray)] rounded-md overflow-hidden">
           <button
@@ -123,14 +211,16 @@ export function DealsHeader({ view, setView }: DealsHeaderProps) {
 
         {/* Export */}
         <Button
-          leadingIcon={<img src="\icons\File.svg" alt="export-file" className="w-[17px] h-4 "/>} 
+          leadingIcon={<img src="\icons\File.svg" alt="export-file" className="w-[17px] h-4 "/>}
+          onClick={handleExportDeals}
            >
           Export
         </Button>
 
         {/* Import */}
         <Button 
-         leadingIcon={<img src="\icons\upload.svg" alt="upload" className="w-[17px] h-4 "/>} 
+         leadingIcon={<img src="\icons\upload.svg" alt="upload" className="w-[17px] h-4 "/>}
+         onClick={handleImportDeals}
         >
          Import
         </Button>

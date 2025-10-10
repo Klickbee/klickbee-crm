@@ -26,6 +26,7 @@
     "react-dom": "19.1.0",
     "react-hot-toast": "^2.6.0",
     "tailwind-merge": "^3.3.1",
+    "xlsx": "^0.18.5",
     "yup": "^1.7.1",
     "zod": "^4.1.11",
     "zustand": "^5.0.8"
@@ -36,6 +37,7 @@
     "@types/node": "^20.19.15",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/xlsx": "^0.0.35",
     "eslint": "^9",
     "eslint-config-next": "15.5.3",
     "prisma": "^6.17.0",

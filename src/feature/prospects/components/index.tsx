@@ -93,9 +93,11 @@ export default function Prospects () {
   const [open, setOpen] = React.useState(false)
     const [showModal, setShowModal] = React.useState<boolean>(false);
     const [editProspect, setEditProspect] = useState<Prospect | null>(null);
+  const [selectedProspects, setSelectedProspects] = React.useState<string[]>([])
+  const [selectedProspectRows, setSelectedProspectRows] = React.useState<Prospect[]>([])
   
 
-  const { prospects, fetchProspects, loading, deleteProspect } = useProspectsStore();
+  const { prospects, fetchProspects, loading, deleteProspect, exportSingleProspect } = useProspectsStore();
 
   useEffect(() => {
     fetchProspects();
@@ -109,15 +111,28 @@ export default function Prospects () {
   const openDetail = (prospect: Prospect) => { setSelected(prospect); setOpen(true) }
   const closeDetail = () => { setOpen(false); setSelected(null) }
 
+  const handleSelectionChange = (selectedKeys: string[], selectedRows: Prospect[]) => {
+    setSelectedProspects(selectedKeys);
+    setSelectedProspectRows(selectedRows);
+  };
+
   return (
     <div className='overflow-x-hidden'>
-      <ProspectHeader/>
+      <ProspectHeader
+        selectedProspects={selectedProspects}
+        selectedProspectRows={selectedProspectRows}
+        onClearSelection={() => {
+          setSelectedProspects([]);
+          setSelectedProspectRows([]);
+        }}
+      />
        <div className='py-8 px-6 overflow-x-hidden'>
           <Table 
             columns={prospectsColumns} 
             data={prospects} 
             selectable={true}
             loading={loading}
+            onSelectionChange={handleSelectionChange}
             onRowClick={(record) => openDetail(record as Prospect)}
           />
           <ProspectDetail 
@@ -134,8 +149,7 @@ export default function Prospects () {
               console.log('Add notes for prospect:', id);
             }}
             onExport={(id: string) => {
-              // Handle export logic here
-              console.log('Export prospect:', id);
+              exportSingleProspect(id);
             }}
           />
           <ProspectModel

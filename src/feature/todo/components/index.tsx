@@ -124,6 +124,8 @@ export default function TODO() {
   const [isDetailOpen, setIsDetailOpen] = React.useState(false)
   const [showModal, setShowModal] = React.useState<boolean>(false);
   const [editTask, setEditTask] = React.useState<TaskData | null>(null);
+  const [selectedTodos, setSelectedTodos] = React.useState<string[]>([])
+  const [selectedTodoRows, setSelectedTodoRows] = React.useState<TaskData[]>([])
   const { todos, fetchTodos, loading, deleteTodo } = useTodoStore();
   const { users } = useUserStore();
 
@@ -145,10 +147,24 @@ export default function TODO() {
     setSelectedTask(null)
   }
 
+  const handleSelectionChange = (selectedKeys: string[], selectedRows: TaskData[]) => {
+    setSelectedTodos(selectedKeys);
+    setSelectedTodoRows(selectedRows);
+  };
+
 
   return (
     <div className='overflow-x-hidden'>
-      <TodoHeader view={view} setView={(view: 'table' | 'grid') => setView(view)} />
+      <TodoHeader 
+        view={view} 
+        setView={(view: 'table' | 'grid') => setView(view)}
+        selectedTodos={selectedTodos}
+        selectedTodoRows={selectedTodoRows}
+        onClearSelection={() => {
+          setSelectedTodos([]);
+          setSelectedTodoRows([]);
+        }}
+      />
       <div className='py-8 px-6 overflow-x-hidden'>
         {view === 'table' ? (
           <>
@@ -160,6 +176,7 @@ export default function TODO() {
                   columns={taskColumns}
                   data={todos}
                   selectable={true}
+                  onSelectionChange={handleSelectionChange}
                   onRowClick={(record) => openDetail(record as TaskData)}
                 />
                 {isDetailOpen && (

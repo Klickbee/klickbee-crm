@@ -1,12 +1,13 @@
 "use client"
 import { Button } from "@/components/ui/Button"
 import { DropDown } from "@/components/ui/DropDown"
-import { Search, LayoutGrid, List, Download, Upload, Plus } from "lucide-react"
+import { Search, LayoutGrid, List, Download, Upload, Plus, ChevronDown } from "lucide-react"
 import { useState } from "react"
 import { filterData, type FilterData } from "../libs/fillterData"
 import Filter from "@/components/filter"
 import CompanyModel from './CompaniesModel'
 import { Company } from "../types/types"
+import { useCompaniesStore } from "../stores/useCompaniesStore"
 
 
 const statusOptions = [
@@ -22,21 +23,46 @@ interface CompaniesHeaderProps {
   showEditModal?: boolean;
   onEditCompany?: (company: Company) => void;
   onCloseEditModal?: () => void;
+  selectedCompanies?: string[];
+  selectedCompanyRows?: Company[];
+  onClearSelection?: () => void;
 }
 
-export function CompaniesHeader({ editCompany, showEditModal, onEditCompany, onCloseEditModal }: CompaniesHeaderProps = {}) {
+export function CompaniesHeader({ editCompany, showEditModal, onEditCompany, onCloseEditModal, selectedCompanies = [], selectedCompanyRows = [], onClearSelection }: CompaniesHeaderProps = {}) {
   const [selectedUser, setSelectedUser] = useState("all")
   const [filters, setFilters] = useState(filterData);
   const [showFilter, setShowFilter] = useState(false)
 
   const [searchQueries, setSearchQueries] = useState<Record<string, string>>({});
   const [showNewCompany, setShowNewCompany] = useState<boolean>(false);
+  
+  // Get export and import functions from store
+  const { exportAllCompanies, importCompaniesFromExcel, downloadImportTemplate, exportSelectedCompanies, deleteCompany } = useCompaniesStore();
+  const [showActionDropdown, setShowActionDropdown] = useState(false);
 
   const handleCloseModal = () => {
     setShowNewCompany(false);
     if (onCloseEditModal) {
       onCloseEditModal();
     }
+  };
+
+  const handleExportCompanies = () => {
+    exportAllCompanies();
+  };
+
+  const handleImportCompanies = () => {
+    // Create a file input element
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.xlsx,.xls';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        importCompaniesFromExcel(file);
+      }
+    };
+    input.click();
   };
 
   const handleToggle = (category: keyof FilterData, id: string) => {
@@ -47,6 +73,40 @@ export function CompaniesHeader({ editCompany, showEditModal, onEditCompany, onC
       ),
     }));
   };
+
+  const handleBulkAction = (action: string) => {
+    switch (action) {
+      case 'export':
+        if (selectedCompanies.length > 0) {
+          exportSelectedCompanies(selectedCompanies);
+        }
+        break;
+      case 'delete':
+        if (selectedCompanies.length > 0 && confirm(`Are you sure you want to delete ${selectedCompanies.length} company(s)?`)) {
+          selectedCompanies.forEach(async (id) => {
+            await deleteCompany(id);
+          });
+          onClearSelection?.();
+        }
+        break;
+      case 'assign-owner':
+        // TODO: Implement assign owner functionality
+        console.log('Assign owner to selected companies:', selectedCompanies);
+        break;
+      case 'change-status':
+        // TODO: Implement change status functionality
+        console.log('Change status for selected companies:', selectedCompanies);
+        break;
+    }
+    setShowActionDropdown(false);
+  };
+
+  const actionOptions = [
+    { value: 'assign-owner', label: 'Assign Owner' },
+    { value: 'change-status', label: 'Change Status' },
+    { value: 'export', label: 'Export' },
+    { value: 'delete', label: 'Delete' },
+  ];
 
 
   return (
@@ -101,19 +161,50 @@ export function CompaniesHeader({ editCompany, showEditModal, onEditCompany, onC
 
       {/* Right section - View Switch + Action Buttons */}
       <div className="flex w-auto h-[36px] items-center gap-2">
+        {/* Action Dropdown - Show when companies are selected */}
+        {selectedCompanies.length > 0 && (
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Button
+                onClick={() => setShowActionDropdown(!showActionDropdown)}
+                className="flex items-center gap-1 h-[36px] px-3 ml-2"
+              >
+                Action
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+              {showActionDropdown && (
+                <div className="absolute top-full left-0 mt-1 z-20 bg-white border border-gray-200 rounded-md shadow-lg py-1 min-w-[150px]">
+                  {actionOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => handleBulkAction(option.value)}
+                      className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center gap-2"
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
         {/* Export */}
          <Button
           leadingIcon={<img src="\icons\File.svg" alt="export-file" className="w-[17px] h-4 " />}
+          onClick={handleExportCompanies}
         >
           Export
         </Button>
 
         {/* Import */}
-        <Button
-          leadingIcon={<img src="\icons\upload.svg" alt="upload" className="w-[17px] h-4 " />}
-        >
-          Import
-        </Button>
+        <div className="relative">
+          <Button
+            leadingIcon={<img src="\icons\upload.svg" alt="upload" className="w-[17px] h-4 " />}
+            onClick={handleImportCompanies}
+          >
+            Import
+          </Button>
+        </div>
 
         {/* New Deal */}
         <Button className="whitespace-nowrap bg-black" onClick={() => setShowNewCompany(true)}>

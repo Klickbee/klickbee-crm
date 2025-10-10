@@ -15,7 +15,7 @@ export default function DealsGridView() {
   const [isDetailOpen, setIsDetailOpen] = React.useState(false)
   const [showModal, setShowModal] = React.useState<boolean>(false);
   const [editDeal, setEditDeal] = React.useState<Deal | null>(null);
-  const { deals, fetchDeals, loading,  deleteDeal ,updateDeal } = useDealStore();
+  const { deals, fetchDeals, loading,  deleteDeal ,updateDeal ,exportSingleDeal } = useDealStore();
 
 useEffect(() => {
     fetchDeals();
@@ -152,9 +152,8 @@ const handleMove = React.useCallback(async  ({ itemId, fromKey, toKey }: { itemI
         
           toast("Add notes functionality coming soon!");
         }}
-        onExport={() => {
-          
-          toast("Export functionality coming soon!");
+        onExport={(id: string) => {
+          exportSingleDeal(id);
         }}
       />
 

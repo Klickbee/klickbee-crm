@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import toast from "react-hot-toast";
 import { Prospect } from "../types/types";
+import { exportProspectsToExcel, exportProspectsWithColumns, exportSingleProspectToExcel } from "../libs/excelExport";
+import { importProspectsFromExcel, generateProspectImportTemplate } from "../libs/excelImport";
 
 interface ProspectStore {
   prospects: Prospect[];
@@ -11,6 +13,12 @@ interface ProspectStore {
   addProspect: (prospect: Omit<Prospect, "id" | "ownerId" | "userId" | "createdAt" | "updatedAt">) => Promise<void>;
   updateProspect: (id: string, prospect: Partial<Prospect>) => Promise<void>;
   deleteProspect: (id: string) => Promise<void>;
+  exportAllProspects: (filename?: string) => void;
+  exportSelectedProspects: (prospectIds: string[], filename?: string) => void;
+  exportSingleProspect: (prospectId: string, filename?: string) => void;
+  exportProspectsWithColumns: (columns: (keyof Prospect)[], filename?: string) => void;
+  importProspectsFromExcel: (file: File) => Promise<void>;
+  downloadImportTemplate: (filename?: string) => void;
 }
 
 export const useProspectsStore = create<ProspectStore>((set, get) => ({
@@ -118,6 +126,149 @@ export const useProspectsStore = create<ProspectStore>((set, get) => ({
       console.error("deleteProspect error:", err);
       toast.error(err.message);
       set({ error: err.message });
+    }
+  },
+
+  // 📊 Export all prospects to Excel
+  exportAllProspects: (filename?: string) => {
+    const { prospects } = get();
+    const result = exportProspectsToExcel(prospects, filename);
+    if (result.success) {
+      toast.success(`Prospects exported successfully!`);
+    } else {
+      toast.error(result.message);
+    }
+  },
+
+  // 📊 Export selected prospects to Excel
+  exportSelectedProspects: (prospectIds: string[], filename?: string) => {
+    const { prospects } = get();
+    const selectedProspects = prospects.filter(prospect => prospectIds.includes(prospect.id));
+    if (selectedProspects.length === 0) {
+      toast.error('No prospects selected for export');
+      return;
+    }
+    const result = exportProspectsToExcel(selectedProspects, filename);
+    if (result.success) {
+      toast.success(`Selected prospects exported successfully!`);
+    } else {
+      toast.error(result.message);
+    }
+  },
+
+  // 📊 Export single prospect to Excel
+  exportSingleProspect: (prospectId: string, filename?: string) => {
+    const { prospects } = get();
+    const prospect = prospects.find(p => p.id === prospectId);
+    if (!prospect) {
+      toast.error('Prospect not found');
+      return;
+    }
+    const result = exportSingleProspectToExcel(prospect, filename);
+    if (result.success) {
+      toast.success(`Prospect ${prospect.fullName || 'Unknown'} exported successfully!`);
+    } else {
+      toast.error(result.message);
+    }
+  },
+
+  // 📊 Export prospects with custom columns
+  exportProspectsWithColumns: (columns: (keyof Prospect)[], filename?: string) => {
+    const { prospects } = get();
+    const result = exportProspectsWithColumns(prospects, columns, filename);
+    if (result.success) {
+      toast.success(`Prospects exported successfully!`);
+    } else {
+      toast.error(result.message);
+    }
+  },
+
+  // 📥 Import prospects from Excel
+  importProspectsFromExcel: async (file: File) => {
+    try {
+      const result = await importProspectsFromExcel(file);
+      
+      if (!result.success) {
+        toast.error(result.message);
+        if (result.errors && result.errors.length > 0) {
+          console.error('Import errors:', result.errors);
+        }
+        return;
+      }
+
+      if (!result.data || result.data.length === 0) {
+        toast.error('No valid prospect data found in the file');
+        return;
+      }
+
+      // Process each prospect through the API
+      let successCount = 0;
+      let errorCount = 0;
+      const errors: string[] = [];
+
+      for (const prospectData of result.data) {
+        try {
+          const prospectPayload = {
+            ...prospectData,
+            company: prospectData.company || 'Unknown Company',
+            status: prospectData.status || 'New',
+          };
+
+          console.log('Importing prospect:', prospectPayload);
+
+          const res = await fetch('/api/admin/prospects', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(prospectPayload),
+          });
+
+          if (!res.ok) {
+            const errorResponse = await res.json();
+            console.error('API Error Response:', errorResponse);
+            throw new Error(errorResponse.error || errorResponse.message || 'Failed to create prospect');
+          }
+
+          const created: Prospect = await res.json();
+          set({ prospects: [...get().prospects, created] });
+          successCount++;
+        } catch (err: any) {
+          errorCount++;
+          const errorMessage = err.message || 'Unknown error';
+          errors.push(`${prospectData.fullName}: ${errorMessage}`);
+          console.error(`Failed to import ${prospectData.fullName}:`, err);
+        }
+      }
+
+      // Show results
+      if (successCount > 0) {
+        toast.success(`Successfully imported ${successCount} prospects!`);
+      }
+      
+      if (errorCount > 0) {
+        toast.error(`Failed to import ${errorCount} prospects. Check console for details.`);
+        console.error('Import errors:', errors);
+      }
+
+      if (result.errors && result.errors.length > 0) {
+        console.warn('Import warnings:', result.errors);
+        toast(`Import completed with ${result.errors.length} warnings. Check console for details.`, {
+          duration: 5000,
+        });
+      }
+
+    } catch (err: any) {
+      console.error('Import error:', err);
+      toast.error('Failed to import prospects from Excel file');
+    }
+  },
+
+  // 📥 Download import template
+  downloadImportTemplate: (filename?: string) => {
+    const result = generateProspectImportTemplate(filename);
+    if (result.success) {
+      toast.success('Import template downloaded successfully!');
+    } else {
+      toast.error(result.message);
     }
   },
 }));
