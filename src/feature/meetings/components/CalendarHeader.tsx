@@ -12,23 +12,22 @@ interface CalendarHeaderProps {
   onAddMeeting: () => void;
 }
 const userOptions = [
-  { value: "all", label: "All Users" },
-  { value: "active", label: "Active Users" },
-  { value: "inactive", label: "Inactive Users" },
+  { value: "all", label: "All Types" },
+  { value: "active", label: "Active Types" },
+  { value: "inactive", label: "Inactive Types" },
 ]
 
 const statusOptions = [
   { value: "all", label: "All Status" },
-  { value: "new", label: "New" },
-  { value: "in-progress", label: "In Progress" },
-  { value: "completed", label: "Completed" },
+  { value: "confirmed", label: "Confirmed" },
+  { value: "cancelled", label: "Cancelled" },
+  { value: "scheduled", label: "Scheduled" },
 ]
 
 const timePeriodOptions = [
-  { value: "today", label: "Today" },
-  { value: "this-week", label: "This Week" },
-  { value: "this-month", label: "This Month" },
-  { value: "this-year", label: "This Year" },
+  { value: "all", label: "All Owners" },
+  { value: "active", label: "Active Owners" },
+  { value: "inactive", label: "Inactive Owners" },
 ]
 
 export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
@@ -42,54 +41,7 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   const menuRef = useRef<HTMLDivElement>(null);
   const [selectedUser, setSelectedUser] = useState("all")
   const [selectedStatus, setSelectedStatus] = useState("all")
-  const [selectedTimePeriod, setSelectedTimePeriod] = useState("this-month")
-
-
-
-
-  // const formatDate = () => {
-  //   if (currentView === "yearly") return currentDate.getFullYear().toString();
-  //   if (currentView === "monthly")
-  //     return currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" });
-  //   if (currentView === "weekly") {
-  //     const weekStart = new Date(currentDate);
-  //     weekStart.setDate(currentDate.getDate() - currentDate.getDay());
-  //     const weekEnd = new Date(weekStart);
-  //     weekEnd.setDate(weekStart.getDate() + 6);
-  //     return `${weekStart.toLocaleDateString("en-US", {
-  //       month: "short",
-  //       day: "numeric",
-  //     })} - ${weekEnd.toLocaleDateString("en-US", {
-  //       month: "short",
-  //       day: "numeric",
-  //       year: "numeric",
-  //     })}`;
-  //   }
-  //   return currentDate.toLocaleDateString("en-US", {
-  //     month: "long",
-  //     day: "numeric",
-  //     year: "numeric",
-  //   });
-  // };
-
-  // const navigateDate = (direction: "prev" | "next") => {
-  //   const newDate = new Date(currentDate);
-  //   switch (currentView) {
-  //     case "daily":
-  //       newDate.setDate(newDate.getDate() + (direction === "next" ? 1 : -1));
-  //       break;
-  //     case "weekly":
-  //       newDate.setDate(newDate.getDate() + (direction === "next" ? 7 : -7));
-  //       break;
-  //     case "monthly":
-  //       newDate.setMonth(newDate.getMonth() + (direction === "next" ? 1 : -1));
-  //       break;
-  //     case "yearly":
-  //       newDate.setFullYear(newDate.getFullYear() + (direction === "next" ? 1 : -1));
-  //       break;
-  //   }
-  //   onDateChange(newDate);
-  // };
+  const [selectedTimePeriod, setSelectedTimePeriod] = useState("all")
 
   return (
     <header>

@@ -33,7 +33,7 @@ export async function POST(req: Request) {
       startTime: toDate(bodyRaw.startTime),
       endTime: toDate(bodyRaw.endTime),
       ownerId: session.user.id,
-      linkedId: bodyRaw.linkedTo && bodyRaw.linkedTo.trim() !== "" ? bodyRaw.linkedTo : session.user.id, // Map linkedTo to linkedId
+      linkedId: session.user.id, // Always link meetings to the user who created them
       assignedTo: bodyRaw.assignedTo && bodyRaw.assignedTo.trim() !== "" ? bodyRaw.assignedTo : null, // Pass through assignedTo, null if empty
     });
     if (!parsed.success) {
@@ -134,7 +134,7 @@ export async function handleMethodWithId(req: Request, id: string) {
           repeatOn: data.repeatOn ?? undefined,
           repeatEvery: data.repeatEvery,
           ends: data.ends,
-          linkedId: data.linkedTo && data.linkedTo.trim() !== "" ? data.linkedTo : session.user.id, // Use linkedId, fallback to current user
+          linkedId: session.user.id, // Always link meetings to the user who created them
           location: data.location ?? undefined,
           assignedId: data.assignedTo && data.assignedTo.trim() !== "" ? data.assignedTo : null, // Use assignedId, null if empty
           participants: data.participants ?? undefined,

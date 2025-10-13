@@ -95,15 +95,15 @@ export const MeetingsSidebar: React.FC<MeetingsSidebarProps> = ({
                 key={day.toISOString()}
                 onClick={() => onSelectedDateChange(day)}
                 className={`
-                  w-8 h-8 text-sm rounded-full transition-colors relative
+                  w-8 h-8 text-sm rounded-md transition-colors relative
                   ${!isCurrentMonth ? 'text-gray-300' : 'text-gray-700 hover:bg-gray-100'}
-                  ${isToday ? 'bg-blue-600 text-white hover:bg-blue-700' : ''}
+                  ${isToday ? 'bg-black text-white hover:bg-gray-700' : ''}
                   ${isSelected && !isToday ? 'bg-gray-200 text-gray-900' : ''}
                 `}
               >
                 {day.getDate()}
                 {dayMeetings.length > 0 && !isToday && (
-                  <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-500 rounded-full"></div>
+                  <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-black rounded-full"></div>
                 )}
               </button>
             );
@@ -140,7 +140,7 @@ export const MeetingsSidebar: React.FC<MeetingsSidebarProps> = ({
 
   const getMeetingStatusColor = (meeting: Meeting) => {
     switch (meeting.status) {
-      case 'completed':
+      case 'confirmed':
         return 'bg-green-500';
       case 'cancelled':
         return 'bg-red-500';
@@ -171,24 +171,24 @@ export const MeetingsSidebar: React.FC<MeetingsSidebarProps> = ({
               <div
                 key={meeting.id}
                 onClick={() => onMeetingClick(meeting)}
-                className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors border border-[var(--border-gray)]"
+                className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
               >
                 <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${getMeetingStatusColor(meeting)}`}></div>
-                
+
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-gray-900">
+                    <span className="text-sm  text-gray-900">
                       {formatMeetingTime(meeting)}
                     </span>
                     {meeting.meetingLink && (
                       <Video className="w-4 h-4 text-blue-500" />
                     )}
                   </div>
-                  
-                  <h4 className="font-medium text-gray-900 mb-1 truncate">
+
+                  <h4 className="text-sm mb-1 break-words">
                     {meeting.title}
                   </h4>
-                  
+
                   {meeting.meetingLink && (
                     <div className="text-xs text-blue-600 truncate">
                       {meeting.meetingLink}

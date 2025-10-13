@@ -74,7 +74,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
                   className={`flex ${item.fullWidth ? 'items-start' : 'items-center'}`}
                 >
                   <span className="w-28 font-medium">{item.label}</span>:
-                  <span className="ml-2">{item.value}</span>
+                  <span className="ml-2 flex items-center">{item.value}</span>
                 </div>
               ))}
             </div>
