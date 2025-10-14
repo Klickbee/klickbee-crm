@@ -66,32 +66,22 @@ export default function DealForm({
     onCancel,
     mode = 'add',
     initialData,
+    usersLoading,
+    userOptions,
 }: {
     onSubmit: (values: DealFormValues) => void
     onCancel: () => void
     mode?: 'add' | 'edit'
     initialData?: Deal
+    usersLoading: boolean
+    userOptions: { id: string; value: string; label: string }[]
 }) {
     const [tagInput, setTagInput] = useState("")
     const [uploading, setUploading] = useState(false);
     const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
 
     // Fetch users for owner dropdown
-    const { users, loading: usersLoading, fetchUsers } = useUserStore();
-
-    useEffect(() => {
-        if (users.length === 0) {
-            fetchUsers();
-        }
-    }, [users]);
-
-
-    // Create user options for the dropdown
-    const userOptions = users.map((user: any) => ({
-        id: user.id,
-        value: user.id,
-        label: user.name || user.email
-    }));
+  
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
@@ -128,6 +118,17 @@ export default function DealForm({
     // Get initial values based on mode and initial data
     const getInitialValues = (): DealFormValues => {
         if (mode === 'edit' && initialData) {
+            // Normalize owner which can be object|string|undefined in initialData
+            const ownerValue = (() => {
+                const o = (initialData as any).owner;
+                if (typeof o === 'object' && o) {
+                    return o.id ?? '';
+                }
+                if (typeof o === 'string') {
+                    return o;
+                }
+                return '';
+            })();
             const initialVals = {
                 dealName: initialData.dealName || '',
                 company: getOptionLabel(companyOptions, initialData.company),
@@ -135,7 +136,7 @@ export default function DealForm({
                 stage: initialData.stage || 'New',
                 amount: initialData.amount || 0,
                 currency: 'EUR', // Default currency, you might want to store this in the deal data
-                owner: getOptionLabel(userOptions, initialData.owner),
+                owner: getOptionLabel(userOptions, ownerValue),
                 closeDate: initialData.closeDate
                     ? new Date(initialData.closeDate).toISOString().split('T')[0]
                     : '',

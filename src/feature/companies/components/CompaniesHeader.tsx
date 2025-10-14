@@ -29,15 +29,18 @@ interface CompaniesHeaderProps {
 }
 
 export function CompaniesHeader({ editCompany, showEditModal, onEditCompany, onCloseEditModal, selectedCompanies = [], selectedCompanyRows = [], onClearSelection }: CompaniesHeaderProps = {}) {
-  const [selectedUser, setSelectedUser] = useState("all")
-  const [filters, setFilters] = useState(filterData);
+  // Get export, import, and filter functions from store FIRST
+  const { exportAllCompanies, importCompaniesFromExcel, downloadImportTemplate, exportSelectedCompanies, deleteCompany, filters, setFilters, applyFilters, resetFilters } = useCompaniesStore();
+  // Derive selected status from store filters
+  const getSelectedStatus = () => {
+    const selected = filters.status.filter((s: any) => s.checked && s.id !== 'all');
+    return selected.length === 1 ? selected[0].id : 'all';
+  };
+  const [selectedUser, setSelectedUser] = useState<string>(getSelectedStatus());
   const [showFilter, setShowFilter] = useState(false)
 
   const [searchQueries, setSearchQueries] = useState<Record<string, string>>({});
   const [showNewCompany, setShowNewCompany] = useState<boolean>(false);
-  
-  // Get export and import functions from store
-  const { exportAllCompanies, importCompaniesFromExcel, downloadImportTemplate, exportSelectedCompanies, deleteCompany } = useCompaniesStore();
   const [showActionDropdown, setShowActionDropdown] = useState(false);
 
   const handleCloseModal = () => {
@@ -66,12 +69,12 @@ export function CompaniesHeader({ editCompany, showEditModal, onEditCompany, onC
   };
 
   const handleToggle = (category: keyof FilterData, id: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      [category]: prev[category].map((item) =>
-        item.id === id ? { ...item, checked: !item.checked } : item
-      ),
-    }));
+    const newFilters = { ...filters };
+    newFilters[category] = newFilters[category].map((item) =>
+      item.id === id ? { ...item, checked: !item.checked } : item
+    );
+    setFilters(newFilters);
+    applyFilters(); // Apply filters immediately after toggle
   };
 
   const handleBulkAction = (action: string) => {
@@ -137,8 +140,18 @@ export function CompaniesHeader({ editCompany, showEditModal, onEditCompany, onC
         {/* Dropdown */}
         <DropDown
           options={statusOptions}
-          value={selectedUser}
-          onChange={setSelectedUser}
+          value={getSelectedStatus()}
+          onChange={(val: string) => {
+            // Update store filters so only the selected status (or all) is active
+            const newFilters = { ...filters } as any;
+            newFilters.status = newFilters.status.map((s: any) => {
+              if (val === 'all') return { ...s, checked: s.id === 'all' };
+              if (s.id === 'all') return { ...s, checked: false };
+              return { ...s, checked: s.id === val };
+            });
+            setFilters(newFilters);
+            applyFilters();
+          }}
           className="h-[36px] min-w-[120px]"
         />
 
@@ -154,7 +167,9 @@ export function CompaniesHeader({ editCompany, showEditModal, onEditCompany, onC
           <img src="\icons\filter.svg" alt="export-file" className="w-[17px] h-4 " />
           Filter
           <span className=" h-[20px]  w-[28px] text-var[(--foreground)]   bg-[#F4F4F5] rounded-md px-0.5 py-0.5 text-xs ">
-            2
+            {filters.status.filter(s => s.checked && s.id !== "all").length +
+             filters.owner.filter(o => o.checked && o.id !== "all" && o.id !== "me").length +
+             filters.tags.filter(t => t.checked && t.id !== "all").length}
           </span>
         </button>
       </div>

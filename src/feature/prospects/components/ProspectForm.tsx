@@ -50,29 +50,18 @@ export default function ProspectForm({
     onCancel,
      mode = 'add',
     initialData,
+    usersLoading,
+    userOptions,
 }: {
     onSubmit: (values: ProspectFormValues) => void
     onCancel: () => void
     mode?: 'add' | 'edit'
   initialData?: Prospect
+  usersLoading: boolean
+  userOptions: { id: string; value: string; label: string }[]
 }) {
     const [tagInput, setTagInput] = useState("")
-    // Fetch users for owner dropdown
-    const { users, loading: usersLoading, fetchUsers } = useUserStore();
-
-    useEffect(() => {
-        if (users.length === 0) {
-            fetchUsers();
-        }
-    }, [users]);
-
-
-    // Create user options for the dropdown
-    const userOptions = users.map((user: any) => ({
-        id: user.id,
-        value: user.id,
-        label: user.name || user.email
-    }));
+    // Fetch users for owner dropdow
        const getOptionLabel = (options: {id: string, label: string}[], value: string) => {
         // First try to find by ID
         const optionById = options.find(opt => opt.id === value);

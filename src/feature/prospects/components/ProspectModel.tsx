@@ -8,6 +8,8 @@ import ProspectForm from "./ProspectForm"
 import { useProspectsStore } from "../stores/useProspectsStore"
 import { Prospect } from "../types/types"
 import toast from "react-hot-toast"
+import { useUserStore } from "@/feature/user/store/userStore"
+import { useEffect } from "react"
 
 type ProspectSlideOverProps = {
   open: boolean
@@ -19,12 +21,32 @@ type ProspectSlideOverProps = {
 export default function ProspectSlideOver({ open, onClose , mode = 'add', prospect }: ProspectSlideOverProps) {
   const { addProspect } = useProspectsStore();
   const { updateProspect } = useProspectsStore();
+   const { users, loading: usersLoading, fetchUsers } = useUserStore();
+  
+    useEffect(() => {
+        if (users.length === 0) {
+            fetchUsers();
+        }
+    }, [users]);
+  
+    // Create user options for the dropdown
+    const userOptions = users.map((user: any) => ({
+        id: user.id,
+        value: user.id,
+        label: user.name || user.email
+    }));
  const handleSubmit = async (values: any) => {
     try {
       if (mode === 'edit' && prospect) {
         await updateProspect(prospect.id, values);
       } else {
-        await addProspect(values);
+        const selectedOwner = userOptions.find(user => user.id === values.owner);
+        const payload = {...values,
+          owner: selectedOwner
+          ? { id: selectedOwner.id as string, name: selectedOwner.label as string }
+          : { id: '', name: '' },
+        }
+        await addProspect(payload);
       }
       onClose();
     } catch (error) {
@@ -61,6 +83,8 @@ export default function ProspectSlideOver({ open, onClose , mode = 'add', prospe
             onSubmit={(values) => handleSubmit(values)}
              mode={mode}
             initialData={prospect}
+            usersLoading={usersLoading}
+            userOptions={userOptions}
           />
         </div>
       </aside>

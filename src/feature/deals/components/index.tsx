@@ -4,6 +4,8 @@ import { DealsHeader } from './Deals-Header';
 import { Table, TableColumn, Badge } from '@/components/ui/Table';
 import { DealData } from '../libs/DealsData';
 import { useDealStore } from '../stores/useDealStore'
+import { useUserStore } from '../../user/store/userStore'
+import Loading from '@/components/ui/Loading'
 
 import GridView from './DealsGridView'
 import DealDetail from './DealDetail'
@@ -41,11 +43,25 @@ const Deals = () => {
   const [selectedDeals, setSelectedDeals] = React.useState<string[]>([]);
   const [selectedDealRows, setSelectedDealRows] = React.useState<Deal[]>([]);
 
-    const { deals, fetchDeals, loading, deleteDeal, exportSingleDeal } = useDealStore();
+  const { filteredDeals, fetchDeals, loading, deleteDeal, exportSingleDeal, initializeOwnerOptions } = useDealStore();
+  const ownerOptions = useDealStore((s) => s.filters.owner);
+  const { fetchUsers, users } = useUserStore();
 
+  // Guard against Strict Mode double-invocation and split responsibilities
+  const didInitRef = React.useRef(false);
   useEffect(() => {
+    if (didInitRef.current) return;
+    didInitRef.current = true;
+    fetchUsers();
     fetchDeals();
-  }, [fetchDeals]);
+  }, [fetchUsers, fetchDeals]);
+
+  // Initialize owner options once users are available
+  useEffect(() => {
+    if (users && users.length > 0 && ownerOptions.length === 0) {
+      initializeOwnerOptions();
+    }
+  }, [users.length, ownerOptions.length, initializeOwnerOptions]);
 
   const openDetail = (deal: DealData) => {
     setSelectedDeal(deal)
@@ -82,27 +98,33 @@ const Deals = () => {
 
         {view === 'table' ? (
           <>
-            <Table 
-              columns={columns} 
-              data={deals} 
-              selectable={true}
-              onSelectionChange={handleSelectionChange}
-              onRowClick={(record) => openDetail(record as Deal)}
-            />
-            <DealDetail 
-              isOpen={isDetailOpen}
-              deal={selectedDeal}
-              onClose={closeDetail}
-              onDelete={async (id) => {
+            {loading ? (
+              <Loading label="Loading deals..." />
+            ) : (
+              <>
+                <Table 
+                  columns={columns} 
+                  data={filteredDeals} 
+                  selectable={true}
+                  onSelectionChange={handleSelectionChange}
+                  onRowClick={(record) => openDetail(record as Deal)}
+                />
+                <DealDetail 
+                  isOpen={isDetailOpen}
+                  deal={selectedDeal}
+                  onClose={closeDetail}
+                  onDelete={async (id) => {
           await deleteDeal(id)
           closeDetail()
         }}
-              onEdit={handleEditDeal}
-              onAddNotes={() => {}}
-              onExport={(id: string) => {
-                exportSingleDeal(id);
-              }}
-            />
+                  onEdit={handleEditDeal}
+                  onAddNotes={() => {}}
+                  onExport={(id: string) => {
+                    exportSingleDeal(id);
+                  }}
+                />
+              </>
+            )}
           </>
         ) : (
           <GridView  />

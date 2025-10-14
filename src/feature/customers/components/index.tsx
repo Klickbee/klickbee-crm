@@ -4,7 +4,9 @@ import { CustomerHeader } from './CustomerHeader'
 import { Table, TableColumn } from '@/components/ui/Table';
 import { Customer } from '../types/types';
 import { useCustomersStore } from '../stores/useCustomersStore';
+import { useUserStore } from '../../user/store/userStore';
 import CustomerDetail from './CustomerDetail';
+import Loading from '@/components/ui/Loading';
 
 export const customerColumns: TableColumn<Customer>[] = [
   {
@@ -92,11 +94,25 @@ export default function Customers () {
   const [selectedCustomers, setSelectedCustomers] = React.useState<string[]>([])
   const [selectedCustomerRows, setSelectedCustomerRows] = React.useState<Customer[]>([])
 
-  const { customers, fetchCustomers, loading, deleteCustomer, exportSingleCustomer } = useCustomersStore();
+  const { filteredCustomers, fetchCustomers, loading, deleteCustomer, exportSingleCustomer, initializeOwnerOptions } = useCustomersStore();
+  const ownerOptions = useCustomersStore((s) => s.filters.owner);
+  const { fetchUsers, users } = useUserStore();
 
+  // Guard against Strict Mode double-invocation
+  const didInitRef = React.useRef(false);
   useEffect(() => {
+    if (didInitRef.current) return;
+    didInitRef.current = true;
+    fetchUsers();
     fetchCustomers();
-  }, [fetchCustomers]);
+  }, [fetchUsers, fetchCustomers]);
+
+  // Initialize owner options once after users are available
+  useEffect(() => {
+    if (users && users.length > 0 && ownerOptions.length === 0) {
+      initializeOwnerOptions();
+    }
+  }, [users.length, ownerOptions.length, initializeOwnerOptions]);
 
   const openDetail = (c: Customer) => { setSelected(c); setOpen(true) }
   const closeDetail = () => { setOpen(false); setSelected(null) }
@@ -125,27 +141,28 @@ export default function Customers () {
         onEditCustomer={handleEditCustomer} 
         onCloseEditModal={closeEditModal}
         selectedCustomers={selectedCustomers}
-        selectedCustomerRows={selectedCustomerRows}
         onClearSelection={() => {
           setSelectedCustomers([]);
           setSelectedCustomerRows([]);
         }}
       />
- <div className='py-8 px-6 overflow-x-hidden'>
-             
-                <Table 
-                  columns={customerColumns} 
-                  data={customers} 
-                  selectable={true}
-                  onSelectionChange={handleSelectionChange}
-                  onRowClick={(record) => openDetail(record as Customer)}
-                />
+<div className='py-8 px-6 overflow-x-hidden'>
+                {loading ? (
+                  <Loading label="Loading customers..." />
+                ) : (
+                  <Table 
+                    columns={customerColumns} 
+                    data={filteredCustomers} 
+                    selectable={true}
+                    onSelectionChange={handleSelectionChange}
+                    onRowClick={(record) => openDetail(record as Customer)}
+                  />
+                )}
                 <CustomerDetail 
                   isOpen={open}
                   customer={selected}
                   onClose={closeDetail}
                   onDelete={async (id: string) => {
-                    await deleteCustomer(id);
                     closeDetail();
                   }}
                   onEdit={(customer: Customer) => {

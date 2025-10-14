@@ -5,7 +5,7 @@ import { DropDown } from "@/components/ui/DropDown"
 import { Search, LayoutGrid, List, Download, Upload, Plus, ChevronDown } from "lucide-react"
 import { useState, useEffect } from "react"
 import Filter from "@/components/filter"
-import { filterData, type FilterData } from "@/feature/deals/libs/filterData"
+import { type FilterData } from "@/feature/deals/libs/filterData"
 import DealModal from "./DealModal"
 import { useSearchParams } from "next/navigation"
 import { Deal } from '../types'
@@ -22,15 +22,14 @@ const searchableCategories: (keyof FilterData)[] = ["owner", "tags"];
 export function DealsHeader({ view, setView, selectedDeals = [], selectedDealRows = [], onClearSelection }: DealsHeaderProps) {
   const [selectedUser, setSelectedUser] = useState("Closed")
   const [showFilter, setShowFilter] = useState(false)
-  const [filters, setFilters] = useState(filterData);
+  const { exportAllDeals, importDealsFromExcel, exportSelectedDeals, deleteDeal, filters, setFilters, applyFilters } = useDealStore();
   const [searchQueries, setSearchQueries] = useState<Record<string, string>>({});
   const [showNewDealer, setShowNewDealer] = useState<boolean>(false);
   const [editDeal, setEditDeal] = useState<Deal | null>(null);
   const [closedDate, setClosedDate] = useState<Date | null>(null);
   const searchParams = useSearchParams()
   
-  // Get export and import functions from store
-  const { exportAllDeals, importDealsFromExcel, exportSelectedDeals, deleteDeal } = useDealStore();
+  // Export/Import via store (already destructured above)
   const [showActionDropdown, setShowActionDropdown] = useState(false);
 
   useEffect(() => {
@@ -103,12 +102,12 @@ export function DealsHeader({ view, setView, selectedDeals = [], selectedDealRow
 
   // ✅ Toggle checkbox
   const handleToggle = (category: keyof FilterData, id: string) => {
-  setFilters((prev) => ({
-    ...prev,
-    [category]: prev[category].map((item) =>
-      item.id === id ? { ...item, checked: !item.checked } : item
-    ),
-  }));
+  const newFilters = { ...filters } as FilterData;
+  newFilters[category] = newFilters[category].map((item) =>
+    item.id === id ? { ...item, checked: !item.checked } : item
+  );
+  setFilters(newFilters);
+  applyFilters();
 };
 
   return (
@@ -155,7 +154,9 @@ export function DealsHeader({ view, setView, selectedDeals = [], selectedDealRow
           <img src="\icons\filter.svg" alt="export-file" className="w-[17px] h-4 "/>
           Filter
           <span className=" h-[20px]  w-[28px] text-var[(--foreground)]   bg-[#F4F4F5] rounded-md px-0.5 py-0.5 text-xs ">
-            2
+            {filters.status.filter(s => s.checked && s.id !== "all").length +
+             filters.owner.filter(o => o.checked && o.id !== "all" && o.id !== "me").length +
+             filters.tags.filter(t => t.checked && t.id !== "all").length}
           </span>
         </button>
       </div>

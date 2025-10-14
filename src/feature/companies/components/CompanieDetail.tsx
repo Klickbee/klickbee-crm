@@ -2,6 +2,7 @@
 import React from "react";
 import DetailModal from "@/components/detailPage";
 import type { Company } from "../types/types";
+import AvatarInitials from "@/components/ui/AvatarInitials";
 
 // Helper function to render status badge
 const renderStatusBadge = (status?: Company['status']) => {
@@ -51,15 +52,14 @@ export default function CompanieDetail({
       label: "Owner",
       value: (
         <span className="flex items-center gap-2">
-          {company.owner && (
+          {company.owner ? (
             <>
-             <span className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-xs">
-            {company.owner?.name?.charAt(0)?.toUpperCase() || company.owner?.email?.charAt(0)?.toUpperCase() || 'U'}
-          </span>
+              <AvatarInitials name={company.owner?.name} email={company.owner?.email} size={24} />
               {company.owner.name || company.owner.email}
             </>
+          ) : (
+            "-"
           )}
-          {!company.owner && "-"}
         </span>
       ),
     },

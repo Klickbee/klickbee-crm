@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/Button"
 import { DropDown } from "@/components/ui/DropDown"
 import { Search, LayoutGrid, List, Download, Upload, Plus, ChevronDown } from "lucide-react"
 import { useEffect, useState } from "react"
-import { filterData, type FilterData } from "../libs/fillterData"
+import { type FilterData } from "../libs/fillterData"
 import CustomerModal from "./CustomersModel"
 import { useSearchParams } from "next/navigation"
 import { Customer } from "../types/types"
@@ -30,22 +30,24 @@ interface CustomerHeaderProps {
 }
 
 export function CustomerHeader({ editCustomer, showEditModal, onEditCustomer, onCloseEditModal, selectedCustomers = [], selectedCustomerRows = [], onClearSelection }: CustomerHeaderProps = {}) {
-  const [selectedUser, setSelectedUser] = useState("all")
-  const [filters, setFilters] = useState(filterData);
+  // Get export and import functions and filters from store FIRST
+  const { exportAllCustomers, importCustomersFromExcel, downloadImportTemplate, exportSelectedCustomers, deleteCustomer, filters, setFilters, applyFilters } = useCustomersStore();
+  // Derive selected status from store filters
+  const getSelectedStatus = () => {
+    const selected = filters.status.filter((s: any) => s.checked && s.id !== 'all');
+    return selected.length === 1 ? selected[0].id : 'all';
+  };
+  const [selectedUser, setSelectedUser] = useState<string>(getSelectedStatus())
   const [showFilter, setShowFilter] = useState(false)
-
   const [searchQueries, setSearchQueries] = useState<Record<string, string>>({});
   const [showNewCustomers, setShowNewCustomers] = useState<boolean>(false);
+  const [showActionDropdown, setShowActionDropdown] = useState(false);
   const searchParams = useSearchParams()
   
-  // Get export and import functions from store
-  const { exportAllCustomers, importCustomersFromExcel, downloadImportTemplate, exportSelectedCustomers, deleteCustomer } = useCustomersStore();
-  const [showActionDropdown, setShowActionDropdown] = useState(false);
-      
-       useEffect(() => {
-          const newParam = searchParams.get("new")
-          if (newParam === "contact") {
-            setShowNewCustomers(true)
+  useEffect(() => {
+    const newParam = searchParams.get("new")
+    if (newParam === "contact") {
+      setShowNewCustomers(true)
           }
         }, [searchParams])
 
@@ -75,12 +77,12 @@ export function CustomerHeader({ editCustomer, showEditModal, onEditCustomer, on
   };
 
   const handleToggle = (category: keyof FilterData, id: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      [category]: prev[category].map((item) =>
-        item.id === id ? { ...item, checked: !item.checked } : item
-      ),
-    }));
+    const newFilters = { ...filters } as FilterData;
+    newFilters[category] = newFilters[category].map((item) =>
+      item.id === id ? { ...item, checked: !item.checked } : item
+    );
+    setFilters(newFilters);
+    applyFilters();
   };
 
   const handleBulkAction = (action: string) => {
@@ -145,8 +147,17 @@ export function CustomerHeader({ editCustomer, showEditModal, onEditCustomer, on
         {/* Dropdown */}
         <DropDown
           options={statusOptions}
-          value={selectedUser}
-          onChange={setSelectedUser}
+          value={getSelectedStatus()}
+          onChange={(val: string) => {
+            const newFilters = { ...filters } as any;
+            newFilters.status = newFilters.status.map((s: any) => {
+              if (val === 'all') return { ...s, checked: s.id === 'all' };
+              if (s.id === 'all') return { ...s, checked: false };
+              return { ...s, checked: s.id === val };
+            });
+            setFilters(newFilters);
+            applyFilters();
+          }}
           className="h-[36px] min-w-[120px]"
         />
 
@@ -162,7 +173,9 @@ export function CustomerHeader({ editCustomer, showEditModal, onEditCustomer, on
           <img src="\icons\filter.svg" alt="export-file" className="w-[17px] h-4 " />
           Filter
           <span className=" h-[20px]  w-[28px] text-var[(--foreground)]   bg-[#F4F4F5] rounded-md px-0.5 py-0.5 text-xs ">
-            2
+            {filters.status.filter(s => s.checked && s.id !== "all").length +
+             filters.owner.filter(o => o.checked && o.id !== "all" && o.id !== "me").length +
+             filters.tags.filter(t => t.checked && t.id !== "all").length}
           </span>
         </button>
       </div>

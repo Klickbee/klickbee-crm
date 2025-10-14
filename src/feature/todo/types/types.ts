@@ -1,7 +1,6 @@
 export interface TaskData {
   id: string;
   taskName: string;
-  linkedTo?: string | { name: string };
   assignedTo?: string | { name: string; assignedImage?: string };
   assignedImage?: string;
   status: 'Todo' | 'InProgress' | 'Done' | 'OnHold';
@@ -13,4 +12,10 @@ export interface TaskData {
   ownerId?: string;
   createdAt?: string;
   updatedAt?: string;
+  linkedTo?: {
+    id: string;
+    name?: string;
+    email: string;
+  }; 
+  
 }

@@ -8,11 +8,12 @@ import TodoDetail from './TodoDetail'
 import { useTodoStore } from '../stores/useTodoStore'
 import type { TaskData } from '../types/types'
 import TodoModel from './TodoModel'
+import Loading from '@/components/ui/Loading'
 
 import toast from 'react-hot-toast'
 
 export default function TodoGridView() {
-  const { todos, fetchTodos, loading, updateTodo ,deleteTodo } = useTodoStore()
+  const { filteredTodos, fetchTodos, loading, updateTodo ,deleteTodo } = useTodoStore()
   const [selectedTask, setSelectedTask] = React.useState<TaskData | null>(null)
   const [isDetailOpen, setIsDetailOpen] = React.useState(false)
     const [showModal, setShowModal] = React.useState<boolean>(false);
@@ -54,7 +55,7 @@ export default function TodoGridView() {
     moveInProgress = true;
 console.log("fromKey:", fromKey, "toKey:", toKey);
 
-    const taskToUpdate = todos.find((t) => String(t.id) === String(itemId));
+    const taskToUpdate = filteredTodos.find((t) => String(t.id) === String(itemId));
     if (!taskToUpdate) {
       moveInProgress = false;
       return;
@@ -99,16 +100,16 @@ console.log("fromKey:", fromKey, "toKey:", toKey);
     } finally {
       moveInProgress = false;
     }
-  }, [todos, updateTodo])
+  }, [filteredTodos, updateTodo])
 
   if (loading) {
-    return <div className="p-4 text-center">Loading todos...</div>
+    return <Loading label="Loading todos..." />
   }
 
   return (
     <main className="p-4 bg-[#F4F4F5] rounded-lg border border-[var(--border-gray)] shadow-sm">
       <GridView
-        items={todos}
+        items={filteredTodos}
         groupBy={groupBy}
         order={["To-Do", "In-Progress", "On-Hold", "Done"]}
         labels={{

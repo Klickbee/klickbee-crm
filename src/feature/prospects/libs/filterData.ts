@@ -9,16 +9,16 @@ export interface FilterData {
   owner: FilterOption[];
   tags: FilterOption[];
 }
-    
+
 export const filterData: FilterData = {
   status: [
     { id: "all", label: "All Status", checked: true },
     { id: "new", label: "New", checked: false },
-    { id: "contacted", label: "Contacted", checked: false },
-    { id: "proposal", label: "Proposal Sent", checked: false },
-    { id: "negotiation", label: "Negotiation", checked: false },
-    { id: "won", label: "Won", checked: false },
-    { id: "lost", label: "Lost", checked: false },
+    { id: "Cold", label: "Cold", checked: false },
+    { id: "Qualified", label: "Qualified", checked: false },
+    { id: "Warmlead", label: "Warm-lead", checked: false },
+    { id: "converted", label: "Converted", checked: false },
+    { id: "notintrested", label: "Not-intrested", checked: false },
   ],
 
   owner: [

@@ -1,11 +1,13 @@
 import GridView from "@/components/ui/GridView"
 import { DealCard } from "./DealCard"
-import { type DealData as Deal } from "../libs/DealsData"
+import { type Deal } from "../types"
+import Loading from "@/components/ui/Loading"
 import * as React from "react"
 import { Plus } from "lucide-react"
 import DealDetail from "./DealDetail"
 import DealModal from './DealModal'
 import { useDealStore } from '../stores/useDealStore'
+import { useUserStore } from '../../user/store/userStore'
 import { useEffect } from 'react';
 import toast from "react-hot-toast"
 
@@ -15,11 +17,18 @@ export default function DealsGridView() {
   const [isDetailOpen, setIsDetailOpen] = React.useState(false)
   const [showModal, setShowModal] = React.useState<boolean>(false);
   const [editDeal, setEditDeal] = React.useState<Deal | null>(null);
-  const { deals, fetchDeals, loading,  deleteDeal ,updateDeal ,exportSingleDeal } = useDealStore();
+  const { filteredDeals, fetchDeals, loading,  deleteDeal ,updateDeal ,exportSingleDeal, initializeOwnerOptions } = useDealStore();
+  const { fetchUsers, users } = useUserStore();
+
+useEffect(() => {
+    // Load users then init owner options
+    fetchUsers();
+  }, [fetchUsers])
 
 useEffect(() => {
     fetchDeals();
-  }, [fetchDeals])
+    initializeOwnerOptions();
+  }, [fetchDeals, initializeOwnerOptions, users])
   
 let moveInProgress = false;
 
@@ -27,7 +36,7 @@ const handleMove = React.useCallback(async  ({ itemId, fromKey, toKey }: { itemI
   if (moveInProgress) return; // prevent double fire in Strict Mode
   moveInProgress = true;
 
-  const dealToUpdate = deals.find((d) => String(d.id) === String(itemId));
+  const dealToUpdate = filteredDeals.find((d) => String(d.id) === String(itemId));
   if (!dealToUpdate) return;
 
   const newStage = toStageFromColumn(toKey, dealToUpdate.stage);
@@ -59,7 +68,7 @@ const handleMove = React.useCallback(async  ({ itemId, fromKey, toKey }: { itemI
   } finally {
     moveInProgress = false;
   }
-}, [deals, updateDeal]);
+}, [filteredDeals, updateDeal]);
 
   const openDetail = (deal: Deal) => {
     setSelectedDeal(deal)
@@ -79,8 +88,11 @@ const handleMove = React.useCallback(async  ({ itemId, fromKey, toKey }: { itemI
 
   return (
     <main className="p-4 bg-[#F4F4F5] rounded-lg border border-[var(--border-gray)] shadow-sm">
+      {loading ? (
+        <Loading label="Loading deals..." />
+      ) : (
       <GridView
-        items={deals as Deal[]}
+        items={filteredDeals}
         groupBy={(d: Deal) => {
           switch (d.stage) {
             case "New":
@@ -136,6 +148,7 @@ const handleMove = React.useCallback(async  ({ itemId, fromKey, toKey }: { itemI
         enableDnd
         onItemMove={handleMove}
       />
+      )}
 
       {/* ✅ Detail Modal */}
       <DealDetail

@@ -16,7 +16,7 @@ export async function POST(req: Request) {
 
     const parsed = createCompanySchema.safeParse({
       ...body,
-      ownerId: session.user.id,
+      ownerId: body.owner.id,
       userId: session.user.id,
     });
 
@@ -58,8 +58,15 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const limit = Number(url.searchParams.get("limit") ?? 50);
     const ownerId = url.searchParams.get("ownerId");
+    const status = url.searchParams.get("status");
 
-    const where = ownerId ? { ownerId } : undefined;
+    let where: Record<string, any> = {};
+    if(ownerId){
+      where.ownerId = ownerId
+    }
+    if(status){
+      where.status = status;
+    }
     const companies = await prisma.company.findMany({
       where,
       include: {

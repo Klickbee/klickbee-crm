@@ -16,7 +16,7 @@ export async function POST(req: Request) {
 
     const parsed = createCustomerSchema.safeParse({
       ...body,
-      ownerId: session.user.id,
+      ownerId: body.owner.id,
       userId: session.user.id,
     });
 

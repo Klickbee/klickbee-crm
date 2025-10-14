@@ -26,9 +26,9 @@ interface MeetingDetailModalProps {
 // Helper function to render status badge
 const renderStatusBadge = (status?: MeetingStatus) => {
   const cls: Record<NonNullable<MeetingStatus>, string> = {
-    scheduled: 'bg-orange-100 text-orange-800',    // Orange background for scheduled
-    confirmed: 'bg-blue-100 text-blue-800',       // Blue background for confirmed
-    cancelled: 'bg-red-100 text-red-800',         // Red background for cancelled
+    Scheduled: 'bg-blue-100 text-blue-800',    // Orange background for scheduled
+    Confirmed: 'bg-blue-100 text-blue-800',       // Blue background for confirmed
+    Cancelled: 'bg-red-100 text-red-800',         // Red background for cancelled
   };
 
   const classes = status ? cls[status] : 'bg-gray-100 text-gray-500';
@@ -92,9 +92,8 @@ export const MeetingDetailModal: React.FC<MeetingDetailModalProps> = ({
       value: (
         <span className="flex items-center gap-2">
           <span className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-xs">
-            {meeting.assignedTo.charAt(0).toUpperCase()}
           </span>
-          {meeting.assignedTo}
+          {meeting.assignedTo.name || meeting.assignedTo.email }
         </span>
       ),
     },
@@ -130,7 +129,7 @@ export const MeetingDetailModal: React.FC<MeetingDetailModalProps> = ({
       value: (
         <span className="flex items-center gap-2">
           <LinkIcon className="w-4 h-4 text-gray-400" />
-          {meeting.linkedTo}
+          {meeting.linkedTo.name || meeting.linkedTo.email || undefined}
         </span>
       ),
     },
@@ -147,18 +146,18 @@ export const MeetingDetailModal: React.FC<MeetingDetailModalProps> = ({
         </div>
       )
     },
-    meeting.repeatFrequency && meeting.repeatFrequency !== 'none' && {
+    meeting.repeatMeeting && {
       label: "Recurs",
       value: (
         <span className="flex items-center gap-2">
           <Repeat className="w-4 h-4 text-gray-400" />
-          {meeting.frequency ? `${meeting.frequency}` : `Every ${meeting.repeatEvery || 1} ${meeting.repeatFrequency}`}
+          {meeting.frequency ? `${meeting.frequency}` : `Every ${meeting.repeatEvery || 1} days`}
           {meeting.repeatOn && ` on ${meeting.repeatOn}`}
         </span>
       ),
     },
     // Add Next Occurrence field for recurring meetings
-    meeting.repeatFrequency && meeting.repeatFrequency !== 'none' && {
+    meeting.repeatMeeting && {
       label: "Next Occurrence",
       value: formatNextOccurrence(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)) // Example: next week
     },
@@ -169,32 +168,32 @@ export const MeetingDetailModal: React.FC<MeetingDetailModalProps> = ({
              meeting.ends === 'OnDate' ? formatNextOccurrence(meeting.ends) : 
              meeting.ends
     },
-    meeting.description && {
+    meeting.description !== undefined && meeting.description !== null && {
       label: "Description",
       value: (
         <p className="text-sm whitespace-pre-wrap">
-          {meeting.description}
+          {meeting.description || "No description added"}
         </p>
       )
     },
-    meeting.notes && {
+    meeting.notes !== undefined && meeting.notes !== null && {
       label: "Notes",
       value: (
         <p className="text-sm whitespace-pre-wrap">
-          {meeting.notes}
+          {meeting.notes || "No notes added"}
         </p>
       )
     },
-    meeting?.attachedFiles && meeting.attachedFiles?.length > 0 && {
+    meeting?.files && Array.isArray(meeting.files) && meeting.files.length > 0 && {
       label: "Attached Files",
       value: (
         <div className="space-y-2">
-          {meeting.attachedFiles.map((file, idx) => (
+          {(meeting.files as any[]).map((file, idx) => (
             <div
               key={idx}
               className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-md"
             >
-              <span className="text-sm text-blue-600">{file}</span>
+              <span className="text-sm text-blue-600">{typeof file === 'string' ? file : file.name || `File ${idx + 1}`}</span>
               <button className="flex items-center text-gray-600 hover:text-gray-800">
                 <Download className="w-4 h-4 mr-1" />
                 Download
@@ -210,6 +209,7 @@ export const MeetingDetailModal: React.FC<MeetingDetailModalProps> = ({
     <DetailModal
       isOpen={isOpen}
       title={meeting.title ?? "Meeting Details"}
+      notes={meeting.notes}
       details={details}
       onClose={onClose}
       onDelete={onDelete && meeting.id ? () => onDelete(meeting.id!) : undefined}

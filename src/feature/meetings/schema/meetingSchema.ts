@@ -18,7 +18,6 @@ export const createMeetingSchema = z
     repeatOn: z.string().optional().or(z.literal("")),
     repeatEvery: z.coerce.number().int().min(0).default(0),
     ends: z.enum(endsValues).default("Never"),
-    linkedId: z.string(),
     location: z.string().optional().or(z.literal("")),
     assignedId: z.string().optional().or(z.literal("")),
     participants: z.array(z.string().trim().min(1)).optional().default([]),

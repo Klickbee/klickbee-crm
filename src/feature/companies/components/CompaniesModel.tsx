@@ -8,6 +8,8 @@ import CompaniesForm from "./CompaniesForm"
 import toast from "react-hot-toast"
 import { useCompaniesStore } from "../stores/useCompaniesStore"
 import { Company } from "../types/types"
+import { useEffect } from "react"
+import { useUserStore } from "@/feature/user/store/userStore"
 
 type DealSlideOverProps = {
   open: boolean
@@ -18,6 +20,21 @@ type DealSlideOverProps = {
 
 export default function CompanySlideOver({ open, onClose, mode = 'add', company }: DealSlideOverProps) {
   const { addCompany, updateCompany } = useCompaniesStore();
+    const { users, loading: usersLoading, fetchUsers } = useUserStore();
+  
+    useEffect(() => {
+        if (users.length === 0) {
+            fetchUsers();
+        }
+    }, [users]);
+  
+    // Create user options for the dropdown
+    const userOptions = users.map((user: any) => ({
+        id: user.id,
+        value: user.id,
+        label: user.name || user.email
+    }));
+  
   const handleSubmit = async (values: any) => {
     try {
       if (mode === 'edit' && company) {
@@ -26,7 +43,13 @@ export default function CompanySlideOver({ open, onClose, mode = 'add', company 
         toast.success("Company updated successfully!", { id: "update-company" });
       } else {
         toast.loading("Creating company...", { id: "create-company" });
-        await addCompany(values);
+        const selectedOwner = userOptions.find(user => user.id === values.owner);
+        const payload = {...values,
+          owner: selectedOwner
+          ? { id: selectedOwner.id as string, name: selectedOwner.label as string }
+          : { id: '', name: '' },
+        }
+        await addCompany(payload);
         toast.success("Company created successfully!", { id: "create-company" });
       }
       onClose();
@@ -67,9 +90,11 @@ export default function CompanySlideOver({ open, onClose, mode = 'add', company 
             onSubmit={(values) => handleSubmit(values)}
             mode={mode}
             initialData={company}
+              usersLoading={usersLoading}
+            userOptions={userOptions}
           />
         </div>
       </aside>
     </Modal>
   )
-}
+} 

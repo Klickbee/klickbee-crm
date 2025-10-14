@@ -1,3 +1,5 @@
+export type StatusType = 'Active' | 'Follow Up' | 'inactive';
+
 export type Company = {
   id: string;
   industry?: string;
@@ -5,16 +7,13 @@ export type Company = {
   fullName?: string;  // Changed from companyname to match prisma schema
   email?: string;
   phone?: string;
-  owner?: {
+ owner?: {
     id: string;
     name?: string;
     email: string;
-  };  // Changed from string to object to match prisma relation
+  };   // Changed from string to object to match prisma relation
   ownerAvatar?: string;
-  status?:
-    | 'Active'
-    | 'Follow Up'
-    | 'inactive';
+  status?: StatusType;
   lastContact?: string;
   tags?: string;
   createdAt?: string;

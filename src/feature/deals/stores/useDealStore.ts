@@ -3,14 +3,23 @@ import toast from "react-hot-toast";
 import { Deal } from "../types";
 import { exportDealsToExcel, exportDealsWithColumns, exportSingleDealToExcel } from "../libs/excelExport";
 import { importDealsFromExcel, generateDealImportTemplate } from "../libs/excelImport";
+import { FilterData } from "../libs/filterData";
+import { useUserStore } from "../../user/store/userStore";
 
 
 interface DealStore {
   deals: Deal[];
+  filteredDeals: Deal[];
   loading: boolean;
   error: string | null;
+  filters: FilterData;
 
   fetchDeals: (ownerId?: string) => Promise<void>;
+  setFilters: (filters: FilterData) => void;
+  applyFilters: () => void;
+  resetFilters: () => void;
+  generateOwnerOptions: () => any[];
+  initializeOwnerOptions: () => void;
   addDeal: (deal: Omit<Deal, "id" | "ownerId" | "createdAt">) => Promise<void>;
   updateDeal: (id: string, deal: Partial<Deal>) => Promise<void>;
   deleteDeal: (id: string) => Promise<void>;
@@ -24,8 +33,130 @@ interface DealStore {
 
 export const useDealStore = create<DealStore>((set, get) => ({
   deals: [],
+  filteredDeals: [],
   loading: false,
   error: null,
+  filters: {
+    status: [
+      { id: "all", label: "All Status", checked: true },
+      { id: "new", label: "New", checked: false },
+      { id: "contacted", label: "Contacted", checked: false },
+      { id: "proposal", label: "Proposal Sent", checked: false },
+      { id: "negotiation", label: "Negotiation", checked: false },
+      { id: "won", label: "Won", checked: false },
+      { id: "lost", label: "Lost", checked: false },
+    ],
+    owner: [],
+    tags: [
+      { id: "all", label: "All Tags", checked: true },
+      { id: "weblead", label: "Web Lead", checked: false },
+      { id: "referral", label: "Referral", checked: false },
+      { id: "vip", label: "VIP", checked: false },
+      { id: "construction", label: "Construction", checked: false },
+      { id: "architecture", label: "Architecture", checked: false },
+    ],
+  },
+
+  // Build owner filter options
+  generateOwnerOptions: () => {
+    const { users } = useUserStore.getState();
+    const userOptions = users.slice(0, 5).map((user) => ({
+      id: user.id,
+      label: user.name || user.email,
+      checked: false,
+    }));
+    return [
+      { id: "all", label: "All Owner", checked: true },
+      { id: "me", label: "Me", checked: false },
+      ...userOptions,
+    ];
+  },
+
+  initializeOwnerOptions: () => {
+    const ownerOptions = get().generateOwnerOptions();
+    set((state) => ({
+      filters: { ...state.filters, owner: ownerOptions },
+    }));
+  },
+
+  // Filters management
+  setFilters: (newFilters: FilterData) => {
+    set({ filters: newFilters });
+  },
+
+  applyFilters: () => {
+    const { deals, filters } = get();
+    let filtered = [...deals];
+
+    // Status filter -> map to stage field
+    const activeStatus = filters.status.filter((s: any) => s.checked && s.id !== "all");
+    if (activeStatus.length > 0) {
+      const map: Record<string, string> = {
+        new: 'New',
+        contacted: 'Contacted',
+        proposal: 'Proposal Sent',
+        negotiation: 'Negotiation',
+        won: 'Won',
+        lost: 'Lost',
+      };
+      filtered = filtered.filter((d: any) =>
+        activeStatus.some((f: any) => (map[f.id] ? d.stage === map[f.id] : false))
+      );
+    }
+
+    // Owner filter
+    const activeOwners = filters.owner.filter((o: any) => o.checked && o.id !== "all");
+    if (activeOwners.length > 0) {
+      filtered = filtered.filter((d: any) =>
+        activeOwners.some((f: any) => {
+          if (f.id === "me") {
+            const currentId = "current-user-id"; // TODO: wire real current user id
+            return d.ownerId === currentId;
+          }
+          // Store fetch maps owner to name string; also check ownerId if present
+          return d.ownerId === f.id || d.owner === f.label;
+        })
+      );
+    }
+
+    // Tags filter (deal.tags may be string or array)
+    const activeTags = filters.tags.filter((t: any) => t.checked && t.id !== "all");
+    if (activeTags.length > 0) {
+      filtered = filtered.filter((d: any) => {
+        const tagsArr: string[] = Array.isArray(d.tags)
+          ? d.tags
+          : (typeof d.tags === 'string' ? d.tags.split(',').map((t: string) => t.trim()) : []);
+        const tagsLower = tagsArr.map((t) => t.toLowerCase());
+        return activeTags.some((f: any) => tagsLower.includes(f.label.toLowerCase()));
+      });
+    }
+
+    set({ filteredDeals: filtered });
+  },
+
+  resetFilters: () => {
+    const initial = {
+      status: [
+        { id: "all", label: "All Status", checked: true },
+        { id: "new", label: "New", checked: false },
+        { id: "contacted", label: "Contacted", checked: false },
+        { id: "proposal", label: "Proposal Sent", checked: false },
+        { id: "negotiation", label: "Negotiation", checked: false },
+        { id: "won", label: "Won", checked: false },
+        { id: "lost", label: "Lost", checked: false },
+      ],
+      owner: get().generateOwnerOptions(),
+      tags: [
+        { id: "all", label: "All Tags", checked: true },
+        { id: "weblead", label: "Web Lead", checked: false },
+        { id: "referral", label: "Referral", checked: false },
+        { id: "vip", label: "VIP", checked: false },
+        { id: "construction", label: "Construction", checked: false },
+        { id: "architecture", label: "Architecture", checked: false },
+      ],
+    };
+    set({ filters: initial, filteredDeals: get().deals });
+  },
 
   // 🧠 Fetch deals from API
   fetchDeals: async (ownerId?: string) => {
@@ -36,8 +167,16 @@ export const useDealStore = create<DealStore>((set, get) => ({
       if (!res.ok) throw new Error("Failed to fetch deals");
 
       const data: any[] = await res.json();
-      const cleanData: Deal[] = data?.length ? data.map(data => { return {...data, owner: data.owner.name}}) : data;
+      const cleanData: Deal[] = Array.isArray(data)
+        ? data.map((d: any) => ({
+            ...d,
+            owner: typeof d.owner === 'object' && d.owner ? (d.owner.name || d.owner.email || '')
+                  : (typeof d.owner === 'string' ? d.owner : ''),
+            ownerId: typeof d.owner === 'object' && d.owner ? d.owner.id : (d.ownerId ?? undefined),
+          }))
+        : [];
       set({ deals: cleanData, loading: false });
+      get().applyFilters();
     } catch (err: any) {
       console.error("fetchDeals error:", err);
       toast.error("Failed to load deals");
@@ -59,8 +198,18 @@ export const useDealStore = create<DealStore>((set, get) => ({
         throw new Error(error.error || "Failed to create deal");
       }
 
-      const created: Deal = await res.json();
-      set({ deals: [...get().deals, created] });
+      const created: any = await res.json();
+      const normalized: Deal = {
+        ...created,
+        owner: typeof created.owner === 'object' && created.owner
+          ? (created.owner.name || created.owner.email || '')
+          : (typeof created.owner === 'string' ? created.owner : (deal.owner || '')),
+        ownerId: typeof created.owner === 'object' && created.owner
+          ? created.owner.id
+          : created.ownerId,
+      };
+      set({ deals: [ ...get().deals, normalized ] });
+      get().applyFilters();
       toast.success("Deal created successfully!");
     } catch (err: any) {
       console.error("addDeal error:", err);
@@ -83,10 +232,18 @@ export const useDealStore = create<DealStore>((set, get) => ({
         throw new Error(error.error || "Failed to update deal");
       }
 
-      const updated: Deal = await res.json();
-      set({
-        deals: get().deals.map((d) => (d.id === id ? updated : d)),
-      });
+      const updatedRaw: any = await res.json();
+      const updated: Deal = {
+        ...updatedRaw,
+        owner: typeof updatedRaw.owner === 'object' && updatedRaw.owner
+          ? (updatedRaw.owner.name || updatedRaw.owner.email || '')
+          : (typeof updatedRaw.owner === 'string' ? updatedRaw.owner : ''),
+        ownerId: typeof updatedRaw.owner === 'object' && updatedRaw.owner
+          ? updatedRaw.owner.id
+          : updatedRaw.ownerId,
+      };
+      set({ deals: get().deals.map((d) => (d.id === id ? updated : d)) });
+      get().applyFilters();
       toast.success("Deal Updated successfully!");
 
     } catch (err: any) {
@@ -107,6 +264,7 @@ export const useDealStore = create<DealStore>((set, get) => ({
       set({
         deals: get().deals.filter((d) => d.id !== id),
       });
+      get().applyFilters();
       toast.success("Deal deleted successfully!");
     } catch (err: any) {
       console.error("deleteDeal error:", err);
@@ -115,10 +273,10 @@ export const useDealStore = create<DealStore>((set, get) => ({
     }
   },
 
-  // 📊 Export all deals to Excel
+  // 📊 Export all deals to Excel (use filtered)
   exportAllDeals: (filename?: string) => {
-    const { deals } = get();
-    const result = exportDealsToExcel(deals, filename);
+    const { filteredDeals } = get();
+    const result = exportDealsToExcel(filteredDeals, filename);
     if (result.success) {
       toast.success(`Deals exported successfully!`);
     } else {

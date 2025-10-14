@@ -4,6 +4,7 @@ import DetailModal from '@/components/detailPage'; // the reusable modal we buil
 import { DealData } from '../libs/DealsData';
 import { Badge } from '@/components/ui/Table';
 import { Deal } from '../types';
+import AvatarInitials from '@/components/ui/AvatarInitials'
 
 interface DealDetailProps {
   isOpen: boolean;
@@ -35,13 +36,7 @@ export default function DealDetail({
       label: 'Owner',
       value: (
         <span className="flex items-center gap-2">
-          {deal.ownerImage && (
-            <img
-              src={deal.ownerImage}
-              alt={deal.owner}
-              className="w-6 h-6 rounded-full"
-            />
-          )}
+          <AvatarInitials name={deal.owner} size={24} />
           {deal.owner}
         </span>
       ),

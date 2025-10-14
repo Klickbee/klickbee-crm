@@ -3,13 +3,22 @@ import toast from "react-hot-toast";
 import { Company } from "../types/types";
 import { exportCompaniesToExcel, exportCompaniesWithColumns, exportSingleCompanyToExcel } from "../libs/excelExport";
 import { importCompaniesFromExcel, generateCompanyImportTemplate } from "../libs/excelImport";
+import { FilterData } from "../libs/fillterData";
+import { useUserStore } from "../../user/store/userStore";
 
 interface CompanyStore {
   companies: Company[];
+  filteredCompanies: Company[];
   loading: boolean;
   error: string | null;
+  filters: FilterData;
 
   fetchCompanies: (ownerId?: string) => Promise<void>;
+  setFilters: (filters: FilterData) => void;
+  applyFilters: () => void;
+  resetFilters: () => void;
+  generateOwnerOptions: () => any[];
+  initializeOwnerOptions: () => void;
   addCompany: (company: Omit<Company, "id" | "ownerId" | "createdAt">) => Promise<void>;
   updateCompany: (id: string, company: Partial<Company>) => Promise<void>;
   deleteCompany: (id: string) => Promise<void>;
@@ -20,13 +29,124 @@ interface CompanyStore {
   importCompaniesFromExcel: (file: File) => Promise<void>;
   downloadImportTemplate: (filename?: string) => void;
 }
-
 export const useCompaniesStore = create<CompanyStore>((set, get) => ({
   companies: [],
+  filteredCompanies: [],
   loading: false,
   error: null,
+  filters: {
+    status: [
+      { id: "all", label: "All Status", checked: true },
+      { id: "active", label: "Active", checked: false },
+      { id: "follow-up", label: "Follow Up", checked: false },
+      { id: "inactive", label: "Inactive", checked: false },
+    ],
+    owner: [], // Will be populated dynamically
+    tags: [
+      { id: "all", label: "All Tags", checked: true },
+      { id: "weblead", label: "Web Lead", checked: false },
+      { id: "referral", label: "Referral", checked: false },
+      { id: "vip", label: "VIP", checked: false },
+      { id: "construction", label: "Construction", checked: false },
+      { id: "architecture", label: "Architecture", checked: false },
+    ],
+  },
 
-  // Fetch companies from API
+  // Helper function to generate owner filter options from users
+  generateOwnerOptions: () => {
+    const { users } = useUserStore.getState();
+    const userOptions = users.slice(0, 5).map((user) => ({
+      id: user.id,
+      label: user.name || user.email,
+      checked: false,
+    }));
+    return [
+      { id: "all", label: "All Owner", checked: true },
+      { id: "me", label: "Me", checked: false },
+      ...userOptions,
+    ];
+  },
+
+  // Initialize owner options when store is created
+  initializeOwnerOptions: () => {
+    const ownerOptions = get().generateOwnerOptions();
+    set((state) => ({
+      filters: {
+        ...state.filters,
+        owner: ownerOptions,
+      },
+    }));
+  },
+
+  // Filter management methods
+  setFilters: (newFilters: FilterData) => {
+    set({ filters: newFilters });
+  },
+
+  applyFilters: () => {
+    const { companies, filters } = get();
+    let filtered = [...companies];
+
+    // Apply status filter
+    const activeStatusFilters = filters.status.filter((s: any) => s.checked && s.id !== "all");
+    if (activeStatusFilters.length > 0) {
+      filtered = filtered.filter((company: Company) =>
+        activeStatusFilters.some((filter: any) => {
+          if (filter.id === "active") return company.status === "Active";
+          if (filter.id === "follow-up") return company.status === "Follow Up";
+          if (filter.id === "inactive") return company.status === "inactive";
+          return false;
+        })
+      );
+    }
+
+    // Apply owner filter
+    const activeOwnerFilters = filters.owner.filter((o: any) => o.checked && o.id !== "all");
+    if (activeOwnerFilters.length > 0) {
+      filtered = filtered.filter((company: Company) =>
+        activeOwnerFilters.some((filter: any) => {
+          if (filter.id === "me") {
+            // This would need to be implemented based on current user logic
+            return company.owner?.id === "current-user-id";
+          }
+          return company.owner?.id === filter.id;
+        })
+      );
+    }
+
+    // Apply tags filter
+    const activeTagFilters = filters.tags.filter((t: any) => t.checked && t.id !== "all");
+    if (activeTagFilters.length > 0) {
+      filtered = filtered.filter((company: Company) =>
+        company.tags && activeTagFilters.some((filter: any) =>
+          company.tags?.toLowerCase().includes(filter.label.toLowerCase())
+        )
+      );
+    }
+
+    set({ filteredCompanies: filtered });
+  },
+
+  resetFilters: () => {
+    const initialFilters = {
+      status: [
+        { id: "all", label: "All Status", checked: true },
+        { id: "active", label: "Active", checked: false },
+        { id: "follow-up", label: "Follow Up", checked: false },
+        { id: "inactive", label: "Inactive", checked: false },
+      ],
+      owner: get().generateOwnerOptions(), // Use dynamic owner options
+      tags: [
+        { id: "all", label: "All Tags", checked: true },
+        { id: "weblead", label: "Web Lead", checked: false },
+        { id: "referral", label: "Referral", checked: false },
+        { id: "vip", label: "VIP", checked: false },
+        { id: "construction", label: "Construction", checked: false },
+        { id: "architecture", label: "Architecture", checked: false },
+      ],
+    };
+    set({ filters: initialFilters, filteredCompanies: get().companies });
+  },
   fetchCompanies: async (ownerId?: string) => {
     set({ loading: true });
     try {
@@ -36,6 +156,7 @@ export const useCompaniesStore = create<CompanyStore>((set, get) => ({
 
       const data: Company[] = await res.json();
       set({ companies: data, loading: false });
+      get().applyFilters(); // Apply filters after fetching data
     } catch (err: any) {
       console.error("fetchCompanies error:", err);
       toast.error("Failed to load companies");
@@ -58,7 +179,17 @@ export const useCompaniesStore = create<CompanyStore>((set, get) => ({
       }
 
       const created: Company = await res.json();
-      set({ companies: [...get().companies, created] });
+      // Mirror customers pattern: keep server-created fields but inject owner from submitted payload
+      set({ companies: [ ...get().companies, { ...created, owner: company.owner? {
+                  id: company.owner.id as string,
+                  name: company.owner.name,
+                  email: (company.owner as any).email || "",
+                }
+              : undefined,
+          },
+        ],
+      });
+      get().applyFilters(); // Apply filters after adding company
     } catch (err: any) {
       console.error("addCompany error:", err);
       toast.error(err.message);
@@ -82,8 +213,9 @@ export const useCompaniesStore = create<CompanyStore>((set, get) => ({
 
       const updated: Company = await res.json();
       set({
-        companies: get().companies.map((c) => (c.id === id ? updated : c)),
+        companies: get().companies.map((c: Company) => (c.id === id ? updated : c)),
       });
+      get().applyFilters(); // Apply filters after updating company
 
     } catch (err: any) {
       console.error("updateCompany error:", err);
@@ -101,8 +233,9 @@ export const useCompaniesStore = create<CompanyStore>((set, get) => ({
       if (!res.ok) throw new Error("Failed to delete company");
 
       set({
-        companies: get().companies.filter((c) => c.id !== id),
+        companies: get().companies.filter((c: Company) => c.id !== id),
       });
+      get().applyFilters(); // Apply filters after deleting company
       toast.success("Company deleted successfully!");
     } catch (err: any) {
       console.error("deleteCompany error:", err);
@@ -113,8 +246,8 @@ export const useCompaniesStore = create<CompanyStore>((set, get) => ({
 
   // Export all companies to Excel
   exportAllCompanies: (filename?: string) => {
-    const { companies } = get();
-    const result = exportCompaniesToExcel(companies, filename);
+    const { filteredCompanies } = get();
+    const result = exportCompaniesToExcel(filteredCompanies, filename);
     if (result.success) {
       toast.success(`Companies exported successfully!`);
     } else {

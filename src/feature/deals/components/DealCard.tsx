@@ -1,10 +1,10 @@
 "use client"
 import { Card, CardContent } from "@/components/ui/Card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar"
 import { cn } from "@/libs/utils"
 import type { Deal } from "../types"
 import { Badge } from "@/components/ui/Table"
 import { Calendar } from "lucide-react"
+import AvatarInitials from "@/components/ui/AvatarInitials"
 
 type DealCardProps = {
   deal: Deal
@@ -76,10 +76,7 @@ export function DealCard({ deal, className }: DealCardProps) {
 
         {/* Owner */}
         <div className="mt-4 flex items-center gap-2">
-          <Avatar className="h-6 w-6">
-            <AvatarImage src={deal.ownerImage || "/placeholder.svg"} alt={deal.owner} />
-            <AvatarFallback>{initials(deal.owner)}</AvatarFallback>
-          </Avatar>
+          <AvatarInitials name={deal.owner} size={24} />
           <span className="text-xs text-foreground/80">{deal.owner}</span>
         </div>
       </CardContent>
@@ -102,13 +99,6 @@ function labelForStage(stage: Deal["stage"]) {
     default:
       return stage
   }
-}
-
-function initials(name?: string) {
-  if (!name) return "?"
-  const parts = String(name).trim().split(/\s+/)
-  const [a, b] = [parts[0]?.[0], parts[1]?.[0]]
-  return (a || "") + (b || "")
 }
 
 export default DealCard

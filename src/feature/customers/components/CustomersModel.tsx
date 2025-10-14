@@ -8,6 +8,8 @@ import CustomerForm from "./CustomersForm"
 import { useCustomersStore } from "../stores/useCustomersStore"
 import { Customer } from "../types/types"
 import toast from "react-hot-toast"
+import { useUserStore } from "@/feature/user/store/userStore"
+import { useEffect } from "react"
 
 type DealSlideOverProps = {
   open: boolean
@@ -18,6 +20,20 @@ type DealSlideOverProps = {
 
 export default function CustomerSlideOver({ open, onClose, mode = 'add', customer }: DealSlideOverProps) {
   const { addCustomer, updateCustomer } = useCustomersStore();
+  const { users, loading: usersLoading, fetchUsers } = useUserStore();
+
+  useEffect(() => {
+      if (users.length === 0) {
+          fetchUsers();
+      }
+  }, [users]);
+
+  // Create user options for the dropdown
+  const userOptions = users.map((user: any) => ({
+      id: user.id,
+      value: user.id,
+      label: user.name || user.email
+  }));
 
   const handleSubmit = async (values: any) => {
     try {
@@ -27,7 +43,13 @@ export default function CustomerSlideOver({ open, onClose, mode = 'add', custome
         toast.success("Customer updated successfully!", { id: "update-customer" });
       } else {
         toast.loading("Creating customer...", { id: "create-customer" });
-        await addCustomer(values);
+         const selectedOwner = userOptions.find(user => user.id === values.owner);
+        const payload = {...values,
+          owner: selectedOwner
+          ? { id: selectedOwner.id as string, name: selectedOwner.label as string }
+          : { id: '', name: '' },
+        }
+        await addCustomer(payload);
         toast.success("Customer created successfully!", { id: "create-customer" });
       }
       onClose();
@@ -68,6 +90,8 @@ export default function CustomerSlideOver({ open, onClose, mode = 'add', custome
             onSubmit={(values) => handleSubmit(values)}
             mode={mode}
             initialData={customer}
+            usersLoading={usersLoading}
+            userOptions={userOptions}
           />
         </div>
       </aside>

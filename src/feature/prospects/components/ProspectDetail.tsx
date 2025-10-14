@@ -2,6 +2,7 @@
 import React from "react";
 import DetailModal from "@/components/detailPage";
 import type { Prospect } from "../types/types";
+import AvatarInitials from "@/components/ui/AvatarInitials";
 
 // Helper function to render status badge
 const renderStatusBadge = (status?: Prospect['status']) => {
@@ -51,15 +52,11 @@ export default function ProspectDetail({
       label: "Owner",
       value: (
         <span className="flex items-center gap-2">
-          {prospect.ownerAvatar && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={prospect.ownerAvatar}
-              alt={typeof prospect.owner  === 'object' ? prospect.owner ?.name : prospect.owner  ?? "-"}
-              className="w-6 h-6 rounded-full"
-            />
-          )}
-                    {typeof prospect.owner  === 'object' ? prospect.owner ?.name : prospect.owner  ?? "-"}
+          <AvatarInitials
+            name={typeof prospect.owner === 'object' ? prospect.owner?.name ?? '' : String(prospect.owner ?? '')}
+            size={24}
+          />
+          {typeof prospect.owner === 'object' ? prospect.owner?.name : prospect.owner ?? "-"}
 
         </span>
       ),

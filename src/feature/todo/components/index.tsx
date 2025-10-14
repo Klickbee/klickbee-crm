@@ -11,6 +11,7 @@ import TodoDetail from './TodoDetail';
 import { useTodoStore } from '../stores/useTodoStore';
 import { useUserStore } from '@/feature/user/store/userStore';
 import TodoModel from './TodoModel'
+import Loading from '@/components/ui/Loading';
 const taskColumns: TableColumn<TaskData>[] = [
   {
     key: 'taskName',
@@ -114,6 +115,29 @@ const taskColumns: TableColumn<TaskData>[] = [
     title: 'Last Update',
     dataIndex: 'lastUpdate',
     sortable: false,
+    render: (_val, record) => {
+      const dateString = (record as TaskData).lastUpdate || (record as TaskData).updatedAt;
+      if (!dateString) return '-';
+      const d = new Date(dateString);
+      const now = new Date();
+      const ms = now.getTime() - d.getTime();
+      const sec = Math.floor(ms / 1000);
+      const min = Math.floor(sec / 60);
+      const hr = Math.floor(min / 60);
+
+      const isYesterday = (() => {
+        const y = new Date(now);
+        y.setDate(now.getDate() - 1);
+        return d.getFullYear() === y.getFullYear() && d.getMonth() === y.getMonth() && d.getDate() === y.getDate();
+      })();
+
+      if (sec < 60) return 'Just now';
+      if (min < 60) return `${min}m ago`;
+      if (hr < 24) return `${hr}h ago`;
+      if (isYesterday) return 'Yesterday';
+
+      return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+    },
   },
 ]
 
@@ -126,12 +150,29 @@ export default function TODO() {
   const [editTask, setEditTask] = React.useState<TaskData | null>(null);
   const [selectedTodos, setSelectedTodos] = React.useState<string[]>([])
   const [selectedTodoRows, setSelectedTodoRows] = React.useState<TaskData[]>([])
-  const { todos, fetchTodos, loading, deleteTodo } = useTodoStore();
+  // Selectors to avoid re-renders from full-store subscription and keep function refs stable
+  const filteredTodos = useTodoStore((s) => s.filteredTodos);
+  const loading = useTodoStore((s) => s.loading);
+  const deleteTodo = useTodoStore((s) => s.deleteTodo);
+  const fetchTodos = useTodoStore((s) => s.fetchTodos);
+  const initializeOwnerOptions = useTodoStore((s) => s.initializeOwnerOptions);
+  const ownerOptions = useTodoStore((s) => s.filters.owner);
   const { users } = useUserStore();
 
+  // Run fetch once on mount; guarded for React Strict Mode double-invocation in dev
+  const didInitRef = React.useRef(false);
   useEffect(() => {
+    if (didInitRef.current) return;
+    didInitRef.current = true;
     fetchTodos();
   }, [fetchTodos]);
+
+  // Initialize owner options once after users are loaded
+  useEffect(() => {
+    if (users && users.length > 0 && ownerOptions.length === 0) {
+      initializeOwnerOptions();
+    }
+  }, [users, ownerOptions.length, initializeOwnerOptions]);
 
   const openDetail = (task: TaskData) => {
     setSelectedTask(task)
@@ -169,12 +210,12 @@ export default function TODO() {
         {view === 'table' ? (
           <>
             {loading ? (
-              <div className="p-4 text-center">Loading todos...</div>
+              <Loading label="Loading todos..." />
             ) : (
               <>
                 <Table
                   columns={taskColumns}
-                  data={todos}
+                  data={filteredTodos}
                   selectable={true}
                   onSelectionChange={handleSelectionChange}
                   onRowClick={(record) => openDetail(record as TaskData)}

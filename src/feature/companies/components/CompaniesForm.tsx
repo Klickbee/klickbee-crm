@@ -59,32 +59,21 @@ export default function CompaniesForm({
     onCancel,
     mode = 'add',
     initialData,
+    usersLoading,
+    userOptions
+    
 }: {
     onSubmit: (values: CompanyFormValues) => void
     onCancel: () => void
     mode?: 'add' | 'edit'
     initialData?: Company
+    usersLoading:boolean
+    userOptions: {id: string, value: string, label: string}[]
 }) {
     const [tagInput, setTagInput] = useState("")
     const [assignInput, setAssignInput] = useState("")
     const [uploading, setUploading] = useState(false);
     const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
-
-    const { users, loading: usersLoading, fetchUsers } = useUserStore();
-
-    useEffect(() => {
-        if (users.length === 0) {
-            fetchUsers();
-        }
-    }, [users]);
-
-
-    // Create user options for the dropdown
-    const userOptions = users.map((user: any) => ({
-        id: user.id,
-        value: user.id,
-        label: user.name || user.email
-    }));
 
     const getOptionLabel = (options: {id: string, label: string}[], value: string) => {
         // First try to find by ID
@@ -160,7 +149,9 @@ export default function CompaniesForm({
                         ...vals,
                         assing: vals.assing ? vals.assing.map((t) => t.trim()).filter(Boolean) : [],
                         tags: vals.tags ? vals.tags.map((t) => t.trim()).filter(Boolean) : [],
-                        files: uploadedFiles
+                        files: uploadedFiles,
+                        // Ensure owner is sent as user ID
+                        owner: vals.owner // This should now be the user ID from SearchableDropdown
                     };
 
                     // Run validation manually in case of async conditions

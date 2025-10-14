@@ -6,7 +6,6 @@ export type Deal = {
   contact: string
   stage: 'New' | 'Contacted' | 'Proposal' | 'Won' | 'Lost'
   amount: number
-  owner: string
   ownerImage?: string
   activity?: string
   tags?: string
@@ -14,5 +13,8 @@ export type Deal = {
   priority?: string
   notes?: string
   attachments?: string[]
+  // Normalized for UI components and exports
+  owner: string
+  // Optional link to the actual owner user id if available from API
+  ownerId?: string
 }
-

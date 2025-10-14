@@ -3,12 +3,21 @@ import toast from "react-hot-toast";
 import { Customer } from "../types/types";
 import { exportCustomersToExcel, exportCustomersWithColumns, exportSingleCustomerToExcel } from "../libs/excelExport";
 import { importCustomersFromExcel, generateCustomerImportTemplate } from "../libs/excelImport";
+import { FilterData } from "../libs/fillterData";
+import { useUserStore } from "../../user/store/userStore";
 interface CustomerStore {
   customers: Customer[];
+  filteredCustomers: Customer[];
   loading: boolean;
   error: string | null;
+  filters: FilterData;
 
   fetchCustomers: (ownerId?: string) => Promise<void>;
+  setFilters: (filters: FilterData) => void;
+  applyFilters: () => void;
+  resetFilters: () => void;
+  generateOwnerOptions: () => any[];
+  initializeOwnerOptions: () => void;
   addCustomer: (customer: Omit<Customer, "id" | "ownerId" | "createdAt">) => Promise<void>;
   updateCustomer: (id: string, customer: Partial<Customer>) => Promise<void>;
   deleteCustomer: (id: string) => Promise<void>;
@@ -22,8 +31,121 @@ interface CustomerStore {
 
 export const useCustomersStore = create<CustomerStore>((set, get) => ({
   customers: [],
+  filteredCustomers: [],
   loading: false,
   error: null,
+  filters: {
+    status: [
+      { id: "all", label: "All Status", checked: true },
+      { id: "active", label: "Active", checked: false },
+      { id: "follow-up", label: "Follow Up", checked: false },
+      { id: "inactive", label: "Inactive", checked: false },
+    ],
+    owner: [],
+    tags: [
+      { id: "all", label: "All Tags", checked: true },
+      { id: "weblead", label: "Web Lead", checked: false },
+      { id: "referral", label: "Referral", checked: false },
+      { id: "vip", label: "VIP", checked: false },
+      { id: "construction", label: "Construction", checked: false },
+      { id: "architecture", label: "Architecture", checked: false },
+    ],
+  },
+
+  // Helper: build owner options from users
+  generateOwnerOptions: () => {
+    const { users } = useUserStore.getState();
+    const userOptions = users.slice(0, 5).map((user) => ({
+      id: user.id,
+      label: user.name || user.email,
+      checked: false,
+    }));
+    return [
+      { id: "all", label: "All Owner", checked: true },
+      { id: "me", label: "Me", checked: false },
+      ...userOptions,
+    ];
+  },
+
+  // Initialize owner options
+  initializeOwnerOptions: () => {
+    const ownerOptions = get().generateOwnerOptions();
+    set((state) => ({
+      filters: {
+        ...state.filters,
+        owner: ownerOptions,
+      },
+    }));
+  },
+
+  // Filters management
+  setFilters: (newFilters: FilterData) => {
+    set({ filters: newFilters });
+  },
+
+  applyFilters: () => {
+    const { customers, filters } = get();
+    let filtered = [...customers];
+
+    // Status filter
+    const activeStatus = filters.status.filter((s: any) => s.checked && s.id !== "all");
+    if (activeStatus.length > 0) {
+      filtered = filtered.filter((customer: Customer) =>
+        activeStatus.some((f: any) => {
+          if (f.id === "active") return customer.status === "Active";
+          if (f.id === "follow-up") return customer.status === "FollowUp";
+          if (f.id === "inactive") return customer.status === "inactive";
+          return false;
+        })
+      );
+    }
+
+    // Owner filter
+    const activeOwners = filters.owner.filter((o: any) => o.checked && o.id !== "all");
+    if (activeOwners.length > 0) {
+      filtered = filtered.filter((customer: Customer) =>
+        activeOwners.some((f: any) => {
+          if (f.id === "me") {
+            // TODO: Replace with actual current user id if available
+            return customer.owner?.id === "current-user-id";
+          }
+          return customer.owner?.id === f.id;
+        })
+      );
+    }
+
+    // Tags filter (customer.tags is string[])
+    const activeTags = filters.tags.filter((t: any) => t.checked && t.id !== "all");
+    if (activeTags.length > 0) {
+      filtered = filtered.filter((customer: Customer) => {
+        const tags = (customer.tags || []).map((t) => t.toLowerCase());
+        return activeTags.some((f: any) => tags.includes(f.label.toLowerCase()));
+      });
+    }
+
+    set({ filteredCustomers: filtered });
+  },
+
+  resetFilters: () => {
+    const initial = {
+      status: [
+        { id: "all", label: "All Status", checked: true },
+        { id: "active", label: "Active", checked: false },
+        { id: "follow-up", label: "Follow Up", checked: false },
+        { id: "inactive", label: "Inactive", checked: false },
+      ],
+      owner: get().generateOwnerOptions(),
+      tags: [
+        { id: "all", label: "All Tags", checked: true },
+        { id: "weblead", label: "Web Lead", checked: false },
+        { id: "referral", label: "Referral", checked: false },
+        { id: "vip", label: "VIP", checked: false },
+        { id: "construction", label: "Construction", checked: false },
+        { id: "architecture", label: "Architecture", checked: false },
+      ],
+    };
+    set({ filters: initial, filteredCustomers: get().customers });
+  },
 
   // 🧠 Fetch customers from API
   fetchCustomers: async (ownerId?: string) => {
@@ -35,6 +157,7 @@ export const useCustomersStore = create<CustomerStore>((set, get) => ({
 
       const data: Customer[] = await res.json();
       set({ customers: data, loading: false });
+      get().applyFilters();
     } catch (err: any) {
       console.error("fetchCustomers error:", err);
       toast.error("Failed to load customers");
@@ -57,7 +180,8 @@ export const useCustomersStore = create<CustomerStore>((set, get) => ({
       }
 
       const created: Customer = await res.json();
-      set({ customers: [...get().customers, created] });
+      set({ customers: [...get().customers, {...created, owner:{id: customer.owner?.id, name: customer.owner?.name, email: customer.owner?.email}}] });
+      get().applyFilters();
       toast.success("Customer created successfully!");
     } catch (err: any) {
       console.error("addCustomer error:", err);
@@ -84,6 +208,7 @@ export const useCustomersStore = create<CustomerStore>((set, get) => ({
       set({
         customers: get().customers.map((c) => (c.id === id ? updated : c)),
       });
+      get().applyFilters();
 
     } catch (err: any) {
       console.error("updateCustomer error:", err);
@@ -103,6 +228,7 @@ export const useCustomersStore = create<CustomerStore>((set, get) => ({
       set({
         customers: get().customers.filter((c) => c.id !== id),
       });
+      get().applyFilters();
       toast.success("Customer deleted successfully!");
     } catch (err: any) {
       console.error("deleteCustomer error:", err);
@@ -111,10 +237,10 @@ export const useCustomersStore = create<CustomerStore>((set, get) => ({
     }
   },
 
- // 📊 Export all customers to Excel
+ // 📊 Export all customers to Excel (use filtered)
   exportAllCustomers: (filename?: string) => {
-    const { customers } = get();
-    const result = exportCustomersToExcel(customers, filename);
+    const { filteredCustomers } = get();
+    const result = exportCustomersToExcel(filteredCustomers, filename);
     if (result.success) {
       toast.success(`Customers exported successfully!`);
     } else {

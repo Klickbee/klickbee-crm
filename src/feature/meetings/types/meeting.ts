@@ -18,12 +18,24 @@ export interface Meeting {
   frequency?: 'Daily' | 'Weekly' | 'Monthly' | 'Yearly';
   repeatOn?: string;
   ends?: 'Never' | 'After' | 'OnDate';
-  linkedTo?: string;
-  assignedTo?: string;
+  linkedId?: string;
+  assignedId?: string;
   repeatEvery?: number;
-
+  ownerId?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+  linkedTo?: {
+    id: string;
+    name?: string;
+    email: string;
+  }; 
+  assignedTo?: {
+    id: string;
+    name?: string;
+    email: string;
+  }; 
 }
 
 export type ViewType = 'daily' | 'weekly' | 'monthly' | 'yearly';
 
-export type MeetingStatus = "scheduled" | "confirmed" | "cancelled";
+export type MeetingStatus = "Scheduled" | "Confirmed" | "Cancelled";

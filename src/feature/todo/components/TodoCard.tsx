@@ -1,11 +1,11 @@
 "use client"
 
 import { Card, CardContent } from "@/components/ui/Card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar"
 import { cn } from "@/libs/utils"
 import * as React from "react"
 import type { TaskData } from "../types/types"
 import { Calendar, AlertTriangle, ArrowUp, Minus, ChevronUp } from "lucide-react"
+import AvatarInitials from "@/components/ui/AvatarInitials"
 
 type TodoCardProps = {
   task: TaskData
@@ -90,23 +90,15 @@ export function TodoCard({ task, className }: TodoCardProps) {
         )}
 
          <div className="mt-4 flex items-center gap-2">
-          <Avatar className="h-6 w-6">
-            <AvatarImage src={task.assignedImage || "/placeholder.svg"} alt={typeof task.assignedTo === 'object' ? task.assignedTo?.name ?? "Assignee" : task.assignedTo ?? "Assignee"} />
-            <AvatarFallback>{initials(task.assignedTo)}</AvatarFallback>
-          </Avatar>
+          <AvatarInitials
+            name={typeof task.assignedTo === 'object' ? task.assignedTo?.name ?? '' : String(task.assignedTo ?? '')}
+            size={24}
+          />
           <span className="text-xs text-foreground/80">{typeof task.assignedTo === 'object' ? task.assignedTo?.name : task.assignedTo ?? ""}</span>
         </div>
       </CardContent>
     </Card>
   )
-}
-
-function initials(name?: string | { name: string; assignedImage?: string }) {
-  if (!name) return "?"
-  const nameStr = typeof name === 'object' ? name?.name : name
-  const parts = String(nameStr).trim().split(/\s+/)
-  const [a, b] = [parts[0]?.[0], parts[1]?.[0]]
-  return (a || "") + (b || "")
 }
 
 export default TodoCard

@@ -7,7 +7,9 @@ import { TableColumn } from '@/components/ui/Table'
 import { Prospect } from '../types/types'
 import ProspectDetail from './ProspectDetail'
 import { useProspectsStore } from '../stores/useProspectsStore'
+import { useUserStore } from '../../user/store/userStore'
 import  ProspectModel from './ProspectModel'
+import Loading from '@/components/ui/Loading'
 
 export const prospectsColumns: TableColumn<Prospect>[] = [
   {
@@ -73,12 +75,12 @@ export const prospectsColumns: TableColumn<Prospect>[] = [
       return (
         <div className="flex flex-wrap gap-1">
           {tags.slice(0, 2).map((tag, index) => (
-            <span key={index} className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-800">
+            <span key={index} className="inline-flex items-center px-2 py-0.5 text-xs font-medium text-gray-800">
               {tag}
             </span>
           ))}
           {tags.length > 2 && (
-            <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-800">
+            <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium text-gray-800">
               +{tags.length - 2}
             </span>
           )}
@@ -97,11 +99,27 @@ export default function Prospects () {
   const [selectedProspectRows, setSelectedProspectRows] = React.useState<Prospect[]>([])
   
 
-  const { prospects, fetchProspects, loading, deleteProspect, exportSingleProspect } = useProspectsStore();
+  const { filteredProspects, fetchProspects, loading, deleteProspect, exportSingleProspect, initializeOwnerOptions } = useProspectsStore();
+  const { fetchUsers, users } = useUserStore();
 
+  // Load users once on mount
+  useEffect(() => {
+    fetchUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Load prospects once on mount
   useEffect(() => {
     fetchProspects();
-  }, [fetchProspects]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Initialize owner options when users are available
+  useEffect(() => {
+    if (users.length > 0) {
+      initializeOwnerOptions();
+    }
+  }, [users.length, initializeOwnerOptions]);
 
    const handleEditDeal = (prospect: Prospect) => {
       setEditProspect(prospect);
@@ -127,34 +145,39 @@ export default function Prospects () {
         }}
       />
        <div className='py-8 px-6 overflow-x-hidden'>
-          <Table 
-            columns={prospectsColumns} 
-            data={prospects} 
-            selectable={true}
-            loading={loading}
-            onSelectionChange={handleSelectionChange}
-            onRowClick={(record) => openDetail(record as Prospect)}
-          />
-          <ProspectDetail 
-            isOpen={open}
-            prospect={selected}
-            onClose={closeDetail}
-            onDelete={async (id: string) => {
-              await deleteProspect(id);
-              closeDetail();
-            }}
-            onEdit={handleEditDeal}
-            onAddNotes={(id: string) => {
-              // Handle add notes logic here
-              console.log('Add notes for prospect:', id);
-            }}
-            onExport={(id: string) => {
-              exportSingleProspect(id);
-            }}
-          />
-          <ProspectModel
-           open={showModal} onClose={() => setShowModal(false)} mode={editProspect ? 'edit' : 'add'} prospect={editProspect || undefined}/>
-        </div>
+         {loading ? (
+           <Loading label="Loading Prospects..." />
+         ) : (
+           <>
+             <Table 
+               columns={prospectsColumns} 
+               data={filteredProspects} 
+               selectable={true}
+               onSelectionChange={handleSelectionChange}
+               onRowClick={(record) => openDetail(record as Prospect)}
+             />
+             <ProspectDetail 
+               isOpen={open}
+               prospect={selected}
+               onClose={closeDetail}
+               onDelete={async (id: string) => {
+                 await deleteProspect(id);
+                 closeDetail();
+               }}
+               onEdit={handleEditDeal}
+               onAddNotes={(id: string) => {
+                 // Handle add notes logic here
+                 console.log('Add notes for prospect:', id);
+               }}
+               onExport={(id: string) => {
+                 exportSingleProspect(id);
+               }}
+             />
+             <ProspectModel
+              open={showModal} onClose={() => setShowModal(false)} mode={editProspect ? 'edit' : 'add'} prospect={editProspect || undefined}/>
+           </>
+         )}
+       </div>
       </div>
   )
 }

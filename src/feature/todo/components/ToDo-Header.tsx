@@ -9,26 +9,21 @@ import { CalendarDropDown } from "@/components/ui/CalendarDropDown"
 import { TaskData } from "../types/types"
 import { useTodoStore } from "../stores/useTodoStore"
 
-// Filter options
+// Filter options aligned to store filter ids
 const statusOptions = [
-  { value: "all-status", label: "All Status" },
-  { value: "in_progress", label: "In Progress" },
-  { value: "closed", label: "Closed" },
-]
-
-const ownerOptions = [
-  { value: "all-owner", label: "All Owner" },
-  { value: "me", label: "Me" },
-  { value: "team", label: "Team" },
-  { value: "unassigned", label: "Unassigned" },
+  { value: "all", label: "All Status" },
+  { value: "Todo", label: "To-Do" },
+  { value: "InProgress", label: "In-Progress" },
+  { value: "OnHold", label: "On-Hold" },
+  { value: "Done", label: "Done" },
 ]
 
 const priorityOptions = [
-  { value: "all-priority", label: "All Priority" },
-  { value: "low", label: "Low" },
-  { value: "medium", label: "Medium" },
-  { value: "high", label: "High" },
-  { value: "urgent", label: "Urgent" },
+  { value: "all", label: "All Priority" },
+  { value: "Low", label: "Low" },
+  { value: "Medium", label: "Medium" },
+  { value: "High", label: "High" },
+  { value: "Urgent", label: "Urgent" },
 ]
 
 type TodoHeaderProps = {
@@ -40,9 +35,25 @@ type TodoHeaderProps = {
 }
 
 export function TodoHeader({ view, setView, selectedTodos = [], selectedTodoRows = [], onClearSelection }: TodoHeaderProps) {
-  const [statusOptionsUser, setstatusOptionsUser] = useState('all-status')
-  const [ownerOptionsUser, setownerOptionsUser] = useState('all-owner')
-  const [priorityOptionsUser, setpriorityOptionsUser] = useState('all-priority')
+  const { filters, setFilters, applyFilters } = useTodoStore();
+  // Derive owner options from store filters
+  const ownerOptions = filters.owner.map(o => ({ value: o.id, label: o.label }));
+  // Selected values derived from store
+  const getSelectedStatus = () => {
+    const selected = filters.status.filter(s => s.checked && s.id !== 'all');
+    return selected.length === 1 ? selected[0].id : 'all';
+  };
+  const getSelectedPriority = () => {
+    const selected = filters.priority.filter(p => p.checked && p.id !== 'all');
+    return selected.length === 1 ? selected[0].id : 'all';
+  };
+  const getSelectedOwner = () => {
+    const selected = filters.owner.filter(o => o.checked && o.id !== 'all');
+    return selected.length === 1 ? selected[0].id : 'all';
+  };
+  const [statusOptionsUser, setstatusOptionsUser] = useState<string>(getSelectedStatus())
+  const [ownerOptionsUser, setownerOptionsUser] = useState<string>(getSelectedOwner())
+  const [priorityOptionsUser, setpriorityOptionsUser] = useState<string>(getSelectedPriority())
     const [showNewTask, setShowNewTask] = useState<boolean>(false);
       const searchParams = useSearchParams()
       // Date filter state
@@ -135,20 +146,47 @@ export function TodoHeader({ view, setView, selectedTodos = [], selectedTodoRows
         {/* Dropdown */}
         <DropDown
           options={statusOptions}
-          value={statusOptionsUser}
-          onChange={setstatusOptionsUser}
+          value={getSelectedStatus()}
+          onChange={(val: string) => {
+            const newFilters = { ...filters } as any;
+            newFilters.status = newFilters.status.map((s: any) => {
+              if (val === 'all') return { ...s, checked: s.id === 'all' };
+              if (s.id === 'all') return { ...s, checked: false };
+              return { ...s, checked: s.id === val };
+            });
+            setFilters(newFilters);
+            applyFilters();
+          }}
           className="h-[36px] w-auto"
         />
         <DropDown
           options={ownerOptions}
-          value={ownerOptionsUser}
-          onChange={setownerOptionsUser}
+          value={getSelectedOwner()}
+          onChange={(val: string) => {
+            const newFilters = { ...filters } as any;
+            newFilters.owner = newFilters.owner.map((o: any) => {
+              if (val === 'all') return { ...o, checked: o.id === 'all' };
+              if (o.id === 'all') return { ...o, checked: false };
+              return { ...o, checked: o.id === val };
+            });
+            setFilters(newFilters);
+            applyFilters();
+          }}
           className="h-[36px] w-auto "
         />
         <DropDown
           options={priorityOptions}
-          value={priorityOptionsUser}
-          onChange={setpriorityOptionsUser}
+          value={getSelectedPriority()}
+          onChange={(val: string) => {
+            const newFilters = { ...filters } as any;
+            newFilters.priority = newFilters.priority.map((p: any) => {
+              if (val === 'all') return { ...p, checked: p.id === 'all' };
+              if (p.id === 'all') return { ...p, checked: false };
+              return { ...p, checked: p.id === val };
+            });
+            setFilters(newFilters);
+            applyFilters();
+          }}
           className="h-[36px] w-auto "
         />
         <CalendarDropDown

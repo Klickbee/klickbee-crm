@@ -13,12 +13,9 @@ export interface FilterData {
 export const filterData: FilterData = {
   status: [
     { id: "all", label: "All Status", checked: true },
-    { id: "new", label: "New", checked: false },
-    { id: "contacted", label: "Contacted", checked: false },
-    { id: "proposal", label: "Proposal Sent", checked: false },
-    { id: "negotiation", label: "Negotiation", checked: false },
-    { id: "won", label: "Won", checked: false },
-    { id: "lost", label: "Lost", checked: false },
+    { id: "active", label: "Active", checked: false },
+    { id: "follow-up", label: "Follow Up", checked: false },
+    { id: "inactive", label: "Inactive", checked: false },
   ],
 
   owner: [

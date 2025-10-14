@@ -44,23 +44,19 @@ export default function CustomerForm({
     onCancel,
     mode = 'add',
     initialData,
+    usersLoading,
+    userOptions
 }: {
     onSubmit: (values: CustomerFormValues) => void
     onCancel: () => void
     mode?: 'add' | 'edit'
-    initialData?: Customer
+    initialData?: Customer,
+    usersLoading: Boolean,
+    userOptions: {id: string, value: string, label: string}[]
 }) {
     const [tagInput, setTagInput] = useState("")
     const [uploading, setUploading] = useState(false);
     const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
-
-    const { users, loading: usersLoading, fetchUsers } = useUserStore();
-
-    useEffect(() => {
-        if (users.length === 0) {
-            fetchUsers();
-        }
-    }, [users]);
 
     const getOptionLabel = (options: {id: string, label: string}[], value: string) => {
         // First try to find by ID
@@ -109,19 +105,12 @@ export default function CustomerForm({
             email: "",
             status: "",
             phone: "",
-            owner: users.length > 0 ? users[0].id : "",
+            owner: userOptions.length > 0 ? userOptions[0].id : "",
             tags: [],
             notes: "",
             files: [],
         };
     };
-
-    // Create user options for the dropdown
-    const userOptions = users.map((user: any) => ({
-        id: user.id,
-        value: user.id,
-        label: user.name || user.email
-    }));
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react'
 import { ChevronUp, ChevronDown, MoreHorizontal } from 'lucide-react'
+import AvatarInitials from '@/components/ui/AvatarInitials'
 
 export interface TableColumn<T = any> {
   key: string
@@ -116,15 +117,20 @@ const TableRow = <T,>({
         >
           {column.avatar ? (
             <div className="flex items-center gap-2">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={String((record as any)[column.avatar.srcIndex] ?? '')}
-                alt={String(column.avatar.altIndex ? (record as any)[column.avatar.altIndex] : (record as any)[column.dataIndex])}
-                className="rounded-full object-cover"
-                style={{ height: `${column.avatar.size ?? 32}px`, width: `${column.avatar.size ?? 32}px` }}
-                width={column.avatar.size ?? 32}
-                height={column.avatar.size ?? 32}
-              />
+              {(() => {
+                // Try to get a name/email to derive initials
+                const val = (record as any)[column.dataIndex];
+                let name: string | null = null;
+                let email: string | null = null;
+                if (val && typeof val === 'object') {
+                  name = (val as any).name ?? null;
+                  email = (val as any).email ?? null;
+                } else if (typeof val === 'string') {
+                  name = val;
+                }
+                const size = column.avatar?.size ?? 32;
+                return <AvatarInitials name={name} email={email} size={size} />;
+              })()}
               <span>
                 {column.render ? column.render((record as any)[column.dataIndex], record, index) : formatCellValue((record as any)[column.dataIndex])}
               </span>

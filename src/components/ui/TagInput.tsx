@@ -21,9 +21,9 @@ const TagInput = ({name, values, setValue, input, setInput}: tagInputProps) => {
                 if (!v) return
                 if (!values?.includes(v)) {
                     if(values){
-                        setValue([...values, v])
+                        setValue([...values, v.toLocaleLowerCase()])
                     }else{
-                        setValue([v])
+                        setValue([v.toLocaleLowerCase()])
                     }
                 }
                 setInput("")

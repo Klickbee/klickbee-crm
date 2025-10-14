@@ -3,13 +3,22 @@ import toast from "react-hot-toast";
 import { Prospect } from "../types/types";
 import { exportProspectsToExcel, exportProspectsWithColumns, exportSingleProspectToExcel } from "../libs/excelExport";
 import { importProspectsFromExcel, generateProspectImportTemplate } from "../libs/excelImport";
+import { FilterData } from "../libs/filterData";
+import { useUserStore } from "../../user/store/userStore";
 
 interface ProspectStore {
   prospects: Prospect[];
+  filteredProspects: Prospect[];
   loading: boolean;
   error: string | null;
+  filters: FilterData;
 
   fetchProspects: (ownerId?: string) => Promise<void>;
+  setFilters: (filters: FilterData) => void;
+  applyFilters: () => void;
+  resetFilters: () => void;
+  generateOwnerOptions: () => any[];
+  initializeOwnerOptions: () => void;
   addProspect: (prospect: Omit<Prospect, "id" | "ownerId" | "userId" | "createdAt" | "updatedAt">) => Promise<void>;
   updateProspect: (id: string, prospect: Partial<Prospect>) => Promise<void>;
   deleteProspect: (id: string) => Promise<void>;
@@ -23,8 +32,138 @@ interface ProspectStore {
 
 export const useProspectsStore = create<ProspectStore>((set, get) => ({
   prospects: [],
+  filteredProspects: [],
   loading: false,
   error: null,
+  filters: {
+    status: [
+      { id: "all", label: "All Status", checked: true },
+      { id: "new", label: "New", checked: false },
+      { id: "Cold", label: "Cold", checked: false },
+      { id: "Qualified", label: "Qualified", checked: false },
+      { id: "Warmlead", label: "Warm-lead", checked: false },
+      { id: "converted", label: "Converted", checked: false },
+      { id: "notintrested", label: "Not-intrested", checked: false },
+    ],
+    owner: [],
+    tags: [
+      { id: "all", label: "All Tags", checked: true },
+      { id: "weblead", label: "Web Lead", checked: false },
+      { id: "referral", label: "Referral", checked: false },
+      { id: "vip", label: "VIP", checked: false },
+      { id: "construction", label: "Construction", checked: false },
+      { id: "architecture", label: "Architecture", checked: false },
+    ],
+  },
+
+  // Build owner filter options from users
+  generateOwnerOptions: () => {
+    const { users } = useUserStore.getState();
+    const userOptions = users.slice(0, 5).map((user) => ({
+      id: user.id,
+      label: user.name || user.email,
+      checked: false,
+    }));
+    return [
+      { id: "all", label: "All Owner", checked: true },
+      { id: "me", label: "Me", checked: false },
+      ...userOptions,
+    ];
+  },
+
+  initializeOwnerOptions: () => {
+    const ownerOptions = get().generateOwnerOptions();
+    set((state) => ({
+      filters: {
+        ...state.filters,
+        owner: ownerOptions,
+      },
+    }));
+  },
+
+  // Filters management
+  setFilters: (newFilters: FilterData) => {
+    set({ filters: newFilters });
+  },
+
+  applyFilters: () => {
+    const { prospects, filters } = get();
+    let filtered = [...prospects];
+
+    // Status filter mapping (ids to Prospect['status'] values)
+    const activeStatus = filters.status.filter((s: any) => s.checked && s.id !== "all");
+    if (activeStatus.length > 0) {
+      filtered = filtered.filter((p: Prospect) =>
+        activeStatus.some((f: any) => {
+          const map: Record<string, Prospect['status']> = {
+            new: 'New',
+            Cold: 'Cold',
+            Qualified: 'Qualified',
+            Warmlead: 'Warmlead',
+            converted: 'Converted',
+            notintrested: 'Notintrested',
+          };
+          const expected = map[f.id];
+          return expected ? p.status === expected : false;
+        })
+      );
+    }
+
+    // Owner filter: compare owner id (if object) or owner name/email string to option id/label
+    const activeOwners = filters.owner.filter((o: any) => o.checked && o.id !== "all");
+    if (activeOwners.length > 0) {
+      filtered = filtered.filter((p: Prospect) =>
+        activeOwners.some((f: any) => {
+          if (f.id === "me") {
+            // TODO: Replace with real current user id
+            const currentId = "current-user-id";
+            if (typeof p.owner === 'object') return p.owner?.id === currentId;
+            return false;
+          }
+          if (typeof p.owner === 'object') {
+            return p.owner?.id === f.id || p.owner?.email === f.label || p.owner?.name === f.label;
+          }
+          // owner stored as string (name/email)
+          return typeof p.owner === 'string' && (p.owner === f.label);
+        })
+      );
+    }
+
+    // Tags filter
+    const activeTags = filters.tags.filter((t: any) => t.checked && t.id !== "all");
+    if (activeTags.length > 0) {
+      filtered = filtered.filter((p: Prospect) => {
+        const tags = (p.tags || []).map((t) => t.toLowerCase());
+        return activeTags.some((f: any) => tags.includes(f.label.toLowerCase()));
+      });
+    }
+
+    set({ filteredProspects: filtered });
+  },
+
+  resetFilters: () => {
+    const initial = {
+      status: [
+        { id: "all", label: "All Status", checked: true },
+        { id: "new", label: "New", checked: false },
+        { id: "Cold", label: "Cold", checked: false },
+        { id: "Qualified", label: "Qualified", checked: false },
+        { id: "Warmlead", label: "Warm-lead", checked: false },
+        { id: "converted", label: "Converted", checked: false },
+        { id: "notintrested", label: "Not-intrested", checked: false },
+      ],
+      owner: get().generateOwnerOptions(),
+      tags: [
+        { id: "all", label: "All Tags", checked: true },
+        { id: "weblead", label: "Web Lead", checked: false },
+        { id: "referral", label: "Referral", checked: false },
+        { id: "vip", label: "VIP", checked: false },
+        { id: "construction", label: "Construction", checked: false },
+        { id: "architecture", label: "Architecture", checked: false },
+      ],
+    };
+    set({ filters: initial, filteredProspects: get().prospects });
+  },
 
   // 🧠 Fetch prospects from API
   fetchProspects: async (ownerId?: string) => {
@@ -53,6 +192,7 @@ export const useProspectsStore = create<ProspectStore>((set, get) => ({
         };
       }) : data;
       set({ prospects: cleanData, loading: false });
+      get().applyFilters();
     } catch (err: any) {
       console.error("fetchProspects error:", err);
       toast.error("Failed to load prospects");
@@ -75,7 +215,24 @@ export const useProspectsStore = create<ProspectStore>((set, get) => ({
       }
 
       const created: Prospect = await res.json();
-      set({ prospects: [...get().prospects, created] });
+      // Mirror companies/customers pattern: inject owner from submitted payload
+      set({
+        prospects: [
+          ...get().prospects,
+          {
+            ...created,
+            owner:
+              prospect && (prospect as any).owner
+                ? {
+                    id: (prospect as any).owner.id as string,
+                    name: (prospect as any).owner.name,
+                    email: ((prospect as any).owner?.email as string) || "",
+                  }
+                : created.owner,
+          },
+        ],
+      });
+      get().applyFilters();
       toast.success("Prospect created successfully!");
     } catch (err: any) {
       console.error("addProspect error:", err);
@@ -102,6 +259,7 @@ export const useProspectsStore = create<ProspectStore>((set, get) => ({
       set({
         prospects: get().prospects.map((p) => (p.id === id ? updated : p)),
       });
+      get().applyFilters();
       toast.success("Prospect updated successfully!");
     } catch (err: any) {
       console.error("updateProspect error:", err);
@@ -121,6 +279,7 @@ export const useProspectsStore = create<ProspectStore>((set, get) => ({
       set({
         prospects: get().prospects.filter((p) => p.id !== id),
       });
+      get().applyFilters();
       toast.success("Prospect deleted successfully!");
     } catch (err: any) {
       console.error("deleteProspect error:", err);
@@ -129,10 +288,10 @@ export const useProspectsStore = create<ProspectStore>((set, get) => ({
     }
   },
 
-  // 📊 Export all prospects to Excel
+  // 📊 Export all prospects to Excel (use filtered)
   exportAllProspects: (filename?: string) => {
-    const { prospects } = get();
-    const result = exportProspectsToExcel(prospects, filename);
+    const { filteredProspects } = get();
+    const result = exportProspectsToExcel(filteredProspects, filename);
     if (result.success) {
       toast.success(`Prospects exported successfully!`);
     } else {

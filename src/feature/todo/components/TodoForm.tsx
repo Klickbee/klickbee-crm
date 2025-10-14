@@ -52,12 +52,16 @@ export default function TodoForm({
     onCancel,
     mode = 'add',
     initialData,
+    usersLoading,
+    userOptions,
 }: {
     onSubmit: (values: TodoFormValues) => void
     onCancel: () => void
     mode?: 'add' | 'edit'
     initialData?: TaskData
-}) {
+    usersLoading: boolean
+    userOptions: { id: string; value: string; label: string }[]
+        }) {
     const [uploading, setUploading] = useState(false);
     const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,19 +86,6 @@ export default function TodoForm({
             setUploading(false);
         }
     };
-    const { users, loading: usersLoading, fetchUsers } = useUserStore();
-
-useEffect(() => {
-    if (users.length === 0) {
-        fetchUsers();
-    }
-}, [users]);
-
-const userOptions = users.map((user: any) => ({
-    id: user.id,
-    value: user.id,
-    label: user.name || user.email
-}));
 
     // Get initial values based on mode and initial data
     const getInitialValues = (): TodoFormValues => {

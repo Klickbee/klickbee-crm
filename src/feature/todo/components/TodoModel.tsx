@@ -7,25 +7,46 @@ import TodoForm from "./TodoForm"
 import { useTodoStore } from "../stores/useTodoStore"
 import { TaskData } from "../types/types"
 import toast from "react-hot-toast"
+import { useEffect } from "react"
+import { useUserStore } from "@/feature/user/store/userStore"
 
 type TodoSlideOverProps = {
   open: boolean
   onClose: () => void
-   mode?: 'add' | 'edit'
-     task?: TaskData
-   
+  mode?: 'add' | 'edit'
+  task?: TaskData
+
 }
 
-export default function TodoSlideOver({ open, onClose,  mode = 'add', task }: TodoSlideOverProps) {
+export default function TodoSlideOver({ open, onClose, mode = 'add', task }: TodoSlideOverProps) {
   const { addTodo } = useTodoStore()
   const { updateTodo } = useTodoStore()
+  const { users, loading: usersLoading, fetchUsers } = useUserStore();
 
-   const handleSubmit = async (values: any) => {
+  useEffect(() => {
+    if (users.length === 0) {
+      fetchUsers();
+    }
+  }, [users]);
+
+  const userOptions = users.map((user: any) => ({
+    id: user.id,
+    value: user.id,
+    label: user.name || user.email
+  }));
+
+  const handleSubmit = async (values: any) => {
     try {
       if (mode === 'edit' && task) {
         await updateTodo(task.id, values);
       } else {
-        await addTodo(values);
+         const selectedOwner = userOptions.find(user => user.id === values.owner);
+        const payload = {...values,
+          owner: selectedOwner
+          ? { id: selectedOwner.id as string, name: selectedOwner.label as string }
+          : { id: '', name: '' },
+        }
+        await addTodo(payload);
       }
       onClose();
     } catch (error) {
@@ -48,8 +69,8 @@ export default function TodoSlideOver({ open, onClose,  mode = 'add', task }: To
         {/* Header */}
         <header className="flex items-center justify-between gap-4 p-4 border-b border-[var(--border-gray)]">
           <h2 id="deal-slide-title" className="text-base font-semibold leading-[28px] text-pretty">
-            
-             {mode === 'edit' ? 'Update Task' : 'Add New Task'}
+
+            {mode === 'edit' ? 'Update Task' : 'Add New Task'}
           </h2>
           <button onClick={onClose} aria-label="Close">
             <X className="size-4" />
@@ -64,8 +85,10 @@ export default function TodoSlideOver({ open, onClose,  mode = 'add', task }: To
               handleSubmit(values)
               onClose()
             }}
-              mode={mode}
+            mode={mode}
             initialData={task}
+            usersLoading={usersLoading}
+            userOptions={userOptions}
           />
         </div>
       </aside>

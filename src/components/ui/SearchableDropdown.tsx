@@ -3,7 +3,8 @@ import { Search } from "lucide-react";
 
 interface Option {
   id: string;
-  label: string;
+  value: string; // The actual value to store (could be ID)
+  label: string; // The display label
 }
 
 interface SearchableDropdownProps {
@@ -25,14 +26,20 @@ export default function SearchableDropdown({
   showIcon = true,
   maxOptions,
 }: SearchableDropdownProps) {
-  const [query, setQuery] = useState(value || "");
+  // Find the label for the current value
+  const getDisplayLabel = (val: string) => {
+    const option = options.find(opt => opt.value === val);
+    return option ? option.label : val;
+  };
+
+  const [query, setQuery] = useState(getDisplayLabel(value) || "");
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // ✅ Sync query state with value prop changes
   useEffect(() => {
-    setQuery(value || "");
-  }, [value]);
+    setQuery(getDisplayLabel(value) || "");
+  }, [value, options]);
 
   const filteredOptions = options
     .filter((opt) => opt.label.toLowerCase().includes(query.toLowerCase()))
@@ -69,8 +76,8 @@ export default function SearchableDropdown({
                 key={option.id}
                 className="px-3 py-2 cursor-pointer text-sm hover:bg-gray-100"
                 onClick={() => {
-                  onChange(option.label);
-                  setQuery(option.label);
+                  onChange(option.value); // Use option.value (ID) instead of option.label
+                  setQuery(option.label); // Display the label
                   setIsOpen(false);
                 }}
               >

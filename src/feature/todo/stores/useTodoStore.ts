@@ -1,13 +1,28 @@
 import { create } from "zustand";
 import toast from "react-hot-toast";
 import { TaskData } from "../types/types";
+import { useUserStore } from "../../user/store/userStore";
+
+type FilterOption = { id: string; label: string; checked: boolean };
+type TodoFilters = {
+  status: FilterOption[];
+  owner: FilterOption[];
+  priority: FilterOption[];
+};
 
 interface TodoStore {
   todos: TaskData[];
+  filteredTodos: TaskData[];
   loading: boolean;
   error: string | null;
+  filters: TodoFilters;
 
   fetchTodos: (ownerId?: string) => Promise<void>;
+  setFilters: (filters: TodoFilters) => void;
+  applyFilters: () => void;
+  resetFilters: () => void;
+  generateOwnerOptions: () => FilterOption[];
+  initializeOwnerOptions: () => void;
   addTodo: (todo: Omit<TaskData, "id" | "ownerId" | "createdAt" | "updatedAt">) => Promise<void>;
   updateTodo: (id: string, todo: Partial<TaskData>) => Promise<void>;
   deleteTodo: (id: string) => Promise<void>;
@@ -17,8 +32,95 @@ interface TodoStore {
 
 export const useTodoStore = create<TodoStore>((set, get) => ({
   todos: [],
+  filteredTodos: [],
   loading: false,
   error: null,
+  filters: {
+    status: [
+      { id: 'all', label: 'All Status', checked: true },
+      { id: 'Todo', label: 'To-Do', checked: false },
+      { id: 'InProgress', label: 'In-Progress', checked: false },
+      { id: 'OnHold', label: 'On-Hold', checked: false },
+      { id: 'Done', label: 'Done', checked: false },
+    ],
+    owner: [],
+    priority: [
+      { id: 'all', label: 'All Priority', checked: true },
+      { id: 'Low', label: 'Low', checked: false },
+      { id: 'Medium', label: 'Medium', checked: false },
+      { id: 'High', label: 'High', checked: false },
+      { id: 'Urgent', label: 'Urgent', checked: false },
+    ],
+  },
+
+  // Build owner filter options from users
+  generateOwnerOptions: () => {
+    const { users } = useUserStore.getState();
+    const userOptions = users.slice(0, 10).map((u) => ({ id: u.id, label: u.name || u.email, checked: false }));
+    return [
+      { id: 'all', label: 'All Owner', checked: true },
+      { id: 'me', label: 'Me', checked: false },
+      ...userOptions,
+    ];
+  },
+
+  initializeOwnerOptions: () => {
+    const ownerOptions = get().generateOwnerOptions();
+    set((state) => ({ filters: { ...state.filters, owner: ownerOptions } }));
+  },
+
+  setFilters: (filters: TodoFilters) => set({ filters }),
+
+  applyFilters: () => {
+    const { todos, filters } = get();
+    let filtered = [...todos];
+
+    // Status filter
+    const selStatus = filters.status.filter((f) => f.checked && f.id !== 'all').map((f) => f.id);
+    if (selStatus.length > 0) {
+      filtered = filtered.filter((t) => selStatus.includes(t.status));
+    }
+
+    // Priority filter
+    const selPriority = filters.priority.filter((f) => f.checked && f.id !== 'all').map((f) => f.id);
+    if (selPriority.length > 0) {
+      filtered = filtered.filter((t) => selPriority.includes(t.priority));
+    }
+
+    // Owner filter - match assignedTo name/email; if 'me' used, requires current user id logic
+    const selOwners = filters.owner.filter((o) => o.checked && o.id !== 'all').map((o) => o.id);
+    if (selOwners.length > 0) {
+      filtered = filtered.filter((t) => {
+        if (!t.assignedTo) return false;
+        const assignedName = typeof t.assignedTo === 'object' ? t.assignedTo.name : t.assignedTo;
+        // Note: 'me' handling requires current user id mapping; skipping for now
+        return selOwners.includes('me') ? false : selOwners.includes(assignedName || '');
+      });
+    }
+
+    set({ filteredTodos: filtered });
+  },
+
+  resetFilters: () => {
+    const initial: TodoFilters = {
+      status: [
+        { id: 'all', label: 'All Status', checked: true },
+        { id: 'Todo', label: 'To-Do', checked: false },
+        { id: 'InProgress', label: 'In-Progress', checked: false },
+        { id: 'OnHold', label: 'On-Hold', checked: false },
+        { id: 'Done', label: 'Done', checked: false },
+      ],
+      owner: get().generateOwnerOptions(),
+      priority: [
+        { id: 'all', label: 'All Priority', checked: true },
+        { id: 'Low', label: 'Low', checked: false },
+        { id: 'Medium', label: 'Medium', checked: false },
+        { id: 'High', label: 'High', checked: false },
+        { id: 'Urgent', label: 'Urgent', checked: false },
+      ],
+    };
+    set({ filters: initial, filteredTodos: get().todos });
+  },
 
   //  Fetch todos from API
   fetchTodos: async (ownerId?: string) => {
@@ -30,6 +132,7 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
 
       const data: any[] = await res.json();
       set({ todos: data, loading: false });
+      get().applyFilters();
     } catch (err: any) {
       console.error("fetchTodos error:", err);
       toast.error("Failed to load todos");
@@ -52,7 +155,15 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
       }
 
       const created: TaskData = await res.json();
-      set({ todos: [...get().todos, created] });
+      set({ todos: [ ...get().todos, { ...created, linkedTo: todo.linkedTo? {
+                  id: todo.linkedTo.id as string,
+                  name: todo.linkedTo.name,
+                  email: (todo.linkedTo as any).email || "",
+                }
+              : undefined,
+          },
+        ],
+      });      get().applyFilters();
       toast.success("Todo created successfully!");
     } catch (err: any) {
       console.error("addTodo error:", err);
@@ -79,6 +190,7 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
       set({
         todos: get().todos.map((t) => (t.id === id ? updated : t)),
       });
+      get().applyFilters();
 
     } catch (err: any) {
       console.error("updateTodo error:", err);
@@ -98,6 +210,7 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
       set({
         todos: get().todos.filter((t) => t.id !== id),
       });
+      get().applyFilters();
       toast.success("Todo deleted successfully!");
     } catch (err: any) {
       console.error("deleteTodo error:", err);
@@ -123,6 +236,7 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
       set({
         todos: get().todos.filter((t) => !ids.includes(t.id)),
       });
+      get().applyFilters();
       toast.success(`${ids.length} todos deleted successfully!`);
     } catch (err: any) {
       console.error("bulkDeleteTodos error:", err);
@@ -155,6 +269,7 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
           ids.includes(t.id) ? { ...t, ...updates } : t
         ),
       });
+      get().applyFilters();
       toast.success(`${ids.length} todos updated successfully!`);
     } catch (err: any) {
       console.error("bulkUpdateTodos error:", err);
