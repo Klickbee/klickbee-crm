@@ -88,6 +88,7 @@ export const useMeetingsStore = create<MeetingStore>((set, get) => ({
       set({
         meetings: get().meetings.map((m) => (m.id === id ? convertedUpdated : m)),
       });
+      toast.success("Meeting Updated successfully!");
 
     } catch (err: any) {
       console.error("updateMeeting error:", err);

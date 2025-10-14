@@ -14,6 +14,7 @@ import { useProspectsStore } from "../stores/useProspectsStore"
 // Values must match FilterData ids in prospects filterData.ts
 const statusOptions = [
   { value: "all", label: "All Status" },
+  { value: "New", label: "New" },
   { value: "Cold", label: "Cold" },
   { value: "Qualified", label: "Qualified" },
   { value: "Warmlead", label: "Warm-lead" },

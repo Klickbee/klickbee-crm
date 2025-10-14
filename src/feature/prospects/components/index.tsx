@@ -75,12 +75,12 @@ export const prospectsColumns: TableColumn<Prospect>[] = [
       return (
         <div className="flex flex-wrap gap-1">
           {tags.slice(0, 2).map((tag, index) => (
-            <span key={index} className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-800">
+            <span key={index} className="inline-flex items-center px-2 py-0.5 text-xs font-medium text-gray-800">
               {tag}
             </span>
           ))}
           {tags.length > 2 && (
-            <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-800">
+            <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium text-gray-800">
               +{tags.length - 2}
             </span>
           )}

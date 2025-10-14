@@ -16,27 +16,29 @@ export const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, onClick }) =>
     });
   };
 
+
   const getStatusColor = () => {
     switch (meeting.status) {
-      case 'confirmed':
+      case 'Confirmed':
         return 'bg-green-100 border-green-300';
-      case 'cancelled':
+      case 'Cancelled':
         return 'bg-red-100 border-red-300';
+      case 'Scheduled':
       default:
         return 'bg-blue-100 border-blue-300';
     }
   };
     const getDotColor = () => {
     switch (meeting.status) {
-      case 'confirmed':
+      case 'Confirmed':
         return 'text-green-500';
-      case 'cancelled':
+      case 'Cancelled':
         return 'text-red-500';
+      case 'Scheduled':
       default:
         return 'text-blue-400';
     }
   };
-
 
   return (
     <div

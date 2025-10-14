@@ -140,9 +140,9 @@ export const MeetingsSidebar: React.FC<MeetingsSidebarProps> = ({
 
   const getMeetingStatusColor = (meeting: Meeting) => {
     switch (meeting.status) {
-      case 'confirmed':
+      case 'Confirmed':
         return 'bg-green-500';
-      case 'cancelled':
+      case 'Cancelled':
         return 'bg-red-500';
       default:
         return 'bg-blue-500';

@@ -1,11 +1,12 @@
 'use client'
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { Meeting } from '../types/meeting';
 import { cn } from '@/libs/utils';
 import MeetingForm from './MeetingForm';
 import Modal from '@/components/ui/Modal';
 import { useMeetingsStore } from '../stores/useMeetingsStore';
+import { useUserStore } from '@/feature/user/store/userStore';
 
 interface AddMeetingModalProps {
   isOpen: boolean;
@@ -23,6 +24,20 @@ export const AddMeetingModal: React.FC<AddMeetingModalProps> = ({
   meeting,
 }) => {
   const { addMeeting, updateMeeting } = useMeetingsStore();
+    const { users, loading: usersLoading, fetchUsers } = useUserStore();
+    
+      useEffect(() => {
+          if (users.length === 0) {
+              fetchUsers();
+          }
+      }, [users]);
+    
+      // Create user options for the dropdown
+      const userOptions = users.map((user: any) => ({
+          id: user.id,
+          value: user.id,
+          label: user.name || user.email
+      }));
   
   if (!isOpen) return null;
   const handleSubmit = async (values: any) => {
@@ -31,8 +46,13 @@ export const AddMeetingModal: React.FC<AddMeetingModalProps> = ({
         // Use store function to update the meeting
         await updateMeeting(meeting.id!, values);
       } else {
-        // Use store function to create a new meeting
-        await addMeeting(values);
+const selectedOwner = userOptions.find(user => user.id === values.linkedTo);
+        const payload = {...values,
+          linkedTo: selectedOwner
+          ? { id: selectedOwner.id as string, name: selectedOwner.label as string }
+          : { id: '', name: '' },
+        }
+          await addMeeting(payload);
       }
       onClose();
     } catch (error) {
@@ -72,6 +92,8 @@ export const AddMeetingModal: React.FC<AddMeetingModalProps> = ({
           onClose={onClose}
           mode={mode}
           initialData={meeting}
+            usersLoading={usersLoading}
+            userOptions={userOptions}
         />
 
       </aside>

@@ -9,6 +9,7 @@ import { useState } from "react";
 import UploadButton from "@/components/ui/UploadButton";
 import { Button } from "@/components/ui/Button";
 import { Meeting } from "../types/meeting";
+import SearchableDropdown from "@/components/ui/SearchableDropdown";
 
 // ✅ Enhanced Yup validation with comprehensive rules
 const MeetingSchema = Yup.object().shape({
@@ -44,15 +45,17 @@ const MeetingSchema = Yup.object().shape({
     }),
 
   location: Yup.string()
-    .max(200, "Location must not exceed 200 characters")
-    .test("is-valid-url", "Location must be a valid URL if provided", (value) => {
+    .max(200, "Location must not exceed 200 characters"),
+
+  meetingLink: Yup.string()
+    .max(500, "Meeting link must not exceed 500 characters")
+    .test("is-valid-url", "Meeting link must be a valid URL if provided", (value) => {
       if (!value) return true;
       try {
         new URL(value);
         return true;
       } catch {
-        // Allow non-URL formats like "Conference Room A"
-        return value.length >= 2;
+        return false;
       }
     }),
 
@@ -150,6 +153,7 @@ const initialValues = {
   ends: "Never",
   linkedTo: "",
   location: "",
+  meetingLink: "",
   assignedTo: "",
   participants: [],
   status: "scheduled",
@@ -163,8 +167,10 @@ type formProps = {
   onClose: () => void;
   mode?: 'add' | 'edit';
   initialData?: Meeting;
+  usersLoading: boolean
+  userOptions: { id: string; value: string; label: string }[]
 }
-export default function MeetingForm({ onSubmit, onClose, mode = 'add', initialData }: formProps) {
+export default function MeetingForm({ onSubmit, onClose, mode = 'add', initialData, usersLoading, userOptions }: formProps) {
   const [tagInput, setTagInput] = useState("")
   const [participantsInput, setParticipantsInput] = useState("")
   const [uploading, setUploading] = useState(false);
@@ -174,7 +180,7 @@ export default function MeetingForm({ onSubmit, onClose, mode = 'add', initialDa
     if (mode === 'edit' && initialData) {
       return {
         title: initialData.title || '',
-        startDate: initialData.startDate ? new Date(initialData.startDate) : new Date(),
+        startDate: initialData.startDate ? new Date(initialData.startDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
         startTime: initialData.startTime ? new Date(initialData.startTime).toTimeString().slice(0, 5) : '09:00',
         endTime: initialData.endTime ? new Date(initialData.endTime).toTimeString().slice(0, 5) : '10:00',
         repeatMeeting: initialData.repeatMeeting || false,
@@ -184,6 +190,7 @@ export default function MeetingForm({ onSubmit, onClose, mode = 'add', initialDa
         ends: initialData.ends || 'Never',
         linkedTo: initialData.linkedTo || '',
         location: initialData.location || '',
+        meetingLink: initialData.meetingLink || '',
         assignedTo: initialData.assignedTo || '',
         participants: initialData.participants || [],
         status: initialData.status || 'scheduled',
@@ -321,10 +328,25 @@ export default function MeetingForm({ onSubmit, onClose, mode = 'add', initialDa
           <div className="p-4 flex flex-col gap-4">
 
             {/* Linked To */}
-            <TextInput label="Linked To" name="linkedTo" placeholder="Deal, Company or Contact" />
-
+            <div>
+              <label htmlFor="linkedTo" className="block text-sm font-medium text-gray-700 mb-1">
+                Linked To
+              </label>
+              <SearchableDropdown
+                name="linkedTo"
+                value={values.linkedTo}
+                options={userOptions}
+                placeholder="Select linkedTo"
+                showIcon={false}
+                maxOptions={20}
+                onChange={(value) => setFieldValue('linkedTo', value)}
+              />
+            </div>
             {/* Location */}
-            <TextInput label="Location / Format" name="location" placeholder="Zoom / Meet link" />
+            <TextInput label="Location" name="location" placeholder="Conference Room A, Office, etc." />
+
+            {/* Link Location */}
+            <TextInput label="Link Location" name="meetingLink" placeholder="Zoom / Meet link" />
 
             {/* Assigned To */}
             <TextInput label="Assigned To" name="assignedTo" placeholder="Team member" />

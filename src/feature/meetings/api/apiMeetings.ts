@@ -58,9 +58,9 @@ export async function POST(req: Request) {
         repeatOn: data.repeatOn ?? null,
         repeatEvery: typeof data.repeatEvery === "number" ? data.repeatEvery : 0,
         ends: data.ends,
-        linkedId: data.linkedId,
+        linkedId: data.linkedTo || session.user.id,
         location: data.location ?? null,
-        assignedId: data.assignedTo && data.assignedTo.trim() !== "" ? data.assignedTo : null, // Map assignedTo to assignedId, null if empty
+        assignedId: data.assignedTo|| session.user.id,
         participants: data.participants ?? [],
         status: data.status,
         tags: data.tags ?? [],
@@ -85,6 +85,11 @@ export async function GET(req: Request) {
     const where = ownerId ? { ownerId } : undefined;
     const meetings = await prisma.meeting.findMany({
       where,
+      include: {
+        linkedTo: true,
+        assignedTo: true,
+        owner: true,
+      },
       orderBy: { createdAt: "desc" },
       take: Math.min(limit, 200),
     });
@@ -101,7 +106,14 @@ export async function handleMethodWithId(req: Request, id: string) {
     const method = req.method?.toUpperCase();
 
     if (method === "GET") {
-      const meeting = await prisma.meeting.findUnique({ where: { id } });
+      const meeting = await prisma.meeting.findUnique({
+        where: { id },
+        include: {
+          linkedTo: true,
+          assignedTo: true,
+          owner: true,
+        }
+      });
       if (!meeting) return NextResponse.json({ error: "Not found" }, { status: 404 });
       return NextResponse.json(meeting);
     }
@@ -134,7 +146,7 @@ export async function handleMethodWithId(req: Request, id: string) {
           repeatOn: data.repeatOn ?? undefined,
           repeatEvery: data.repeatEvery,
           ends: data.ends,
-          linkedId: session.user.id, // Always link meetings to the user who created them
+          linkedId: data.linkedTo || session.user.id, // Map linkedTo from form to linkedId, fallback to session user
           location: data.location ?? undefined,
           assignedId: data.assignedTo && data.assignedTo.trim() !== "" ? data.assignedTo : null, // Use assignedId, null if empty
           participants: data.participants ?? undefined,
