@@ -65,6 +65,7 @@ export default function CustomerDetail({
     <DetailModal
       isOpen={isOpen}
       title={customer.fullName ?? "Customer Details"}
+      notes={customer.notes ??undefined}
       details={details}
       onClose={onClose}
       onDelete={onDelete ? () => onDelete(customer.id) : undefined}

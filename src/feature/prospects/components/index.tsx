@@ -22,7 +22,7 @@ export const prospectsColumns: TableColumn<Prospect>[] = [
     key: 'company',
     title: 'Company',
     dataIndex: 'company',
-    sortable: true,
+    sortable: false,
   },
   {
     key: 'email',

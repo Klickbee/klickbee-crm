@@ -114,6 +114,7 @@ export default function TodoDetail({
     <DetailModal
       isOpen={isOpen}
       title={task.taskName ?? "Task Details"}
+      notes={task.notes ??undefined}
       details={details}
       onClose={onClose}
       onDelete={onDelete ? () => onDelete(task.id) : undefined}

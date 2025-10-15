@@ -72,6 +72,7 @@ export default function CompanieDetail({
     <DetailModal
       isOpen={isOpen}
       title={company.fullName ?? "Company Details"}
+      notes={company.notes ??undefined}
       details={details}
       onClose={onClose}
       onDelete={onDelete ? () => onDelete(company.id) : undefined}

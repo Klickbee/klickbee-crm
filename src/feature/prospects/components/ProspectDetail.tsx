@@ -82,6 +82,7 @@ export default function ProspectDetail({
     <DetailModal
       isOpen={isOpen}
       title={prospect.fullName ?? "Prospect Details"}
+      notes={prospect.notes ??undefined}
       details={details}
       onClose={onClose}
       onDelete={onDelete ? () => onDelete(prospect.id) : undefined}

@@ -1,6 +1,6 @@
 "use client";
-import React from 'react'
-import { getMetricsData } from "../libs/MetricsData"
+import React, { useEffect } from 'react'
+import { useDealStore } from "../../deals/stores/useDealStore"
 import { useRouter } from "next/navigation"
 
 const colorClasses = [
@@ -12,9 +12,63 @@ const colorClasses = [
 ]
 
 const DashboardMetrics = () => {
-  const metrics = getMetricsData()
-    const router = useRouter();
+  const { deals, filteredDeals, fetchDeals } = useDealStore()
+  const router = useRouter()
 
+  useEffect(() => {
+    fetchDeals()
+  }, [fetchDeals])
+
+  // Calculate metrics from deals data
+  const newLeads = filteredDeals.filter(deal => deal.stage === 'New').length
+  const activeDeals = filteredDeals.filter(deal => deal.stage !== 'Won' && deal.stage !== 'Lost').length
+  const wonDeals = filteredDeals.filter(deal => deal.stage === 'Won').length
+  const totalDeals = filteredDeals.length
+  const conversionRate = totalDeals > 0 ? Math.round((wonDeals / totalDeals) * 100) : 0
+
+  const expectedRevenue = filteredDeals
+    .filter(deal => deal.stage !== 'Lost')
+    .reduce((sum, deal) => sum + (deal.amount || 0), 0)
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount)
+  }
+
+  const metrics = [
+    {
+      title: "New Leads",
+      value: `${newLeads} Leads`,
+      change: "+12% from last week",
+      changeType: "increase" as const,
+      icon: <img src="/icons/users.svg" alt="New Leads" className="h-6 w-6 text-muted-foreground" />,
+    },
+    {
+      title: "Active Deals",
+      value: `${activeDeals} Deals`,
+      change: "+8% from last week",
+      changeType: "increase" as const,
+      icon: <img src="/sideBarIcons/handshake.svg" alt="Active Deals" className="h-6 w-6 text-muted-foreground" />,
+    },
+    {
+      title: "Conversion Rate",
+      value: `${conversionRate}%`,
+      change: "+2% from last week",
+      changeType: "increase" as const,
+      icon: <img src="/sideBarIcons/bar-chart.svg" alt="Conversion Rate" className="h-6 w-6 text-muted-foreground" />,
+    },
+    {
+      title: "Expected Revenue",
+      value: formatCurrency(expectedRevenue),
+      change: "+15% from last week",
+      changeType: "increase" as const,
+      icon: <img src="/icons/Dollar.svg" alt="Expected Revenue" className="h-6 w-6 text-muted-foreground" />,
+    },
+  ]
 
   return (
     <section className=" h-[156px] w-auto shadow-sm rounded-xl border border-[var(--border-gray)] bg-white opacity-100 ">
