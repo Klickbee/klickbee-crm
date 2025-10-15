@@ -290,20 +290,13 @@ export const Table = <T,>({
                   }}
                   onClick={() => handleSort(column)}
                 >
-                  <div className="flex items-center gap-1">
+                  <div className=" flex items-center gap-1">
                     {column.title}
-                    {column.sortable && column.key === 'dealName' && (
+                    {column.sortable && (
                       <div className="flex flex-col">
-                        <ChevronUp 
+                        <img src='\icons\UpDown.svg'
                           className={`h-3 w-3 ${
                             sortConfig?.key === column.key && sortConfig.direction === 'asc' 
-                              ? 'text-blue-600' 
-                              : 'text-gray-400'
-                          }`} 
-                        />
-                        <ChevronDown 
-                          className={`h-3 w-3 -mt-1 ${
-                            sortConfig?.key === column.key && sortConfig.direction === 'desc' 
                               ? 'text-blue-600' 
                               : 'text-gray-400'
                           }`} 

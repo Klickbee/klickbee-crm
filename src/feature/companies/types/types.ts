@@ -18,4 +18,5 @@ export type Company = {
   tags?: string;
   createdAt?: string;
   updatedAt?: string;
+  notes?:string
 };
