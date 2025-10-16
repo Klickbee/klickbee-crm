@@ -15,19 +15,19 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
 
-  deals         Deal[]
-  todo          Todo[]
-  linkedTodos   Todo[] @relation("linkedUser")
-  assignedTodos Todo[] @relation("assignedUser")
-  meetings      Meeting[]
-  linkedMeetings   Meeting[] @relation("linkedUser")
-  assignedMeetings Meeting[] @relation("assignedUser")
-  prospects     Prospect[] @relation("userId")
-  prospectsOwner       Prospect[] @relation("ownerId")
-  customers     Customer[] @relation("customer_user")
-  customersOwner     Customer[] @relation("customer_owner")
-  companiesByUser   Company[] @relation("company_user")
-  companiesByOwner  Company[] @relation("company_owner")
+  deals            Deal[]
+  todo             Todo[]
+  linkedTodos      Todo[]     @relation("linkedUser")
+  assignedTodos    Todo[]     @relation("assignedUser")
+  meetings         Meeting[]
+  linkedMeetings   Meeting[]  @relation("linkedUser")
+  assignedMeetings Meeting[]  @relation("assignedUser")
+  prospects        Prospect[] @relation("userId")
+  prospectsOwner   Prospect[] @relation("ownerId")
+  customers        Customer[] @relation("customer_user")
+  customersOwner   Customer[] @relation("customer_owner")
+  companiesByUser  Company[]  @relation("company_user")
+  companiesByOwner Company[]  @relation("company_owner")
 }
 
 enum DealStage {
@@ -47,8 +47,10 @@ enum Currency {
 model Deal {
   id        String    @id @default(uuid())
   dealName  String
-  company   String
-  contact   String?
+  companyId String?
+  company   Company?  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  contactId String?
+  contact   Customer? @relation(fields: [contactId], references: [id], onDelete: Cascade)
   stage     DealStage
   amount    Float
   currency  Currency
@@ -90,8 +92,8 @@ model Todo {
   dueDate    DateTime?
   notes      String?
   files      Json?
-  ownerId       String
-  owner         User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId    String
+  owner      User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   createdAt  DateTime     @default(now())
   updatedAt  DateTime     @updatedAt
 
@@ -131,10 +133,10 @@ model Meeting {
   repeatEvery   Int              @default(0)
   ends          MeetingEnds      @default(Never)
   location      String?
-  linkedTo   User         @relation("linkedUser", fields: [linkedId], references: [id], onDelete: Cascade)
-  linkedId   String
-  assignedTo User?        @relation("assignedUser", fields: [assignedId], references: [id], onDelete: Cascade)
-  assignedId String?
+  linkedTo      User             @relation("linkedUser", fields: [linkedId], references: [id], onDelete: Cascade)
+  linkedId      String
+  assignedTo    User?            @relation("assignedUser", fields: [assignedId], references: [id], onDelete: Cascade)
+  assignedId    String?
   participants  String[]         @default([])
   status        MeetingStatus    @default(Scheduled)
   tags          String[]         @default([])
@@ -148,7 +150,6 @@ model Meeting {
   @@index([ownerId])
   @@index([linkedId])
   @@index([assignedId])
-  
 }
 
 enum ProspectStatus {
@@ -162,10 +163,11 @@ enum ProspectStatus {
 
 model Prospect {
   id        String         @id @default(uuid())
-  userId   String
-  user     User           @relation("userId", fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User           @relation("userId", fields: [userId], references: [id], onDelete: Cascade)
   fullName  String
-  company   String
+  companyId String?
+  company   Company?       @relation(fields: [companyId], references: [id], onDelete: Cascade)
   email     String?
   phone     String?
   status    ProspectStatus @default(New)
@@ -187,21 +189,23 @@ enum CustomerStatus {
 }
 
 model Customer {
-  id        String          @id @default(uuid())
+  id        String         @id @default(uuid())
   userId    String
-  user      User            @relation("customer_user", fields: [userId], references: [id], onDelete: Cascade)
+  user      User           @relation("customer_user", fields: [userId], references: [id], onDelete: Cascade)
   fullName  String
-  company   String
+  companyId String?
+  company   Company?       @relation(fields: [companyId], references: [id], onDelete: Cascade)
   email     String?
   phone     String?
-  status    CustomerStatus  @default(Active)
-  tags      String[]        @default([])
+  status    CustomerStatus @default(Active)
+  tags      String[]       @default([])
   notes     String?
   files     Json?
   ownerId   String
-  owner     User            @relation("customer_owner", fields: [ownerId], references: [id], onDelete: Cascade)
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
+  owner     User           @relation("customer_owner", fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  deals     Deal[]
 
   @@index([ownerId])
   @@index([userId])
@@ -214,23 +218,26 @@ enum CompanyStatus {
 }
 
 model Company {
-  id        String         @id @default(uuid())
+  id        String        @id @default(uuid())
   userId    String
-  user      User           @relation("company_user", fields: [userId], references: [id], onDelete: Cascade)
+  user      User          @relation("company_user", fields: [userId], references: [id], onDelete: Cascade)
   fullName  String
   industry  String
   email     String?
   phone     String?
   website   String?
-  status    CompanyStatus  @default(Active)
-  tags      String[]       @default([])
-  assing    String[]       @default([])
+  status    CompanyStatus @default(Active)
+  tags      String[]      @default([])
+  assing    String[]      @default([])
   notes     String?
   files     Json?
   ownerId   String
-  owner     User           @relation("company_owner", fields: [ownerId], references: [id], onDelete: Cascade)
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
+  owner     User          @relation("company_owner", fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  deals     Deal[]
+  prospects Prospect[]
+  customers Customer[]
 
   @@index([ownerId])
   @@index([userId])

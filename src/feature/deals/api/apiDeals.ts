@@ -4,7 +4,6 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/feature/auth/lib/auth";
 import { prisma } from "@/libs/prisma";
 import { createDealSchema, updateDealSchema } from "../schema/dealSchema";
-import { includes } from "zod";
 
 export async function POST(req: Request) {
   try {
@@ -32,17 +31,23 @@ export async function POST(req: Request) {
     const created = await prisma.deal.create({
       data: {
         dealName: data.dealName,
-        company: data.company,
-        contact: data.contact ?? null,
         stage: data.stage,
         amount: data.amount,
         currency: data.currency,
         ownerId: data.ownerId,
+        companyId: data.companyId ?? null,
+        contactId: data.contactId ?? null,
         closeDate: data.closeDate ? new Date(data.closeDate) : null,
         tags: data.tags ?? [],
         notes: data.notes ?? null,
         files: data.files ?? undefined,
+
       },
+       include: {
+    owner: true,
+    company: true,
+    contact: true, 
+  },
     });
 
     return NextResponse.json(created, { status: 201 });
@@ -60,11 +65,20 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const limit = Number(url.searchParams.get("limit") ?? 50);
     const ownerId = url.searchParams.get("ownerId");
+    const companyId = url.searchParams.get("companyId");
+    const contactId = url.searchParams.get("contactId");
 
-    const where = ownerId ? { ownerId } : undefined;
+
+
+      const where = {
+      ...(ownerId ? { ownerId } : {}),
+      ...(companyId ? { companyId } : {}),
+      ...(contactId ? { contactId } : {}),
+
+    };
     const deals = await prisma.deal.findMany({
       where,
-      include: { owner: true },
+      include: { owner: true, company: true , contact: true },
       orderBy: { createdAt: "desc" },
       take: Math.min(limit, 200),
     });
@@ -79,7 +93,6 @@ export async function GET(req: Request) {
   }
 }
 
-// For GET by id, PATCH, DELETE we route to /api/admin/deals/[id]
 export async function handleMethodWithId(req: Request, id: string) {
   try {
     const method = req.method?.toUpperCase();
@@ -112,8 +125,8 @@ export async function handleMethodWithId(req: Request, id: string) {
         where: { id },
         data: {
           dealName: data.dealName,
-          company: data.company,
-          contact: data.contact ?? undefined,
+          companyId: data.companyId,
+          contactId: data.contactId ?? undefined,
           stage: data.stage,
           amount: data.amount,
           currency: data.currency,

@@ -33,7 +33,7 @@ export async function POST(req: Request) {
       startTime: toDate(bodyRaw.startTime),
       endTime: toDate(bodyRaw.endTime),
       ownerId: session.user.id,
-      linkedId: session.user.id, // Always link meetings to the user who created them
+      linkedId: bodyRaw.linkedTo, // Always link meetings to the user who created them
       assignedTo: bodyRaw.assignedTo && bodyRaw.assignedTo.trim() !== "" ? bodyRaw.assignedTo : null, // Pass through assignedTo, null if empty
     });
     if (!parsed.success) {
@@ -58,7 +58,7 @@ export async function POST(req: Request) {
         repeatOn: data.repeatOn ?? null,
         repeatEvery: typeof data.repeatEvery === "number" ? data.repeatEvery : 0,
         ends: data.ends,
-        linkedId: data.linkedTo || session.user.id,
+        linkedId: data.linkedId || session.user.id,
         location: data.location ?? null,
         assignedId: data.assignedTo|| session.user.id,
         participants: data.participants ?? [],

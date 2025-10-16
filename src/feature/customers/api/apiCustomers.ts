@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     const created = await prisma.customer.create({
       data: {
         fullName: data.fullName,
-        company: data.company,
+        companyId: data.companyId || null,
         email: data.email || null,
         phone: data.phone || null,
         status: data.status,
@@ -56,12 +56,19 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const limit = Number(url.searchParams.get("limit") ?? 50);
     const ownerId = url.searchParams.get("ownerId");
+const companyId = url.searchParams.get("companyId");
+  
 
-    const where = ownerId ? { ownerId } : undefined;
+
+      const where = {
+      ...(ownerId ? { ownerId } : {}),
+      ...(companyId ? { companyId } : {}),
+    };
     const customers = await prisma.customer.findMany({
       where,
       include: {
         owner: true,
+        company: true,
       },
       orderBy: { createdAt: "desc" },
       take: Math.min(limit, 200),
@@ -105,7 +112,7 @@ export async function handleMethodWithId(req: Request, id: string) {
         where: { id },
         data: {
           fullName: data.fullName,
-          company: data.company,
+          companyId: data.companyId || null,
           email: data.email ?? undefined,
           phone: data.phone ?? undefined,
           status: data.status,

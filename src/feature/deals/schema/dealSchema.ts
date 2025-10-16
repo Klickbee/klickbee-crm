@@ -6,8 +6,14 @@ export const currencyEnum = z.enum(["USD", "EUR", "GBP"]);
 
 export const createDealSchema = z.object({
   dealName: z.string().trim().min(1),
-  company: z.string().trim().min(1),
-  contact: z.string().trim().optional().or(z.literal("")),
+ companyId: z
+    .string()
+    .optional()
+    .nullable(),
+  contactId:z
+    .string()
+    .optional()
+    .nullable(),
   stage: dealStageEnum,
   amount: z.preprocess((val) => {
   if (typeof val === "string") return Number(val);

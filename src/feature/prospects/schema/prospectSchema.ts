@@ -11,7 +11,10 @@ const statusValues = [
 
 export const createProspectSchema = z.object({
   fullName: z.string().trim().min(1, "Full name is required"),
-  company: z.string().trim().min(1, "Company is required"),
+  companyId: z
+    .string()
+    .optional()
+    .nullable(),
   email: z.string().trim().email().optional().or(z.literal("")),
   phone: z.string().trim().optional().or(z.literal("")),
   status: z.enum(statusValues).default("New"),
@@ -24,7 +27,10 @@ export const createProspectSchema = z.object({
 export const updateProspectSchema = z.object({
   id: z.string().trim().min(1),
   fullName: z.string().trim().optional(),
-  company: z.string().trim().optional(),
+  companyId: z
+    .string()
+    .optional()
+    .nullable(),
   email: z.string().trim().email().optional(),
   phone: z.string().trim().optional(),
   status: z.enum(statusValues).optional(),

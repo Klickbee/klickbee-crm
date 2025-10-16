@@ -55,9 +55,13 @@ export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
     const limit = Number(url.searchParams.get("limit") ?? 50);
-    const linkedId = url.searchParams.get("ownerId");
+    const linkedId = url.searchParams.get("linkedId");
+    const assignedId = url.searchParams.get("assignedId");
 
-    const where = linkedId ? { linkedId } : undefined;
+    const where = {
+      ...(linkedId ? { linkedId } : {}),
+      ...(assignedId ? { assignedId } : {}),
+    };
     const todos = await prisma.todo.findMany({
       where,
       include:{linkedTo: true, assignedTo: true},
