@@ -16,6 +16,7 @@ export async function POST(req: Request) {
     const parsed = createTodoSchema.safeParse({
       ...raw,
       linkedId: session.user.id,
+      assignedId: raw?.assignedTo || session.user.id,
     });
 
     if (!parsed.success) {
