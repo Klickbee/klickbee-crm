@@ -4,6 +4,8 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/feature/auth/lib/auth";
 import { prisma } from "@/libs/prisma";
 import { createDealSchema, updateDealSchema } from "../schema/dealSchema";
+import { withActivityLogging } from "@/libs/apiUtils";
+import { ActivityAction } from "@prisma/client";
 
 export async function POST(req: Request) {
   try {
@@ -26,29 +28,46 @@ export async function POST(req: Request) {
       );
     }
 
-    const data = parsed.data;
+    const parsedData = parsed.data;
+    const data = {
+        dealName: parsedData.dealName,
+        stage: parsedData.stage,
+        amount: parsedData.amount,
+        currency: parsedData.currency,
+        ownerId: parsedData.ownerId,
+        companyId: parsedData.companyId ?? null,
+        contactId: parsedData.contactId ?? null,
+        closeDate: parsedData.closeDate ? new Date(parsedData.closeDate) : null,
+        tags: parsedData.tags ?? [],
+        notes: parsedData.notes ?? null,
+        files: parsedData.files ?? undefined,
 
-    const created = await prisma.deal.create({
-      data: {
-        dealName: data.dealName,
-        stage: data.stage,
-        amount: data.amount,
-        currency: data.currency,
-        ownerId: data.ownerId,
-        companyId: data.companyId ?? null,
-        contactId: data.contactId ?? null,
-        closeDate: data.closeDate ? new Date(data.closeDate) : null,
-        tags: data.tags ?? [],
-        notes: data.notes ?? null,
-        files: data.files ?? undefined,
+      }
 
-      },
-       include: {
-    owner: true,
-    company: true,
-    contact: true, 
-  },
-    });
+    const created = await withActivityLogging(
+          async () => {
+            return await prisma.deal.create({
+              data,
+              include: {
+                owner: true,
+                company: true,
+                contact: true, 
+              },
+            });
+          },
+          {
+            entityType: 'Deal',
+            entityId: '',
+            action: ActivityAction.Create,
+            userId: session.user.id,
+            getCurrentData: async (result: any) => {
+              return result;
+            },
+            metadata: {
+              createdFields: Object.keys(data),
+            },
+          }
+      );
 
     return NextResponse.json(created, { status: 201 });
   } catch (err) {
@@ -111,7 +130,7 @@ export async function handleMethodWithId(req: Request, id: string) {
       const body = await req.json();
 
       // ✅ validate with zod
-      const parsed = updateDealSchema.safeParse({ ...body, id });
+      const parsed = updateDealSchema.safeParse({ ...body, id, ownerId: body.owner.id });
       if (!parsed.success) {
         return NextResponse.json(
           { error: "Validation error", details: parsed.error.flatten() },
@@ -119,25 +138,51 @@ export async function handleMethodWithId(req: Request, id: string) {
         );
       }
 
-      const data = parsed.data;
+      const parsedData = parsed.data;
+      const data = {
+          dealName: parsedData.dealName,
+          companyId: parsedData.companyId,
+          contactId: parsedData.contactId ?? undefined,
+          ownerId: parsedData.ownerId,
+          stage: parsedData.stage,
+          amount: parsedData.amount,
+          currency: parsedData.currency,
+          closeDate: parsedData.closeDate ? new Date(parsedData.closeDate) : undefined,
+          tags: parsedData.tags ?? undefined,
+          notes: parsedData.notes ?? undefined,
+          files: parsedData.files ?? undefined,
+        }
 
-      const updated = await prisma.deal.update({
-        where: { id },
-        data: {
-          dealName: data.dealName,
-          companyId: data.companyId,
-          contactId: data.contactId ?? undefined,
-          stage: data.stage,
-          amount: data.amount,
-          currency: data.currency,
-          closeDate: data.closeDate ? new Date(data.closeDate) : undefined,
-          tags: data.tags ?? undefined,
-          notes: data.notes ?? undefined,
-          files: data.files ?? undefined,
+      const getPreviousData = async () => {
+            const deal = await prisma.deal.findUnique({
+              where: { id: id },
+            });
+            return deal;
+          };
+      console.log(await getPreviousData())
+      const updatedDeal = await withActivityLogging(
+        async () => {
+          return await prisma.deal.update({
+            where: { id: id },
+            data,
+          });
         },
-      });
+        {
+          entityType: 'Deal',
+          entityId: id,
+          action: ActivityAction.Update,
+          userId: session.user.id,
+          getPreviousData,
+          getCurrentData: async (result: any) => {
+            return result;
+          },
+          metadata: {
+            updatedFields: Object.keys(data),
+          },
+        }
+      );
 
-      return NextResponse.json(updated);
+      return NextResponse.json(updatedDeal);
     }
 
     if (method === "DELETE") {
@@ -145,7 +190,29 @@ export async function handleMethodWithId(req: Request, id: string) {
       if (!session?.user?.id)
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-      await prisma.deal.delete({ where: { id } });
+      const getPreviousData = async () => {
+            return await prisma.deal.findUnique({
+              where: { id },
+            });
+          };
+      
+      const deletedDeal = await withActivityLogging(
+        async () => {
+          return await prisma.deal.delete({
+            where: { id },
+          });
+        },
+        {
+          entityType: 'Deal',
+          entityId: id,
+          action: ActivityAction.Delete,
+          userId: session.user.id,
+          getPreviousData,
+          metadata: {
+            deletedAt: new Date().toISOString(),
+          },
+        }
+      );
       return NextResponse.json({ success: true });
     }
 
