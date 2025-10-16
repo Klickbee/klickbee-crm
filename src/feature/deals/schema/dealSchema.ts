@@ -1,7 +1,7 @@
 // src/feature/deals/schemas/dealSchema.ts
 import { z } from "zod";
 
-export const dealStageEnum = z.enum(["New", "Qualified", "Proposal", "Won", "Lost"]);
+export const dealStageEnum = z.enum(["New", "Contacted", "Proposal", "Negotiation", "Won", "Lost"]);
 export const currencyEnum = z.enum(["USD", "EUR", "GBP"]);
 
 export const createDealSchema = z.object({

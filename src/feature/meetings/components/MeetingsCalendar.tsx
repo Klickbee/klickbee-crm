@@ -31,6 +31,10 @@ export const MeetingsCalendar: React.FC = () => {
     closeMeetingDetail,
     openAddMeeting,
     closeAddMeeting,
+    loading,
+    isDeleting,
+    isEditing,
+    isExporting,
   } = useMeetings();
   const searchParams = useSearchParams();
   
@@ -218,6 +222,9 @@ const getHeaderDate = () => {
           console.log('Reschedule meeting:', id);
         }}
         onDelete={deleteMeeting}
+        isDeleting={isDeleting}
+        isEditing={isEditing}
+        isExporting={isExporting}
       />
     </div>
   );

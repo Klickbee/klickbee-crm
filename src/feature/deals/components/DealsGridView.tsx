@@ -17,18 +17,26 @@ export default function DealsGridView() {
   const [isDetailOpen, setIsDetailOpen] = React.useState(false)
   const [showModal, setShowModal] = React.useState<boolean>(false);
   const [editDeal, setEditDeal] = React.useState<Deal | null>(null);
+  const [isDeleting, setIsDeleting] = React.useState(false);
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [isExporting, setIsExporting] = React.useState(false);
   const { filteredDeals, fetchDeals, loading,  deleteDeal ,updateDeal ,exportSingleDeal, initializeOwnerOptions } = useDealStore();
   const { fetchUsers, users } = useUserStore();
 
-useEffect(() => {
-    // Load users then init owner options
+ const didInitRef = React.useRef(false);
+  useEffect(() => {
+    if (didInitRef.current) return;
+    didInitRef.current = true;
     fetchUsers();
-  }, [fetchUsers])
-
-useEffect(() => {
     fetchDeals();
-    initializeOwnerOptions();
-  }, [fetchDeals, initializeOwnerOptions, users])
+  }, [fetchUsers, fetchDeals]);
+
+  // Initialize owner options once users are available
+  useEffect(() => {
+    if (users && users.length > 0 ) {
+      initializeOwnerOptions();
+    }
+  }, [users.length, initializeOwnerOptions]);
   
 let moveInProgress = false;
 
@@ -157,17 +165,43 @@ const handleMove = React.useCallback(async  ({ itemId, fromKey, toKey }: { itemI
         onClose={closeDetail}
 
         onDelete={async (id) => {
-          await deleteDeal(id)
-          closeDetail()
+          setIsDeleting(true);
+          try {
+            await deleteDeal(id);
+            closeDetail();
+          } catch (error) {
+            console.error('Error deleting deal:', error);
+          } finally {
+            setIsDeleting(false);
+          }
         }}
-        onEdit={(deal: Deal) => handleEditDeal(deal)}
+        onEdit={async (deal) => {
+          setIsEditing(true);
+          try {
+            handleEditDeal(deal);
+          } catch (error) {
+            console.error('Error editing deal:', error);
+          } finally {
+            setIsEditing(false);
+          }
+        }}
         onAddNotes={() => {
         
           toast("Add notes functionality coming soon!");
         }}
-        onExport={(id: string) => {
-          exportSingleDeal(id);
+        onExport={async (id: string) => {
+          setIsExporting(true);
+          try {
+            await exportSingleDeal(id);
+          } catch (error) {
+            console.error('Error exporting deal:', error);
+          } finally {
+            setIsExporting(false);
+          }
         }}
+        isDeleting={isDeleting}
+        isEditing={isEditing}
+        isExporting={isExporting}
       />
 
       <DealModal open={showModal} onClose={() => setShowModal(false)} mode={editDeal ? 'edit' : 'add'} deal={editDeal || undefined} />

@@ -8,8 +8,8 @@ import AvatarInitials from "@/components/ui/AvatarInitials";
 const renderStatusBadge = (status?: Company['status']) => {
   const cls: Record<NonNullable<Company['status']>, string> = {
     Active: 'bg-green-100 text-green-700',
-    'Follow Up': 'bg-[#FEF3C7] text-[#92400E]',
-    'inactive': 'bg-[#FEE2E2] text-[#B91C1C]',
+    FollowUp: 'bg-[#FEF3C7] text-[#92400E]',
+    inactive: 'bg-[#FEE2E2] text-[#B91C1C]',
   };
 
   const classes = status ? cls[status] : 'bg-gray-100 text-gray-500';
@@ -74,6 +74,7 @@ export default function CompanieDetail({
       title={company.fullName ?? "Company Details"}
       notes={company.notes ??undefined}
       details={details}
+      attachments={company.files?.map(file => file.url) ?? []}
       onClose={onClose}
       onDelete={onDelete ? () => onDelete(company.id) : undefined}
       onEdit={onEdit ? () => onEdit(company as Company) : undefined}

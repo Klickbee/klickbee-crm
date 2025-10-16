@@ -1,4 +1,4 @@
-export type StatusType = 'Active' | 'Follow Up' | 'inactive';
+export type StatusType = 'Active' | 'FollowUp' | 'inactive';
 
 export type Company = {
   id: string;
@@ -7,7 +7,7 @@ export type Company = {
   fullName?: string;  // Changed from companyname to match prisma schema
   email?: string;
   phone?: string;
- owner?: {
+  owner?: {
     id: string;
     name?: string;
     email: string;
@@ -16,6 +16,7 @@ export type Company = {
   status?: StatusType;
   lastContact?: string;
   tags?: string;
+  files?: Array<{ url: string; name: string; size: number }>;
   createdAt?: string;
   updatedAt?: string;
   notes?:string

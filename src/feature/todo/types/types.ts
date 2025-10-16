@@ -8,7 +8,7 @@ export interface TaskData {
   dueDate?: string;
   lastUpdate?: string;
   notes?: string;
-  files?: string[];
+  files?: Array<{ url: string; name: string; size: number }>;
   ownerId?: string;
   createdAt?: string;
   updatedAt?: string;

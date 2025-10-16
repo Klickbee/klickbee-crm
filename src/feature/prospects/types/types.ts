@@ -7,6 +7,7 @@ export type Prospect = {
   status: 'New' | 'Cold' | 'Qualified' | 'Warmlead' | 'Converted' | 'Notintrested';
   tags?: string[];
   notes?: string | null;
+  files?: Array<{ url: string; name: string; size: number }>;
   ownerId: string;
   userId: string;
   owner?: {

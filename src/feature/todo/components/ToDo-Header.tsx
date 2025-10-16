@@ -32,9 +32,15 @@ type TodoHeaderProps = {
   selectedTodos?: string[];
   selectedTodoRows?: TaskData[];
   onClearSelection?: () => void;
+  isDeleting?: boolean;
+  isEditing?: boolean;
+  isExporting?: boolean;
+  setIsDeleting?: (value: boolean) => void;
+  setIsEditing?: (value: boolean) => void;
+  setIsExporting?: (value: boolean) => void;
 }
 
-export function TodoHeader({ view, setView, selectedTodos = [], selectedTodoRows = [], onClearSelection }: TodoHeaderProps) {
+export function TodoHeader({ view, setView, selectedTodos = [], selectedTodoRows = [], onClearSelection, isDeleting = false, isEditing = false, isExporting = false, setIsDeleting, setIsEditing, setIsExporting }: TodoHeaderProps) {
   const { filters, setFilters, applyFilters } = useTodoStore();
   // Derive owner options from store filters
   const ownerOptions = filters.owner.map(o => ({ value: o.id, label: o.label }));
@@ -83,24 +89,39 @@ export function TodoHeader({ view, setView, selectedTodos = [], selectedTodoRows
         setEditTask(null);
       };
 
-  const handleBulkAction = (action: string) => {
+  const handleBulkAction = async (action: string) => {
     switch (action) {
       case 'delete':
         if (selectedTodos.length > 0 && confirm(`Are you sure you want to delete ${selectedTodos.length} task(s)?`)) {
-          bulkDeleteTodos(selectedTodos);
-          onClearSelection?.();
+          setIsDeleting?.(true);
+          try {
+            await bulkDeleteTodos(selectedTodos);
+            onClearSelection?.();
+          } finally {
+            setIsDeleting?.(false);
+          }
         }
         break;
       case 'mark-done':
         if (selectedTodos.length > 0) {
-          bulkUpdateTodos(selectedTodos, { status: 'Done' });
-          onClearSelection?.();
+          setIsEditing?.(true);
+          try {
+            await bulkUpdateTodos(selectedTodos, { status: 'Done' });
+            onClearSelection?.();
+          } finally {
+            setIsEditing?.(false);
+          }
         }
         break;
       case 'mark-in-progress':
         if (selectedTodos.length > 0) {
-          bulkUpdateTodos(selectedTodos, { status: 'InProgress' });
-          onClearSelection?.();
+          setIsEditing?.(true);
+          try {
+            await bulkUpdateTodos(selectedTodos, { status: 'InProgress' });
+            onClearSelection?.();
+          } finally {
+            setIsEditing?.(false);
+          }
         }
         break;
       case 'assign-to-me':

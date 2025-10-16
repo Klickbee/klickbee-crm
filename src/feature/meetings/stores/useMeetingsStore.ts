@@ -5,6 +5,9 @@ import { Meeting } from "../types/meeting";
 interface MeetingStore {
   meetings: Meeting[];
   loading: boolean;
+  isDeleting: boolean;
+  isEditing: boolean;
+  isExporting: boolean;
   error: string | null;
 
   fetchMeetings: (ownerId?: string) => Promise<void>;
@@ -24,6 +27,9 @@ const convertDates = (meeting: any): Meeting => ({
 export const useMeetingsStore = create<MeetingStore>((set, get) => ({
   meetings: [],
   loading: false,
+  isDeleting: false,
+  isEditing: false,
+  isExporting: false,
   error: null,
 
   // 🧠 Fetch meetings from API
@@ -71,6 +77,7 @@ export const useMeetingsStore = create<MeetingStore>((set, get) => ({
 
   // ✏️ Update a meeting
   updateMeeting: async (id, meeting) => {
+    set({ isEditing: true });
     try {
       const res = await fetch(`/api/admin/meetings/${id}`, {
         method: "PATCH",
@@ -94,11 +101,14 @@ export const useMeetingsStore = create<MeetingStore>((set, get) => ({
       console.error("updateMeeting error:", err);
       toast.error(err.message);
       set({ error: err.message });
+    } finally {
+      set({ isEditing: false });
     }
   },
 
   // ❌ Delete a meeting
   deleteMeeting: async (id) => {
+    set({ isDeleting: true });
     try {
       const res = await fetch(`/api/admin/meetings/${id}`, {
         method: "DELETE",
@@ -113,6 +123,8 @@ export const useMeetingsStore = create<MeetingStore>((set, get) => ({
       console.error("deleteMeeting error:", err);
       toast.error(err.message);
       set({ error: err.message });
+    } finally {
+      set({ isDeleting: false });
     }
   },
 }));

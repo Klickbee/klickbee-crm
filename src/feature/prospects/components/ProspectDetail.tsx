@@ -33,6 +33,9 @@ interface ProspectDetailProps {
   onDelete?: (id: string) => void;
   onAddNotes?: (id: string) => void;
   onExport?: (id: string) => void;
+  isDeleting?: boolean;
+  isEditing?: boolean;
+  isExporting?: boolean;
 }
 
 export default function ProspectDetail({
@@ -43,6 +46,9 @@ export default function ProspectDetail({
   onEdit,
   onAddNotes,
   onExport,
+  isDeleting = false,
+  isEditing = false,
+  isExporting = false,
 }: ProspectDetailProps) {
   if (!prospect) return null;
 
@@ -84,12 +90,16 @@ export default function ProspectDetail({
       title={prospect.fullName ?? "Prospect Details"}
       notes={prospect.notes ??undefined}
       details={details}
+      attachments={prospect.files?.map(file => file.url) ?? []}
       onClose={onClose}
       onDelete={onDelete ? () => onDelete(prospect.id) : undefined}
         onEdit={onEdit ? () => onEdit(prospect as Prospect) : undefined}
            editLabel="Edit Prospect"
       onAddNotes={onAddNotes ? () => onAddNotes(prospect.id) : undefined}
       onExport={onExport ? () => onExport(prospect.id) : undefined}
+      isDeleting={isDeleting}
+      isEditing={isEditing}
+      isExporting={isExporting}
     />
   );
 }

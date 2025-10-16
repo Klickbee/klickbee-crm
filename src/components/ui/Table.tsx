@@ -44,12 +44,13 @@ export interface TableRowProps<T = any> {
 // Badge component for stage indicators
 const Badge: React.FC<{ 
   children: React.ReactNode
-  variant: 'New' | 'Contacted' | 'Proposal' | 'Won' | 'Lost'
+  variant: 'New' | 'Contacted' | 'Proposal' | 'Negotiation' | 'Won' | 'Lost'
 }> = ({ children, variant }) => {
   const variantClasses = {
     New: 'bg-blue-100 text-blue-800',
     Contacted: 'bg-purple-100 text-purple-800',
     Proposal: 'bg-orange-100 text-orange-800',
+    Negotiation: 'bg-yellow-100 text-yellow-800',
     Won: 'bg-green-100 text-green-800',
     Lost: 'bg-red-100 text-red-800'
   }
@@ -161,7 +162,7 @@ export const Table = <T,>({
   onRowClick,
   className = '',
   loading = false,
-  emptyText = '-'
+  emptyText = 'No Data Yet'
 }: TableProps<T>) => {
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null)
   const [selectedKeys, setSelectedKeys] = useState<string[]>([])
@@ -318,7 +319,7 @@ export const Table = <T,>({
               <tr>
                 <td 
                   colSpan={columns.length + (selectable ? 2 : 1)} 
-                  className="px-4 py-8 text-center text-gray-500"
+                  className="px-4 py-8 text-center  text-sm "
                 >
                   {emptyText}
                 </td>

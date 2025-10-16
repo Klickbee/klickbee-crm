@@ -11,6 +11,7 @@ import { useUserStore } from "@/feature/user/store/userStore"
 import SearchableDropdown from "@/components/ui/SearchableDropdown"
 import toast from "react-hot-toast"
 import { TaskData } from "../types/types"
+import CalendarDropDown from "@/components/ui/CalendarDropDown"
 
 type TodoFormValues = {
     taskName: string
@@ -224,11 +225,19 @@ export default function TodoForm({
                         </div>
 
                         <FieldBlock name="dueDate" label="Due Date">
-                            <Field
-                                id="dueDate"
-                                name="dueDate"
-                                type="date"
-                                className="w-full rounded-md text-sm shadow-sm border  border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
+        
+                        
+                     <CalendarDropDown
+                                label={values.dueDate ? new Date(values.dueDate).toLocaleDateString('en-US', {
+                                    month: 'long',
+                                    day: 'numeric',
+                                    year: 'numeric'
+                                }) : "Select due Date"}
+                                value={values.dueDate ? new Date(values.dueDate) : null}
+                                buttonClassName="min-w-[360px] bg-blue-50 hover:bg-blue-100"
+                                onChange={(date) => setFieldValue("dueDate", date.toISOString().split('T')[0])}
+                                          triggerIcon="calendar"
+
                             />
                         </FieldBlock>
                         <FieldBlock name="notes" label="Notes">

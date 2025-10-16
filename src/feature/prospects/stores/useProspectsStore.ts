@@ -10,6 +10,9 @@ interface ProspectStore {
   prospects: Prospect[];
   filteredProspects: Prospect[];
   loading: boolean;
+  isDeleting: boolean;
+  isEditing: boolean;
+  isExporting: boolean;
   error: string | null;
   filters: FilterData;
 
@@ -34,6 +37,9 @@ export const useProspectsStore = create<ProspectStore>((set, get) => ({
   prospects: [],
   filteredProspects: [],
   loading: false,
+  isDeleting: false,
+  isEditing: false,
+  isExporting: false,
   error: null,
   filters: {
     status: [
@@ -243,6 +249,7 @@ export const useProspectsStore = create<ProspectStore>((set, get) => ({
 
   // ✏️ Update a prospect
   updateProspect: async (id, prospect) => {
+    set({ isEditing: true });
     try {
       const res = await fetch(`/api/admin/prospects/${id}`, {
         method: "PATCH",
@@ -265,11 +272,14 @@ export const useProspectsStore = create<ProspectStore>((set, get) => ({
       console.error("updateProspect error:", err);
       toast.error(err.message);
       set({ error: err.message });
+    } finally {
+      set({ isEditing: false });
     }
   },
 
   // ❌ Delete a prospect
   deleteProspect: async (id) => {
+    set({ isDeleting: true });
     try {
       const res = await fetch(`/api/admin/prospects/${id}`, {
         method: "DELETE",
@@ -285,6 +295,8 @@ export const useProspectsStore = create<ProspectStore>((set, get) => ({
       console.error("deleteProspect error:", err);
       toast.error(err.message);
       set({ error: err.message });
+    } finally {
+      set({ isDeleting: false });
     }
   },
 

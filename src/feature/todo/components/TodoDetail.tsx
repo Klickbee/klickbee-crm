@@ -23,6 +23,9 @@ interface TodoDetailProps {
   onEdit?: (task: TaskData) => void;
   onAddNotes?: (id: string) => void;
   onExport?: (id: string) => void;
+  isDeleting?: boolean;
+  isEditing?: boolean;
+  isExporting?: boolean;
 }
 
 // Helper function to render status badge
@@ -82,6 +85,9 @@ export default function TodoDetail({
   onEdit,
   onAddNotes,
   onExport,
+  isDeleting = false,
+  isEditing = false,
+  isExporting = false,
 }: TodoDetailProps) {
   if (!task) return null;
 
@@ -116,9 +122,13 @@ export default function TodoDetail({
       title={task.taskName ?? "Task Details"}
       notes={task.notes ??undefined}
       details={details}
+      attachments={task.files?.map(file => file.url) ?? []}
       onClose={onClose}
       onDelete={onDelete ? () => onDelete(task.id) : undefined}
       onEdit={onEdit ? () => onEdit(task as TaskData) : undefined}
+      isDeleting={isDeleting}
+      isEditing={isEditing}
+      isExporting={isExporting}
     />
   );
 }

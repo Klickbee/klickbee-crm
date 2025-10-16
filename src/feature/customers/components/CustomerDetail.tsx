@@ -67,6 +67,7 @@ export default function CustomerDetail({
       title={customer.fullName ?? "Customer Details"}
       notes={customer.notes ??undefined}
       details={details}
+      attachments={customer.files?.map(file => file.url) ?? []}
       onClose={onClose}
       onDelete={onDelete ? () => onDelete(customer.id) : undefined}
       onEdit={onEdit ? () => onEdit(customer as Customer) : undefined}

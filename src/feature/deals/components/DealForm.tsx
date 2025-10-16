@@ -15,6 +15,7 @@ import { useUserStore } from '@/feature/user/store/userStore';
 import InputWithDropDown from "@/components/ui/InputWithDropDown"
 import toast from "react-hot-toast"
 import { Deal } from '../types'
+import CalendarDropDown from "@/components/ui/CalendarDropDown"
 
 type DealFormValues = {
   dealName: string
@@ -33,8 +34,8 @@ type DealFormValues = {
 const schema = Yup.object({
     dealName: Yup.string().trim().required("Deal Name is required"),
     company: Yup.string().trim().required("Company is required"),
-    contact: Yup.string().trim(),
-    stage: Yup.string().oneOf(["New", "Contacted", "Proposal", "negotiation", "Won", "Lost"]).required("Stage is required"),
+    contact: Yup.string().trim(),    stage: Yup.string().oneOf(["New", "Contacted",  "Proposal", "Negotiation",  "Won", "Lost"]).required("Stage is required"),
+
     amount: Yup.number()
         .typeError("Enter a valid number")
         .min(0, "Amount cannot be negative")
@@ -236,9 +237,9 @@ export default function DealForm({
                                     className="w-full text-sm rounded-md shadow-sm border  border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
                                 >
                                     <option value="New">New</option>
-                                    <option value="contacted">Contacted</option>
+                                    <option value="Contacted">Contacted</option>
                                     <option value="Proposal">Proposal Sent</option>
-                                    <option value="negotiation">Negotiation</option>
+                                    <option value="Negotiation">Negotiation</option>
                                     <option value="Won">Won</option>
                                     <option value="Lost">Lost</option>
                                 </Field>
@@ -261,14 +262,22 @@ export default function DealForm({
                             />
                         </FieldBlock>
 
-                        <FieldBlock name="closeDate" label="Close Date">
-                            <Field
-                                id="closeDate"
-                                name="closeDate"
-                                type="date"
-                                className="w-full rounded-md text-sm shadow-sm border  border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
-                            />
-                        </FieldBlock>
+                        
+                            <FieldBlock name="closeDate" label="Close Date">
+                                <CalendarDropDown
+                                    label={values.closeDate ? new Date(values.closeDate).toLocaleDateString('en-US', {
+                                        month: 'long',
+                                        day: 'numeric',
+                                        year: 'numeric'
+                                    }) : "Select closed Date"}
+                                    value={values.closeDate ? new Date(values.closeDate) : null}
+                                      buttonClassName="min-w-[360px] bg-blue-50 hover:bg-blue-100"
+                                       triggerIcon="calendar"
+
+                                    onChange={(date) => setFieldValue("closeDate", date.toISOString().split('T')[0])}
+                                />
+                            </FieldBlock>
+                       
 
                         <TagInput name='Tags' values={values.tags} setValue={(values: string[]) => setFieldValue('tags', values)} input={tagInput} setInput={(value: string) => setTagInput(value)} />
                         <ErrorMessage name="tags" component="div" className="text-sm text-red-600" />

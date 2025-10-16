@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { Delete, Download, Edit, Plus, Trash2, X } from 'lucide-react';
+import { Delete, Download, Edit, Loader, Plus, Trash2, X } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import { Button } from '../ui/Button';
 
@@ -25,6 +25,9 @@ interface DetailModalProps {
   onAddNotes?: () => void;
   onExport?: () => void;
   editLabel?: string;
+  isDeleting?: boolean;
+  isEditing?: boolean;
+  isExporting?: boolean;
 }
 
 const DetailModal: React.FC<DetailModalProps> = ({
@@ -42,8 +45,28 @@ const DetailModal: React.FC<DetailModalProps> = ({
   onAddNotes,
   onExport,
   editLabel,
+  isDeleting = false,
+  isEditing = false,
+  isExporting = false,
 }) => {
   if (!isOpen) return null;
+
+  const handleFileDownload = async (fileUrl: string) => {
+    try {
+      // Create a temporary link element to trigger download
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = fileUrl.split('/').pop() || 'file'; // Extract filename from URL
+      link.target = '_blank';
+
+      // Append to body, click, and remove
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+    }
+  };
 
   return (
     <Modal open={isOpen} onClose={onClose}>
@@ -108,12 +131,16 @@ const DetailModal: React.FC<DetailModalProps> = ({
                 {attachments.map((file, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-md"
+                    className="flex items-center justify-between  px-4 py-3  gap-4"
                   >
-                    <span className="text-sm text-blue-600 truncate">{file}</span>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm text-blue-600 block truncate">{file}</span>
+                    </div>
                     <button
-                      className="text-gray-600 hover:text-gray-800"
+                      onClick={() => handleFileDownload(file)}
+                      className="flex items-center text-gray-600 border border-[var(--border-gray)] px-3 rounded-md shadow-sm text-sm py-1 hover:text-gray-800 whitespace-nowrap"
                     >
+                      <Download className="w-4 h-4 mr-2" />
                       Download
                     </button>
                   </div>
@@ -158,7 +185,11 @@ const DetailModal: React.FC<DetailModalProps> = ({
                 onClick={onDelete}
                 className="p-1 text-sm font-medium rounded-lg text-red-500 border border-red-500"
               >
-                <Trash2 size={15}/>
+                {isDeleting ? (
+                  <Loader className="animate-spin" size={15} />
+                ) : (
+                  <Trash2 size={15} />
+                )}
               </Button>
             )}
             <div className="flex gap-2">
@@ -167,17 +198,26 @@ const DetailModal: React.FC<DetailModalProps> = ({
                   onClick={onExport}
                   className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50"
                 >
-                  <img src="\icons\File.svg" alt="Export" className='h-4 w-4' />
-                  Export        
-                   </Button>
+                  {isExporting ? (
+                    <Loader className="animate-spin" size={15} />
+                  ) : (
+                    <img src="\icons\File.svg" alt="Export" className='h-4 w-4' />
+                  )}
+                  Export
+                </Button>
               )}
               {onEdit && (
                 <Button
                   onClick={onEdit}
                   className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 whitespace-nowrap"
                 >
-                  <Edit size={15}/>
-                  {editLabel || "Edit Deal"}                </Button>
+                  {isEditing ? (
+                    <Loader className="animate-spin" size={15} />
+                  ) : (
+                    <Edit size={15} />
+                  )}
+                  {editLabel || "Edit Deal"}
+                </Button>
               )}
               {onReschedule && (
                 <Button

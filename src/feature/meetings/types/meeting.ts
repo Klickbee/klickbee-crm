@@ -13,7 +13,7 @@ export interface Meeting {
   meetingLink?: string;
   repeatFrequency?: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
   status?: MeetingStatus;
-  files?: File[];
+  files?: Array<{ url: string; name: string; size: number }>;
   repeatMeeting?: boolean;
   frequency?: 'Daily' | 'Weekly' | 'Monthly' | 'Yearly';
   repeatOn?: string;

@@ -22,7 +22,7 @@ const searchableCategories: (keyof FilterData)[] = ["owner", "tags"];
 export function DealsHeader({ view, setView, selectedDeals = [], selectedDealRows = [], onClearSelection }: DealsHeaderProps) {
   const [selectedUser, setSelectedUser] = useState("Closed")
   const [showFilter, setShowFilter] = useState(false)
-  const { exportAllDeals, importDealsFromExcel, exportSelectedDeals, deleteDeal, filters, setFilters, applyFilters } = useDealStore();
+  const { exportAllDeals, importDealsFromExcel, exportSelectedDeals, deleteDeal, filters, setFilters, applyFilters, setClosedDateFilter } = useDealStore();
   const [searchQueries, setSearchQueries] = useState<Record<string, string>>({});
   const [showNewDealer, setShowNewDealer] = useState<boolean>(false);
   const [editDeal, setEditDeal] = useState<Deal | null>(null);
@@ -138,7 +138,10 @@ export function DealsHeader({ view, setView, selectedDeals = [], selectedDealRow
         {/* Dropdown */}
         <CalendarDropDown
           value={closedDate}
-          onChange={setClosedDate}
+          onChange={(date) => {
+            setClosedDate(date);
+            setClosedDateFilter(date);
+          }}
           className="h-[36px] min-w-[120px]"
         />
 

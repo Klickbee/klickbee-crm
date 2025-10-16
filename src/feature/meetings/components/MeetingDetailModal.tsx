@@ -21,6 +21,9 @@ interface MeetingDetailModalProps {
   onReschedule?: (id: string) => void;
   onAddNotes?: (id: string) => void;
   onExport?: (id: string) => void;
+  isDeleting?: boolean;
+  isEditing?: boolean;
+  isExporting?: boolean;
 }
 
 // Helper function to render status badge
@@ -49,6 +52,9 @@ export const MeetingDetailModal: React.FC<MeetingDetailModalProps> = ({
   onReschedule,
   onAddNotes,
   onExport,
+  isDeleting = false,
+  isEditing = false,
+  isExporting = false,
 }) => {
   if (!meeting) return null;
 
@@ -194,10 +200,7 @@ export const MeetingDetailModal: React.FC<MeetingDetailModalProps> = ({
               className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-md"
             >
               <span className="text-sm text-blue-600">{typeof file === 'string' ? file : file.name || `File ${idx + 1}`}</span>
-              <button className="flex items-center text-gray-600 hover:text-gray-800">
-                <Download className="w-4 h-4 mr-1" />
-                Download
-              </button>
+
             </div>
           ))}
         </div>
@@ -211,11 +214,15 @@ export const MeetingDetailModal: React.FC<MeetingDetailModalProps> = ({
       title={meeting.title ?? "Meeting Details"}
       notes={meeting.notes}
       details={details}
+      attachments={meeting.files?.map(file => file.url) ?? []}
       onClose={onClose}
       onDelete={onDelete && meeting.id ? () => onDelete(meeting.id!) : undefined}
       onEdit={onEdit ? () => onEdit(meeting as Meeting) : undefined}
       editLabel="Edit Meeting"
       onReschedule={onReschedule && meeting.id ? () => onReschedule(meeting.id!) : undefined}
+      isDeleting={isDeleting}
+      isEditing={isEditing}
+      isExporting={isExporting}
     />
   );
 };

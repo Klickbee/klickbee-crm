@@ -10,6 +10,7 @@ import UploadButton from "@/components/ui/UploadButton";
 import { Button } from "@/components/ui/Button";
 import { Meeting } from "../types/meeting";
 import SearchableDropdown from "@/components/ui/SearchableDropdown";
+import CalendarDropDown from "@/components/ui/CalendarDropDown";
 
 // ✅ Enhanced Yup validation with comprehensive rules
 const MeetingSchema = Yup.object().shape({
@@ -287,13 +288,30 @@ export default function MeetingForm({ onSubmit, onClose, mode = 'add', initialDa
 
           {/* Date & Time */}
           <div className="grid grid-cols-3 gap-4 p-4">
-            <TextInput label="Date" type="date" name="startDate" />
+              <div>
+             <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">
+                Date
+              </label>
+              <CalendarDropDown
+              label={values.startDate ? new Date(values.startDate).toLocaleDateString('en-US', {
+                  month: 'long',
+                  day: 'numeric',
+                  year: 'numeric'
+              }) : "Select  Date"}
+              value={values.startDate ? new Date(values.startDate) : null}
+                buttonClassName=" h-10 mt-1 w-30 text-sm whitespace-nowrap"
+          triggerIcon="calendar"
+
+              onChange={(date) => setFieldValue("startDate", date.toISOString().split('T')[0])}
+          />
+          </div>
             <TextInput label="Start Time" type="time" name="startTime" />
             <TextInput label="End Time" type="time" name="endTime" />
           </div>
 
           {/* Repeat Meeting */}
           <div className="p-4">
+
             <CheckboxInput name="repeatMeeting" label="Repeat this meeting" />
             {values.repeatMeeting && (
               <div>

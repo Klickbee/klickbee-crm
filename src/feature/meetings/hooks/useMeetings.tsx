@@ -6,6 +6,9 @@ export const useMeetings = () => {
   const {
     meetings,
     loading,
+    isDeleting,
+    isEditing,
+    isExporting,
     error,
     fetchMeetings,
     addMeeting,
@@ -51,6 +54,9 @@ export const useMeetings = () => {
   return {
     meetings,
     loading,
+    isDeleting,
+    isEditing,
+    isExporting,
     error,
     addMeeting,
     updateMeeting,

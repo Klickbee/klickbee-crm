@@ -14,6 +14,9 @@ interface DealDetailProps {
   onEdit?: (deal: Deal) => void;
   onAddNotes?: (id: string) => void;
   onExport?: (id: string) => void;
+  isDeleting?: boolean;
+  isEditing?: boolean;
+  isExporting?: boolean;
 }
 
 export default function DealDetail({
@@ -24,6 +27,9 @@ export default function DealDetail({
   onEdit,
   onAddNotes,
   onExport,
+  isDeleting = false,
+  isEditing = false,
+  isExporting = false,
 }: DealDetailProps) {
   if (!deal) return null;
 
@@ -56,9 +62,12 @@ export default function DealDetail({
       onClose={onClose}
       onDelete={onDelete ? () => onDelete(deal.id) : undefined}
       onEdit={onEdit ? () => onEdit(deal as Deal) : undefined}
+      onExport={onExport ? () => onExport(deal.id) : undefined}
       editLabel="Edit Deal"
       onAddNotes={onAddNotes ? () => onAddNotes(deal.id) : undefined}
-      onExport={onExport ? () => onExport(deal.id) : undefined}
+      isDeleting={isDeleting}
+      isEditing={isEditing}
+      isExporting={isExporting}
     />
   );
 }

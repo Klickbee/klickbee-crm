@@ -13,11 +13,13 @@ interface DealStore {
   loading: boolean;
   error: string | null;
   filters: FilterData;
+  closedDateFilter: Date | null;
 
   fetchDeals: (ownerId?: string) => Promise<void>;
   setFilters: (filters: FilterData) => void;
   applyFilters: () => void;
   resetFilters: () => void;
+  setClosedDateFilter: (date: Date | null) => void;
   generateOwnerOptions: () => any[];
   initializeOwnerOptions: () => void;
   addDeal: (deal: Omit<Deal, "id" | "ownerId" | "createdAt">) => Promise<void>;
@@ -56,6 +58,7 @@ export const useDealStore = create<DealStore>((set, get) => ({
       { id: "architecture", label: "Architecture", checked: false },
     ],
   },
+  closedDateFilter: null,
 
   // Build owner filter options
   generateOwnerOptions: () => {
@@ -84,8 +87,13 @@ export const useDealStore = create<DealStore>((set, get) => ({
     set({ filters: newFilters });
   },
 
+  setClosedDateFilter: (date: Date | null) => {
+    set({ closedDateFilter: date });
+    get().applyFilters();
+  },
+
   applyFilters: () => {
-    const { deals, filters } = get();
+    const { deals, filters, closedDateFilter } = get();
     let filtered = [...deals];
 
     // Status filter -> map to stage field
@@ -94,7 +102,7 @@ export const useDealStore = create<DealStore>((set, get) => ({
       const map: Record<string, string> = {
         new: 'New',
         contacted: 'Contacted',
-        proposal: 'Proposal Sent',
+        proposal: 'Proposal',
         negotiation: 'Negotiation',
         won: 'Won',
         lost: 'Lost',
@@ -110,8 +118,8 @@ export const useDealStore = create<DealStore>((set, get) => ({
       filtered = filtered.filter((d: any) =>
         activeOwners.some((f: any) => {
           if (f.id === "me") {
-            const currentId = "current-user-id"; // TODO: wire real current user id
-            return d.ownerId === currentId;
+            const currentUserId = useUserStore.getState().getCurrentUserId();
+            return d.ownerId === currentUserId;
           }
           // Store fetch maps owner to name string; also check ownerId if present
           return d.ownerId === f.id || d.owner === f.label;
@@ -128,6 +136,17 @@ export const useDealStore = create<DealStore>((set, get) => ({
           : (typeof d.tags === 'string' ? d.tags.split(',').map((t: string) => t.trim()) : []);
         const tagsLower = tagsArr.map((t) => t.toLowerCase());
         return activeTags.some((f: any) => tagsLower.includes(f.label.toLowerCase()));
+      });
+    }
+
+    // Closed date filter
+    if (closedDateFilter) {
+      filtered = filtered.filter((d: any) => {
+        if (!d.closeDate) return false;
+        const dealDate = new Date(d.closeDate);
+        const filterDate = new Date(closedDateFilter);
+        // Filter for deals with closeDate >= selected date
+        return dealDate >= filterDate;
       });
     }
 
@@ -155,10 +174,20 @@ export const useDealStore = create<DealStore>((set, get) => ({
         { id: "architecture", label: "Architecture", checked: false },
       ],
     };
-    set({ filters: initial, filteredDeals: get().deals });
+    set({ filters: initial, filteredDeals: get().deals, closedDateFilter: null });
   },
 
-  // 🧠 Fetch deals from API
+  // 🔧 Test function to set current user (for debugging)
+  setCurrentUserForTesting: (userId: string) => {
+    const { users } = useUserStore.getState();
+    const user = users.find(u => u.id === userId);
+    if (user) {
+      useUserStore.getState().setCurrentUser(user);
+      console.log('Set current user to:', user);
+    } else {
+      console.log('User not found:', userId);
+    }
+  },
   fetchDeals: async (ownerId?: string) => {
     set({ loading: true });
     try {
@@ -177,6 +206,25 @@ export const useDealStore = create<DealStore>((set, get) => ({
         : [];
       set({ deals: cleanData, loading: false });
       get().applyFilters();
+
+      // Initialize current user if not set and we have users data
+      const { users, currentUser } = useUserStore.getState();
+
+      if (users.length > 0) {
+        // Initialize current user from localStorage if not already set
+        if (!currentUser) {
+          useUserStore.getState().initializeCurrentUser();
+
+          // If still no current user, set safi as default (since user is logged in as safi)
+          const { currentUser: newCurrentUser } = useUserStore.getState();
+          if (!newCurrentUser) {
+            const safiUser = users.find(u => u.name === 'safi');
+            if (safiUser) {
+              useUserStore.getState().setCurrentUser(safiUser);
+            }
+          }
+        }
+      }
     } catch (err: any) {
       console.error("fetchDeals error:", err);
       toast.error("Failed to load deals");

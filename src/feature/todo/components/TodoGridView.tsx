@@ -18,6 +18,9 @@ export default function TodoGridView() {
   const [isDetailOpen, setIsDetailOpen] = React.useState(false)
     const [showModal, setShowModal] = React.useState<boolean>(false);
     const [editTask, setEditTask] = React.useState<TaskData | null>(null);
+  const [isDeleting, setIsDeleting] = React.useState(false);
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [isExporting, setIsExporting] = React.useState(false);
 
   React.useEffect(() => {
     fetchTodos()
@@ -53,17 +56,21 @@ export default function TodoGridView() {
   const handleMove = React.useCallback(async ({ itemId, fromKey, toKey }: { itemId: string | number; fromKey: string; toKey: string }) => {
     if (moveInProgress) return; // prevent double fire in Strict Mode
     moveInProgress = true;
-console.log("fromKey:", fromKey, "toKey:", toKey);
+
+    setIsEditing(true);
+    console.log("fromKey:", fromKey, "toKey:", toKey);
 
     const taskToUpdate = filteredTodos.find((t) => String(t.id) === String(itemId));
     if (!taskToUpdate) {
       moveInProgress = false;
+      setIsEditing(false);
       return;
     }
 
     const newStatus = toStatusFromColumn(toKey, taskToUpdate.status);
     if (!newStatus || newStatus === taskToUpdate.status) {
       moveInProgress = false;
+      setIsEditing(false);
       return;
     }
 
@@ -99,6 +106,7 @@ console.log("fromKey:", fromKey, "toKey:", toKey);
       console.error("handleMove error:", err);
     } finally {
       moveInProgress = false;
+      setIsEditing(false);
     }
   }, [filteredTodos, updateTodo])
 
@@ -154,12 +162,20 @@ console.log("fromKey:", fromKey, "toKey:", toKey);
         task={selectedTask}
         onClose={closeDetail}
         onDelete={async (id) => {
-                  await deleteTodo(id)
-                  closeDetail()
-                }}
+          setIsDeleting(true);
+          try {
+            await deleteTodo(id)
+            closeDetail()
+          } finally {
+            setIsDeleting(false);
+          }
+        }}
         onEdit={handleEditTask}
         onAddNotes={() => {}}
         onExport={() => {}}
+        isDeleting={isDeleting}
+        isEditing={isEditing}
+        isExporting={isExporting}
       />
       <TodoModel open={showModal} onClose={() => setShowModal(false)} mode={editTask ? 'edit' : 'add'} task={editTask || undefined} />
     </main>

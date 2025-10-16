@@ -31,7 +31,7 @@ const schema = Yup.object({
     industry: Yup.string().trim().required("Industry is required"),
     email: Yup.string().trim().email("Please enter a valid email address"),
     website: Yup.string().trim().url("Please enter a valid website URL"),
-    status: Yup.string().oneOf(["Active", "Follow Up", "inactive"]).required("Status is required"),
+    status: Yup.string().oneOf(["Active", "FollowUp", "inactive"]).required("Status is required"),
     phone: Yup.string().trim().matches(/^[\+]?[1-9][\d]{0,15}$/, "Please enter a valid phone number"),
     owner: Yup.string().trim().required("Owner is required"),
     tags: Yup.array().of(Yup.string().trim().min(1)).max(10, "Up to 10 tags allowed"),

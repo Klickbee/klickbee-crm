@@ -10,6 +10,7 @@ type CalendarDropDownProps = {
   className?: string
   disabled?: boolean
   triggerIcon?: 'calendar' | 'chevron'
+  buttonClassName?: string
 }
 
 const monthNamesShort = [
@@ -31,6 +32,7 @@ export const CalendarDropDown: React.FC<CalendarDropDownProps> = ({
   className = "",
   disabled = false,
   triggerIcon = 'chevron',
+  buttonClassName = "",
 }) => {
   // Inline custom select to avoid native <select> overflow issues
   const InlineSelect: React.FC<{
@@ -58,7 +60,7 @@ export const CalendarDropDown: React.FC<CalendarDropDownProps> = ({
         <button
           type="button"
           onClick={() => setOpen(v => !v)}
-          className={`border shadow-sm border-[var(--border-gray)] rounded px-2 pr-1 py-1 text-sm flex items-center gap-1 ${buttonClassName}`}
+          className={`border  shadow-sm border-[var(--border-gray)] rounded px-2 pr-1 py-1 text-sm w-full flex items-center gap-1 ${buttonClassName}`}
         >
           {current ? current.label : value}
           <ChevronDown className="w-4 h-4 text-gray-500" />
@@ -170,14 +172,18 @@ export const CalendarDropDown: React.FC<CalendarDropDownProps> = ({
     a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
 
   return (
-    <div ref={containerRef} className={`relative inline-block w-fit ${className}`}>
+    <div ref={containerRef} className={`relative  w-fit ${className}`}>
       <button
         type="button"
         disabled={disabled}
         onClick={() => !disabled && setIsOpen(v => !v)}
-        className={`bg-white border border-[var(--border-gray)] rounded-md h-9 min-w-[120px] py-2 pl-3 pr-9 text-left leading-[20px] text-sm text-gray-900 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed`}
+        className={`bg-white border border-[var(--border-gray)] rounded-md h-9 py-2 pl-3 pr-9 text-left leading-[20px] text-sm text-gray-900 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${buttonClassName}`}
       >
-        {label}
+        {value ? value.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        }) : label}
         {triggerIcon === 'calendar' ? (
           <Calendar className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         ) : (

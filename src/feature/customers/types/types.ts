@@ -8,7 +8,7 @@ export type Customer = {
   status: 'Active' | 'FollowUp' | 'inactive';
   tags: string[];
   notes?: string;
-  files?: any;
+  files?: Array<{ url: string; name: string; size: number }>;
   ownerId: string;
   owner: {
     id: string;

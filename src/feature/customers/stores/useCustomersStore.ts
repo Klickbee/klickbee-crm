@@ -5,10 +5,14 @@ import { exportCustomersToExcel, exportCustomersWithColumns, exportSingleCustome
 import { importCustomersFromExcel, generateCustomerImportTemplate } from "../libs/excelImport";
 import { FilterData } from "../libs/fillterData";
 import { useUserStore } from "../../user/store/userStore";
+
 interface CustomerStore {
   customers: Customer[];
   filteredCustomers: Customer[];
   loading: boolean;
+  isDeleting: boolean;
+  isEditing: boolean;
+  isExporting: boolean;
   error: string | null;
   filters: FilterData;
 
@@ -33,6 +37,9 @@ export const useCustomersStore = create<CustomerStore>((set, get) => ({
   customers: [],
   filteredCustomers: [],
   loading: false,
+  isDeleting: false,
+  isEditing: false,
+  isExporting: false,
   error: null,
   filters: {
     status: [
@@ -192,6 +199,7 @@ export const useCustomersStore = create<CustomerStore>((set, get) => ({
 
   // ✏️ Update a customer
   updateCustomer: async (id, customer) => {
+    set({ isEditing: true });
     try {
       const res = await fetch(`/api/admin/customers/${id}`, {
         method: "PATCH",
@@ -214,11 +222,14 @@ export const useCustomersStore = create<CustomerStore>((set, get) => ({
       console.error("updateCustomer error:", err);
       toast.error(err.message);
       set({ error: err.message });
+    } finally {
+      set({ isEditing: false });
     }
   },
 
   // ❌ Delete a customer
   deleteCustomer: async (id) => {
+    set({ isDeleting: true });
     try {
       const res = await fetch(`/api/admin/customers/${id}`, {
         method: "DELETE",
@@ -234,6 +245,8 @@ export const useCustomersStore = create<CustomerStore>((set, get) => ({
       console.error("deleteCustomer error:", err);
       toast.error(err.message);
       set({ error: err.message });
+    } finally {
+      set({ isDeleting: false });
     }
   },
 
