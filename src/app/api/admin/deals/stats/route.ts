@@ -12,57 +12,60 @@ type RangeKey =
   | "last_365_days"
   | "all";
 
-function getDateRange(range: RangeKey): { gte?: Date; lt?: Date } {
+function getDateRange(range: RangeKey): {
+  current: { gte?: Date; lt?: Date };
+  previous: { gte?: Date; lt?: Date };
+} {
   const now = new Date();
   const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
-  if (range === "all") return {};
+  let currentGte: Date | undefined;
+  let currentLt: Date | undefined;
+
+  if (range === "all") {
+    return { current: {}, previous: {} };
+  }
 
   if (range === "this_week") {
     const day = now.getDay();
     const distanceToMonday = (day + 6) % 7; // Monday=0
     const monday = new Date(now);
     monday.setDate(now.getDate() - distanceToMonday);
-    const gte = startOfDay(monday);
-    const lt = new Date(gte);
-    lt.setDate(gte.getDate() + 7);
-    return { gte, lt };
+    currentGte = startOfDay(monday);
+    currentLt = new Date(currentGte);
+    currentLt.setDate(currentGte.getDate() + 7);
+  } else if (range === "this_month") {
+    currentGte = new Date(now.getFullYear(), now.getMonth(), 1);
+    currentLt = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  } else if (range === "this_year") {
+    currentGte = new Date(now.getFullYear(), 0, 1);
+    currentLt = new Date(now.getFullYear() + 1, 0, 1);
+  } else if (range === "last_7_days") {
+    currentLt = new Date();
+    currentGte = new Date(currentLt);
+    currentGte.setDate(currentLt.getDate() - 7);
+  } else if (range === "last_28_days") {
+    currentLt = new Date();
+    currentGte = new Date(currentLt);
+    currentGte.setDate(currentLt.getDate() - 28);
+  } else if (range === "last_365_days") {
+    currentLt = new Date();
+    currentGte = new Date(currentLt);
+    currentGte.setDate(currentLt.getDate() - 365);
   }
 
-  if (range === "this_month") {
-    const gte = new Date(now.getFullYear(), now.getMonth(), 1);
-    const lt = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-    return { gte, lt };
-  }
+  const getPrevRange = (current: { gte?: Date; lt?: Date }): { gte?: Date; lt?: Date } => {
+    if (!current.gte || !current.lt) return {};
+    const durationMs = current.lt.getTime() - current.gte.getTime();
+    const prevLt = new Date(current.gte.getTime());
+    const prevGte = new Date(prevLt.getTime() - durationMs);
+    return { gte: prevGte, lt: prevLt };
+  };
 
-  if (range === "this_year") {
-    const gte = new Date(now.getFullYear(), 0, 1);
-    const lt = new Date(now.getFullYear() + 1, 0, 1);
-    return { gte, lt };
-  }
-
-  if (range === "last_7_days") {
-    const lt = new Date();
-    const gte = new Date(lt);
-    gte.setDate(lt.getDate() - 7);
-    return { gte, lt };
-  }
-
-  if (range === "last_28_days") {
-    const lt = new Date();
-    const gte = new Date(lt);
-    gte.setDate(lt.getDate() - 28);
-    return { gte, lt };
-  }
-
-  if (range === "last_365_days") {
-    const lt = new Date();
-    const gte = new Date(lt);
-    gte.setDate(lt.getDate() - 365);
-    return { gte, lt };
-  }
-
-  return {};
+  return {
+    current: { gte: currentGte, lt: currentLt },
+    previous: getPrevRange({ gte: currentGte, lt: currentLt }),
+  };
 }
 
 export async function GET(req: Request) {
@@ -88,16 +91,24 @@ export async function GET(req: Request) {
       "all",
     ];
     const range: RangeKey = validRanges.includes(rangeParam) ? rangeParam : "this_month";
-    const { gte, lt } = getDateRange(range);
 
-    const baseWhere: any = {
-      ...(gte ? { createdAt: { gte } } : {}),
-      ...(lt ? { createdAt: { ...(gte ? { gte } : {}), lt } } : {}),
-      ...(ownerId ? { ownerId } : {}),
-      ...(companyId ? { companyId } : {}),
-      ...(contactId ? { contactId } : {}),
+    const { current: { gte: currentGte, lt: currentLt }, previous: { gte: prevGte, lt: prevLt } } = getDateRange(range);
+
+    const buildWhere = (rangeInput: { gte?: Date; lt?: Date }) => {
+      const createdAtFilter =
+        rangeInput.gte && rangeInput.lt
+          ? { createdAt: { gte: rangeInput.gte, lt: rangeInput.lt } }
+          : {};
+      return {
+        ...createdAtFilter,
+        ...(ownerId ? { ownerId } : {}),
+        ...(companyId ? { companyId } : {}),
+        ...(contactId ? { contactId } : {}),
+      } as any;
     };
 
+    const baseWhere: any = buildWhere({ gte: currentGte, lt: currentLt });
+    const prevWhere: any = buildWhere({ gte: prevGte, lt: prevLt });
     // Count metrics
     const [
       totalDeals,
@@ -108,6 +119,11 @@ export async function GET(req: Request) {
       totalProposal,
       totalNegotiation,
       expectedRevenueActive,
+      prevTotalDeals,
+      prevTotalActive,
+      prevTotalNew,
+      prevTotalWon,
+      prevExpectedRevenueActive,
     ] = await Promise.all([ 
       prisma.deal.count({
         where: { ...baseWhere },
@@ -132,14 +148,52 @@ export async function GET(req: Request) {
       }),
       prisma.deal.aggregate({
         _sum: { amount: true },
-        where: { ...baseWhere, NOT: { stage: { in: ["Won", "Lost"] } } },
+        where: { ...baseWhere, NOT: { stage: { in: ["Lost"] } } },
+      }),
+
+      // Previous period values
+      prisma.deal.count({
+        where: { ...prevWhere },
+      }),
+      prisma.deal.count({
+        where: { ...prevWhere, NOT: { stage: { in: ["Won", "Lost"] } } },
+      }),
+      prisma.deal.count({
+        where: { ...prevWhere, stage: "New" },
+      }),
+      prisma.deal.count({
+        where: { ...prevWhere, stage: "Won" },
+      }),
+      prisma.deal.aggregate({
+        _sum: { amount: true },
+        where: { ...prevWhere, NOT: { stage: { in: [ "Lost"] } } },
       }),
     ]);
 
     const expectedRevenueUSD = expectedRevenueActive._sum.amount ?? 0;
 
-    // Conversion rate: active / won (as per request)
-    const conversionRate = totalDeals === 0 ? 0 : (totalWon / totalDeals) * 100;
+    const prevExpectedRevenueUSD = prevExpectedRevenueActive._sum.amount ?? 0;
+
+    const conversionRate = totalWon === 0 ? 0 : (totalWon / totalDeals) * 100;
+    const prevConversionRate = prevTotalWon === 0 ? 0 : (prevTotalWon / prevTotalDeals) * 100;
+
+    // Percent change helper
+    const toPctChange = (prev: number, curr: number): number => {
+        if (range === "all") return 0;
+      
+        // Case 1: both are zero → no change
+        if (prev === 0 && curr === 0) return 0;
+      
+        // Case 2: previously zero, now positive → infinite rise
+        if (prev === 0 && curr > 0) return 100;
+      
+        // Case 3: previously nonzero, now zero → 100% drop
+        if (prev > 0 && curr === 0) return -100;
+      
+        // Case 4: normal percentage change
+        const pct = ((curr - prev) / prev) * 100;
+        return Math.round(pct * 100) / 100; // 2 decimals
+      };
 
     return NextResponse.json({
       range,
@@ -154,6 +208,12 @@ export async function GET(req: Request) {
         negotiationDeals: totalNegotiation,
         conversionRate,
         expectedRevenueUSD,
+        changes: {
+          newDealsChangePercent: toPctChange(prevTotalNew, totalNew),
+          activeDealsChangePercent: toPctChange(prevTotalActive, totalActive),
+          expectedRevenueChangePercent: toPctChange(prevExpectedRevenueUSD, expectedRevenueUSD),
+          conversionRateChangePercent: toPctChange(prevConversionRate * 100, conversionRate * 100),
+        },
       },
     });
   } catch (err) {
