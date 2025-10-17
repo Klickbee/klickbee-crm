@@ -1,28 +1,49 @@
 "use client"
 
-import React from "react"
-import { getRecentActivities } from "../libs/ActivitiesData"
+import React, { useState, useEffect } from "react"
+import { fetchRecentActivities } from "../libs/ActivitiesData"
 import { Activity } from "../types/Types"
 
 export default function RecentActivitiesCard() {
-  const activities = getRecentActivities()
+  const [activities, setActivities] = useState<Activity[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const loadActivities = async () => {
+      setLoading(true)
+      try {
+        const data = await fetchRecentActivities()
+        setActivities(data)
+      } catch (error) {
+        console.error('Error loading activities:', error)
+        // Activities will fall back to mock data if fetch fails
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadActivities()
+  }, [])
 
   const getActivityTitle = (activity: Activity, index: number) => {
-    switch (index) {
-      case 0:
-        return `${activity.user} updated contact details`
-      case 1:
-        return `New lead "Acme Corp" added by Sarah Lee`
-      case 2:
-        return `Meeting scheduled with "Global Tech Ltd"`
-      case 3:
-        return `Proposal sent to "Bright Solutions"`
-      default:
-        return `${activity.user} ${activity.action}`
-    }
+    // Use the actual activity action and description from the API data
+    return `${activity.user} ${activity.action}`;
   }
-  return (
 
+  if (loading) {
+    return (
+      <section className="shadow-sm rounded-xl border border-[var(--border-gray)] bg-white h-[500px] flex flex-col">
+        <div className="flex h-14 items-center justify-between px-4 border-b border-[var(--border-gray)] flex-shrink-0">
+          <h3 className="text-base font-semibold">Recent Activities</h3>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-gray-500">Loading activities...</p>
+        </div>
+      </section>
+    )
+  }
+
+  return (
     <section className="shadow-sm rounded-xl border border-[var(--border-gray)] bg-white h-[500px] flex flex-col">
       <div className="flex h-14 items-center justify-between px-4 border-b border-[var(--border-gray)] flex-shrink-0">
         <h3 className="text-sm font-semibold text-[var(--foreground)]">Recent Activities</h3>

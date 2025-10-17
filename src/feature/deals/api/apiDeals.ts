@@ -142,7 +142,7 @@ export async function handleMethodWithId(req: Request, id: string) {
       const data = {
           dealName: parsedData.dealName,
           companyId: parsedData.companyId,
-          contactId: parsedData.contactId ?? undefined,
+          contactId: parsedData.contactId,
           ownerId: parsedData.ownerId,
           stage: parsedData.stage,
           amount: parsedData.amount,
@@ -165,6 +165,11 @@ export async function handleMethodWithId(req: Request, id: string) {
           return await prisma.deal.update({
             where: { id: id },
             data,
+            include: {
+              owner: true,
+              company: true,
+              contact: true, 
+            },
           });
         },
         {
