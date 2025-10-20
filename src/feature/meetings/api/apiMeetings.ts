@@ -34,7 +34,7 @@ export async function POST(req: Request) {
       startDate: toDate(bodyRaw.startDate),
       startTime: toDate(bodyRaw.startTime),
       endTime: toDate(bodyRaw.endTime),
-      ownerId: session.user.id,
+      ownerId: bodyRaw.owner.id,
       linkedId: bodyRaw.linkedTo, 
       assignedTo: bodyRaw.assignedTo && bodyRaw.assignedTo.trim() !== "" ? bodyRaw.assignedTo : null,
     });
@@ -147,7 +147,7 @@ export async function handleMethodWithId(req: Request, id: string) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
       const bodyRaw = await req.json();
-      const parsed = updateMeetingSchema.safeParse({ ...bodyRaw, id });
+      const parsed = updateMeetingSchema.safeParse({ ...bodyRaw, id, ownerId: bodyRaw.owner.id });
       if (!parsed.success) {
         return NextResponse.json(
           { error: "Validation error", details: parsed.error.flatten() },
@@ -174,6 +174,7 @@ export async function handleMethodWithId(req: Request, id: string) {
           tags: parsedData.tags ?? undefined,
           notes: parsedData.notes ?? undefined,
           files: parsedData.files ?? undefined,
+          ownerId: parsedData.ownerId,
         };
 
       const getPreviousData = async () => {

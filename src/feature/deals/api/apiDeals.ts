@@ -5,7 +5,7 @@ import { authOptions } from "@/feature/auth/lib/auth";
 import { prisma } from "@/libs/prisma";
 import { createDealSchema, updateDealSchema } from "../schema/dealSchema";
 import { withActivityLogging } from "@/libs/apiUtils";
-import { ActivityAction } from "@prisma/client";
+import { ActivityAction, Prisma } from "@prisma/client";
 
 export async function POST(req: Request) {
   try {
@@ -86,6 +86,7 @@ export async function GET(req: Request) {
     const ownerId = url.searchParams.get("ownerId");
     const companyId = url.searchParams.get("companyId");
     const contactId = url.searchParams.get("contactId");
+    const search = url.searchParams.get("search");
 
 
 
@@ -93,6 +94,14 @@ export async function GET(req: Request) {
       ...(ownerId ? { ownerId } : {}),
       ...(companyId ? { companyId } : {}),
       ...(contactId ? { contactId } : {}),
+      ...(search
+        ? {
+              dealName: {
+              contains: search,
+              mode: Prisma.QueryMode.insensitive,
+            },
+          }
+        : {}),
 
     };
     const deals = await prisma.deal.findMany({

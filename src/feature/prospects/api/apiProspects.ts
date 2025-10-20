@@ -121,7 +121,7 @@ export async function handleMethodWithId(req: Request, id: string) {
       }
 
       const body = await req.json();
-      const parsed = updateProspectSchema.safeParse({ ...body, id });
+      const parsed = updateProspectSchema.safeParse({ ...body, id, ownerId: body.owner.id });
       if (!parsed.success) {
         return NextResponse.json(
           { error: "Validation error", details: parsed.error.flatten() },
@@ -138,6 +138,7 @@ export async function handleMethodWithId(req: Request, id: string) {
         status: parsedData.status,
         tags: parsedData.tags ?? undefined,
         notes: parsedData.notes ?? undefined,
+        ownerId: parsedData.ownerId,
       };
       
       const getPreviousData = async () => {
