@@ -127,7 +127,6 @@ export function TodoHeader({ view, setView, selectedTodos = [], selectedTodoRows
         break;
       case 'assign-to-me':
         // TODO: Implement assign to me functionality
-        console.log('Assign to me for selected todos:', selectedTodos);
         break;
     }
     setShowActionDropdown(false);

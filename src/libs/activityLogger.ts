@@ -14,7 +14,6 @@ export interface ActivityLogData {
 }
 
 export async function logActivity(data: ActivityLogData) {
-  console.log('logActivity', {data});
   try {
     await prisma.activityLog.create({
       data: {

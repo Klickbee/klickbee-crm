@@ -183,7 +183,6 @@ export async function handleMethodWithId(req: Request, id: string) {
         });
         return meeting;
       };
-      console.log(await getPreviousData())
       const updatedMeeting = await withActivityLogging(
         async () => {
           return await prisma.meeting.update({

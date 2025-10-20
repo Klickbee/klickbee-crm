@@ -36,6 +36,7 @@ export const updateProspectSchema = z.object({
   status: z.enum(statusValues).optional(),
   tags: z.array(z.string().trim().min(1)).optional(),
   notes: z.string().optional(),
+  ownerId: z.string(),
 });
 
 export type CreateProspectInput = z.infer<typeof createProspectSchema>;

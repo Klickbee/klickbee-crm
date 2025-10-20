@@ -15,7 +15,6 @@ const uploadDir = path.join(process.cwd(), "public", "uploads");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
 export async function POST(req: Request) {
-  console.log("uploadFile POST");
 
   try {
     // Extract raw body (as buffer)

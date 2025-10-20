@@ -219,7 +219,6 @@ const getHeaderDate = () => {
         }}
         onReschedule={(id) => {
           // TODO: Implement reschedule functionality
-          console.log('Reschedule meeting:', id);
         }}
        onDelete={async (id) => {
                     

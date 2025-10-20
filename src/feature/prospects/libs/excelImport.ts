@@ -61,8 +61,6 @@ export const importProspectsFromExcel = async (file: File): Promise<{
       'notes': 'notes',
     };
 
-    console.log('Available headers:', headers);
-    console.log('Normalized headers:', normalizedHeaders);
     
     // Map headers to Prospect fields
     const fieldMappings: Record<number, keyof Prospect> = {};
@@ -73,7 +71,6 @@ export const importProspectsFromExcel = async (file: File): Promise<{
       }
     });
     
-    console.log('Column mappings found:', fieldMappings);
     
     // Check if we have required fields
     const requiredFields: (keyof Prospect)[] = ['fullName'];
@@ -140,11 +137,9 @@ export const importProspectsFromExcel = async (file: File): Promise<{
       
       // Only add prospect if it has valid data and required fields
       if (hasValidData && prospect.fullName) {
-        console.log(`Row ${i + 1} processed:`, prospect);
         prospects.push(prospect);
       } else if (hasValidData) {
         errors.push(`Row ${i + 1}: Missing required field 'Prospect Name'`);
-        console.log(`Row ${i + 1} skipped - missing fullName:`, prospect);
       }
     }
     

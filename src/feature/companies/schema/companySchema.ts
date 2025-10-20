@@ -29,6 +29,7 @@ export const updateCompanySchema = z.object({
   assing: z.array(z.string().trim().min(1)).optional(),
   notes: z.string().optional(),
   files: z.any().optional(),
+  ownerId: z.string(),
 });
 
 export type CreateCompanyInput = z.infer<typeof createCompanySchema>;

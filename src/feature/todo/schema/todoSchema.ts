@@ -50,7 +50,7 @@ export const updateTodoSchema = z
     taskName: z.string().trim().optional(),
     status: z.string().optional(),
     priority: z.string().optional(),
-    linkedId: z.string().trim().optional(),
+    linkedTo: z.string().trim().optional(),
     assignedId: z.string().trim().optional(),
     dueDate: z.string().nullable().optional(),
     notes: z.string().optional(),

@@ -341,7 +341,6 @@ export const useCompaniesStore = create<CompanyStore>((set, get) => ({
             // Note: owner fields should be set by the API based on the authenticated user
           };
 
-          console.log('Importing company:', companyPayload);
 
           const res = await fetch('/api/admin/companies', {
             method: 'POST',

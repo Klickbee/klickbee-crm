@@ -130,7 +130,7 @@ export async function handleMethodWithId(req: Request, id: string) {
         }
 
       const body = await req.json();
-      const parsed = updateCustomerSchema.safeParse({ ...body, id });
+      const parsed = updateCustomerSchema.safeParse({ ...body, id, ownerId: body.owner });
       if (!parsed.success) {
         return NextResponse.json(
           { error: "Validation error", details: parsed.error.flatten() },
@@ -148,6 +148,7 @@ export async function handleMethodWithId(req: Request, id: string) {
           tags: parsedData.tags ?? undefined,
           notes: parsedData.notes ?? undefined,
           files: parsedData.files ?? undefined,
+          ownerId: parsedData.ownerId,
       };
 
       const getPreviousData = async () => {
@@ -156,7 +157,6 @@ export async function handleMethodWithId(req: Request, id: string) {
         });
         return customer;
       };
-      console.log(await getPreviousData())
       const updatedCustomer = await withActivityLogging(
         async () => {
           return await prisma.customer.update({

@@ -168,7 +168,6 @@ export async function handleMethodWithId(req: Request, id: string) {
         });
         return deal;
       };
-      console.log(await getPreviousData())
       const updatedDeal = await withActivityLogging(
         async () => {
           return await prisma.deal.update({

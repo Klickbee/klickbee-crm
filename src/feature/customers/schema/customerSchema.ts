@@ -31,6 +31,7 @@ export const updateCustomerSchema = z.object({
   tags: z.array(z.string().trim().min(1)).optional(),
   notes: z.string().optional(),
   files: z.any().optional(),
+  ownerId: z.string(),
 });
 
 export type CreateCustomerInput = z.infer<typeof createCustomerSchema>;

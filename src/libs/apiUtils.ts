@@ -27,7 +27,6 @@ export async function withActivityLogging<T>(
   let result: any;
 
   try {
-    console.log('getPreviousData');
     // Get data before the operation if needed
     if (getPreviousData) {
       previousData = await getPreviousData();
@@ -35,14 +34,12 @@ export async function withActivityLogging<T>(
 
     // Execute the main operation
     result = await operation();
-    console.log({result});
 
     // Get data after the operation if needed
     let currentData = null;
     if (getCurrentData) {
       currentData = await getCurrentData(result);
     }
-    console.log({currentData});
 
     // Log the activity
     await logActivity({

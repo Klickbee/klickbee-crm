@@ -184,7 +184,6 @@ export const useDealStore = create<DealStore>((set, get) => ({
     const user = users.find(u => u.id === userId);
     if (user) {
       useUserStore.getState().setCurrentUser(user);
-      console.log('Set current user to:', user);
     } else {
       console.log('User not found:', userId);
     }

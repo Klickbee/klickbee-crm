@@ -351,7 +351,6 @@ export const useCustomersStore = create<CustomerStore>((set, get) => ({
             // Note: userId and ownerId should be set by the API based on the authenticated user
           };
 
-          console.log('Importing customer:', customerPayload);
 
           const res = await fetch('/api/admin/customers', {
             method: 'POST',

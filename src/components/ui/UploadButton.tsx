@@ -27,7 +27,6 @@ const UploadButton = ({ values, setValue, uploading, uploadFile }: uploadProps) 
                         multiple
                         onChange={(e) => {
                             const files = Array.from(e.currentTarget.files ?? [])
-                            console.log("Selected files:", files)
                             if (values) {
                                 setValue([...values, ...files])
                             } else {
@@ -53,7 +52,6 @@ const UploadButton = ({ values, setValue, uploading, uploadFile }: uploadProps) 
                             onClick={() => {
                                 const next = [...values]
                                 next.splice(i, 1)
-                                console.log("Remaining files:", next)
                                 setValue(next)
                             }}
                         >

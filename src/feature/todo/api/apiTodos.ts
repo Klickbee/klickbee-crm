@@ -131,7 +131,7 @@ export async function handleMethodWithId(req: Request, id: string) {
       const body = await req.json();
 
       // validate with zod - id comes from URL params, not body
-      const parsed = updateTodoSchema.safeParse(body);
+      const parsed = updateTodoSchema.safeParse({...body, linkedTo: body.linkedTo});
       if (!parsed.success) {
         return NextResponse.json(
           { error: "Validation error", details: parsed.error.flatten() },
@@ -142,7 +142,7 @@ export async function handleMethodWithId(req: Request, id: string) {
       const parsedData = parsed.data as any;
       const data = {
         taskName: parsedData.taskName,
-        linkedTo: parsedData.linkedId ? { connect: { id: parsedData.linkedId } } : undefined,
+        linkedTo: parsedData.linkedTo ? { connect: { id: parsedData.linkedTo } } : undefined,
         assignedTo: parsedData.assignedId ? { connect: { id: parsedData.assignedId } } : undefined,
         status: parsedData.status,
         priority: parsedData.priority,
@@ -156,7 +156,6 @@ export async function handleMethodWithId(req: Request, id: string) {
         });
         return todo;
       };
-      console.log(await getPreviousData())
       const updatedTodo = await withActivityLogging(
         async () => {
           return await prisma.todo.update({

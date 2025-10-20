@@ -58,7 +58,6 @@ export default function TodoGridView() {
     moveInProgress = true;
 
     setIsEditing(true);
-    console.log("fromKey:", fromKey, "toKey:", toKey);
 
     const taskToUpdate = filteredTodos.find((t) => String(t.id) === String(itemId));
     if (!taskToUpdate) {

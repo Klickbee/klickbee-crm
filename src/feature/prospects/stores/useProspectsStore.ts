@@ -414,7 +414,6 @@ export const useProspectsStore = create<ProspectStore>((set, get) => ({
             status: prospectData.status || 'New',
           };
 
-          console.log('Importing prospect:', prospectPayload);
 
           const res = await fetch('/api/admin/prospects', {
             method: 'POST',

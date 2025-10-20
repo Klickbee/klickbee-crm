@@ -62,8 +62,6 @@ export const importCustomersFromExcel = async (file: File): Promise<{
       'owner': 'owner',
     };
 
-    console.log('Available headers:', headers);
-    console.log('Normalized headers:', normalizedHeaders);
     
     // Map headers to Customer fields
     const fieldMappings: Record<number, keyof Customer> = {};
@@ -74,7 +72,6 @@ export const importCustomersFromExcel = async (file: File): Promise<{
       }
     });
     
-    console.log('Column mappings found:', fieldMappings);
     
     // Check if we have required fields
     const requiredFields: (keyof Customer)[] = ['fullName'];
@@ -140,11 +137,9 @@ export const importCustomersFromExcel = async (file: File): Promise<{
       
       // Only add customer if it has valid data and required fields
       if (hasValidData && customer.fullName) {
-        console.log(`Row ${i + 1} processed:`, customer);
         customers.push(customer);
       } else if (hasValidData) {
         errors.push(`Row ${i + 1}: Missing required field 'Customer Name'`);
-        console.log(`Row ${i + 1} skipped - missing fullName:`, customer);
       }
     }
     

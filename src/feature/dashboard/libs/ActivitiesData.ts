@@ -11,7 +11,6 @@ export const fetchRecentActivities = async (): Promise<Activity[]> => {
     // Debug logging to see what entity types are being received
     if (data.data && Array.isArray(data.data)) {
       const entityTypes = [...new Set(data.data.map((activity: any) => activity.entityType))];
-      console.log('Activity entity types received:', entityTypes);
     }
 
     return mapActivitiesToInterface(data.data);
@@ -78,17 +77,8 @@ const generateActivityDescription = (activity: any): { action: string, descripti
   const { action, entityType, metadata } = activity;
   const user = activity.performedBy?.name || activity.performedBy?.email || 'User';
 
-  // Enhanced debugging for entity type detection
-  console.log('Processing activity:', {
-    entityType: entityType,
-    action: action,
-    entityTypeLower: entityType?.toLowerCase(),
-    user: user
-  });
-
   // Handle deal-related activities
   if (entityType?.toLowerCase() === 'deal' || entityType?.toLowerCase() === 'deals') {
-    console.log('✅ Processing as DEAL');
     switch (action) {
       case 'Create':
         const dealData = activity.newValues;
@@ -109,7 +99,6 @@ const generateActivityDescription = (activity: any): { action: string, descripti
         const prevDealData = activity.previousValues;
         const updateDealName = updateDealData?.dealName || 'Unnamed Deal';
 
-        console.log('Deal Update - changedFields:', changedFields, 'newValues:', updateDealData);
 
         if (changedFields.length === 0) {
           return {
@@ -182,7 +171,6 @@ const generateActivityDescription = (activity: any): { action: string, descripti
 
   // Handle todo-related activities
   if (entityType?.toLowerCase() === 'todo' || entityType?.toLowerCase() === 'todos') {
-    console.log('✅ Processing as TODO');
     switch (action) {
       case 'Create':
         const todoData = activity.newValues;
@@ -198,7 +186,6 @@ const generateActivityDescription = (activity: any): { action: string, descripti
         const prevTodoData = activity.previousValues;
         const todoUpdateTitle = todoUpdateData?.taskName || 'Untitled Task';
 
-        console.log('Task Update - changedFields:', todoChangedFields, 'newValues:', todoUpdateData);
 
         if (todoChangedFields.length === 0) {
           return {
@@ -277,7 +264,6 @@ const generateActivityDescription = (activity: any): { action: string, descripti
 
   // Handle meeting-related activities
   if (entityType?.toLowerCase() === 'meeting' || entityType?.toLowerCase() === 'meetings') {
-    console.log('✅ Processing as MEETING');
     switch (action) {
       case 'Create':
         const meetingData = activity.newValues;
@@ -293,7 +279,6 @@ const generateActivityDescription = (activity: any): { action: string, descripti
         const prevMeetingData = activity.previousValues;
         const meetingUpdateTitle = meetingUpdateData?.title || 'Untitled Meeting';
 
-        console.log('Meeting Update - changedFields:', meetingChangedFields, 'newValues:', meetingUpdateData);
 
         if (meetingChangedFields.length === 0) {
           return {
@@ -380,7 +365,6 @@ const generateActivityDescription = (activity: any): { action: string, descripti
 
   // Handle prospect-related activities
   if (entityType?.toLowerCase() === 'prospect' || entityType?.toLowerCase() === 'prospects') {
-    console.log('✅ Processing as PROSPECT');
     switch (action) {
       case 'Create':
         const prospectData = activity.newValues;
@@ -396,7 +380,6 @@ const generateActivityDescription = (activity: any): { action: string, descripti
         const prevProspectData = activity.previousValues;
         const prospectUpdateName = prospectUpdateData?.fullName || prospectUpdateData?.name || 'Unnamed Prospect';
 
-        console.log('Prospect Update - changedFields:', prospectChangedFields, 'newValues:', prospectUpdateData);
 
         if (prospectChangedFields.length === 0) {
           return {
@@ -489,7 +472,6 @@ const generateActivityDescription = (activity: any): { action: string, descripti
   // Handle contact/customer-related activities
   if (entityType?.toLowerCase() === 'contact' || entityType?.toLowerCase() === 'contacts' ||
       entityType?.toLowerCase() === 'customer' || entityType?.toLowerCase() === 'customers') {
-    console.log('✅ Processing as CONTACT');
     switch (action) {
       case 'Create':
         const contactData = activity.newValues;
@@ -505,7 +487,6 @@ const generateActivityDescription = (activity: any): { action: string, descripti
         const prevContactData = activity.previousValues;
         const contactUpdateName = contactUpdateData?.fullName || contactUpdateData?.name || 'Unnamed Contact';
 
-        console.log('Contact Update - changedFields:', contactChangedFields, 'newValues:', contactUpdateData);
 
         if (contactChangedFields.length === 0) {
           return {
@@ -597,7 +578,6 @@ const generateActivityDescription = (activity: any): { action: string, descripti
 
   // Handle company-related activities
   if (entityType?.toLowerCase() === 'company' || entityType?.toLowerCase() === 'companies') {
-    console.log('✅ Processing as COMPANY');
     switch (action) {
       case 'Create':
         const companyData = activity.newValues;
@@ -613,7 +593,6 @@ const generateActivityDescription = (activity: any): { action: string, descripti
         const prevCompanyData = activity.previousValues;
         const companyUpdateName = companyUpdateData?.fullName || companyUpdateData?.name || 'Unnamed Company';
 
-        console.log('Company Update - changedFields:', companyChangedFields, 'newValues:', companyUpdateData);
 
         if (companyChangedFields.length === 0) {
           return {
@@ -708,8 +687,6 @@ const generateActivityDescription = (activity: any): { action: string, descripti
     }
   }
 
-  // Generic fallback for any other entity types
-  console.log('❌ Unknown entity type, using generic fallback:', { entityType, action });
   return {
     action: action.toLowerCase(),
     description: `${user} performed ${action} on ${entityType}.`
