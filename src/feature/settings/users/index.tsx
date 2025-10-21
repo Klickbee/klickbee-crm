@@ -17,8 +17,10 @@ const columns: TableColumn<UserType>[] = [
   {
     key: 'status', title: 'Status', dataIndex: 'status', sortable: false, render: (status) => {
       const cls = {
-        'Active': 'bg-[#DCFCE7] text-[#15803D]',
-        'Invite Send': 'bg-[#FFEDD5] text-[#C2410C]',
+        'Active': 'bg-[#DCFCE7] text-[#15803D]', 
+        'Invite Sent': 'bg-[#FFEDD5] text-[#C2410C]', 
+        'Inactive': 'bg-[#E5E7EB] text-[#6B7280]', 
+        'Deleted': 'bg-red-200 text-red-600', 
       }[String(status)] || 'bg-[#E4E4E7] text-[#3F3F46]'
       return (
         <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${cls}`}>
@@ -41,10 +43,20 @@ const UsersFeat = () => {
   const [addUser, setAddUser] = useState(false);
   const [users, setUsers] = useState<UserType[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
 
   const handleAddUser = () => {
     setAddUser((prev) => !prev)
   }
+
+  // Handle user selection from table
+  const handleSelectionChange = (selectedItems: string[], selectedRows: UserType[]) => {
+    setSelectedUsers(selectedItems);
+  };
+
+  const handleClearSelection = () => {
+    setSelectedUsers([]);
+  };
 
   // Fetch users from database
   useEffect(() => {
@@ -67,15 +79,22 @@ const UsersFeat = () => {
     try {
       const userData = await getUserData();
       setUsers(userData);
+      setSelectedUsers([]); // Clear selection after refresh
     } catch (error) {
       console.error('Failed to refresh users:', error);
     }
   };
+
   return (
     <div>
-     
+
       {!addUser ? <>
-       <UsersHeader handleAddUser={handleAddUser} />
+       <UsersHeader
+         handleAddUser={handleAddUser}
+         selectedUsers={selectedUsers}
+         onClearSelection={handleClearSelection}
+         onUsersChange={refreshUsers}
+       />
       <div className=" px-6">
         <div className="border-[#E4E4E7] border-[1px] rounded-xl px-3">
           <div className='flex justify-between my-3'>
@@ -102,7 +121,13 @@ const UsersFeat = () => {
 
           <div className=''>
 
-            <Table columns={columns} data={users} selectable={true} loading={loading} />
+            <Table
+              columns={columns}
+              data={users}
+              selectable={true}
+              loading={loading}
+              onSelectionChange={handleSelectionChange}
+            />
 
           </div>
 

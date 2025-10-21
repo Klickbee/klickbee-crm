@@ -23,3 +23,18 @@ export async function fetchUsers() {
 
     return await response.json();
 }
+
+export async function deleteUsers(userIds: string[]) {
+    const response = await fetch('/api/auth/user', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userIds }),
+    });
+
+    if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to delete users');
+    }
+
+    return await response.json();
+}

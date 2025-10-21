@@ -164,6 +164,9 @@ export async function handleMethodWithId(req: Request, id: string) {
           return await prisma.company.update({
             where: { id: id },
             data,
+            include: {
+              owner: true
+            },
           });
         },
         {

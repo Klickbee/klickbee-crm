@@ -20,9 +20,28 @@ const MeetingSchema = Yup.object().shape({
     .max(100, "Meeting title must not exceed 100 characters")
     .required("Meeting title is required"),
 
-  startDate: Yup.date()
+  startDate: Yup.mixed()
     .required("Date is required")
-    .min(new Date(), "Meeting date cannot be in the past"),
+    .test("is-valid-date", "Date is required", (value) => {
+      if (!value) return false;
+      // Type guard to ensure value is compatible with Date constructor
+      if (typeof value === 'string' || typeof value === 'number' || value instanceof Date) {
+        const date = new Date(value);
+        return !isNaN(date.getTime());
+      }
+      return false;
+    })
+    .test("not-in-past", "Meeting date cannot be in the past", (value) => {
+      if (!value) return true; // Let the required validation handle this
+      // Type guard to ensure value is compatible with Date constructor
+      if (typeof value === 'string' || typeof value === 'number' || value instanceof Date) {
+        const selectedDate = new Date(value);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return selectedDate >= today;
+      }
+      return false;
+    }),
 
   startTime: Yup.string()
     .required("Start time is required")
@@ -48,7 +67,7 @@ const MeetingSchema = Yup.object().shape({
   location: Yup.string()
     .max(200, "Location must not exceed 200 characters"),
 
-  meetingLink: Yup.string()
+  link: Yup.string()
     .max(500, "Meeting link must not exceed 500 characters")
     .test("is-valid-url", "Meeting link must be a valid URL if provided", (value) => {
       if (!value) return true;
@@ -154,7 +173,7 @@ const initialValues = {
   ends: "Never",
   linkedTo: "",
   location: "",
-  meetingLink: "",
+  link: "",
   assignedTo: "",
   participants: [],
   status: "",
@@ -201,12 +220,24 @@ export default function MeetingForm({ onSubmit, onClose, mode = 'add', initialDa
         repeatOn: initialData.repeatOn || '',
         repeatEvery: initialData.repeatEvery || 1,
         ends: initialData.ends || 'Never',
-        linkedTo: typeof initialData.linkedTo === 'string' ? initialData.linkedTo : (initialData.linkedTo as { id: string })?.id || '',
+        linkedTo: initialData.linkedTo ?
+          (typeof initialData.linkedTo === 'string' ?
+            initialData.linkedTo :
+            (initialData.linkedTo as { id: string })?.id || ''
+          ) : '',
         location: initialData.location || '',
-        meetingLink: initialData.meetingLink || '',
-        assignedTo: typeof initialData.assignedTo === 'string' ? initialData.assignedTo : (initialData.assignedTo as { id: string })?.id || '',
+        link: initialData.link || '',
+        assignedTo: initialData.assignedTo ?
+          (typeof initialData.assignedTo === 'string' ?
+            initialData.assignedTo :
+            (initialData.assignedTo as { id: string })?.id || ''
+          ) : '',
         participants: initialData.participants || [],
-        status: initialData.status || '',
+        status: initialData.status && typeof initialData.status === 'string' ?
+          (initialData.status === 'Confirmed' ? 'confirmed' :
+           initialData.status === 'Cancelled' ? 'cancelled' :
+           initialData.status === 'Scheduled' ? 'scheduled' :
+           (initialData.status as string).toLowerCase()) : '',
         tags: initialData.tags || [],
         notes: initialData.notes || '',
         files: initialData.files || [],
@@ -274,8 +305,8 @@ export default function MeetingForm({ onSubmit, onClose, mode = 'add', initialDa
             })() : null,
             tags: vals.tags ? vals.tags.map((t: string) => t.trim()).filter(Boolean) : [],
             participants: vals.participants ? vals.participants.map((p: string) => p.trim()).filter(Boolean) : [],
-            linkedTo: vals.linkedTo && vals.linkedTo.trim() !== '' ? vals.linkedTo : undefined,
-            assignedTo: vals.assignedTo && vals.assignedTo.trim() !== '' ? vals.assignedTo : undefined,
+            linkedId: vals.linkedTo && vals.linkedTo.trim() !== '' ? vals.linkedTo : null,
+            assignedId: vals.assignedTo && vals.assignedTo.trim() !== '' ? vals.assignedTo : null,
             files: uploadedFiles
           };
 
@@ -391,7 +422,7 @@ export default function MeetingForm({ onSubmit, onClose, mode = 'add', initialDa
             <TextInput label="Location" name="location" placeholder="Conference Room A, Office, etc." />
 
             {/* Link Location */}
-            <TextInput label="Link Location" name="meetingLink" placeholder="Zoom / Meet link" />
+            <TextInput label="Link" name="link" placeholder="Zoom / Meet link" />
 
             {/* Assigned To */}
             <div>
@@ -413,7 +444,7 @@ export default function MeetingForm({ onSubmit, onClose, mode = 'add', initialDa
             <TagInput name='Participants' values={values.participants} setValue={(values: string[]) => setFieldValue('participants', values)} input={participantsInput} setInput={(value: string) => setParticipantsInput(value)} />
 
             {/* Status */}
-            <SelectInput label="Status" name="status">
+            <SelectInput label="Status" name="status" value={values.status}>
               <option value="" disabled>Select Status</option>
 
               <option value="scheduled">Scheduled</option>

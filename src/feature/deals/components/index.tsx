@@ -2,7 +2,6 @@
 import React, { useEffect } from 'react';
 import { DealsHeader } from './Deals-Header';
 import { Table, TableColumn, Badge } from '@/components/ui/Table';
-import { DealData } from '../libs/DealsData';
 import { useDealStore } from '../stores/useDealStore'
 import { useUserStore } from '../../user/store/userStore'
 import Loading from '@/components/ui/Loading'
@@ -11,10 +10,11 @@ import GridView from './DealsGridView'
 import DealDetail from './DealDetail'
 import { Deal } from '../types';
 import DealModal from "./DealModal"
+import { DateConvertion } from '@/libs/utils/dateConvertion';
 
 const Deals = () => {
   const [view, setView] = React.useState<'table' | 'grid'>('table');
-  const [selectedDeal, setSelectedDeal] = React.useState<DealData | null>(null)
+  const [selectedDeal, setSelectedDeal] = React.useState<Deal | null>(null)
   const [isDetailOpen, setIsDetailOpen] = React.useState(false)
   const [showModal, setShowModal] = React.useState<boolean>(false);
   const [editDeal, setEditDeal] = React.useState<Deal | null>(null);
@@ -78,7 +78,14 @@ const Deals = () => {
         year: 'numeric'
       });
     } },
-    { key: 'activity', title: 'Last Activity', dataIndex: 'activity', sortable: false },
+    { key: 'activity', title: 'Last Activity', dataIndex: 'activity', sortable: false,
+        render: (_val, record) => {
+            const dateString = (record as Deal)?.lastActivity;
+              const time =  DateConvertion(dateString);
+              const lastActivity = time === '-' ? time : `${time} - ${(record as Deal)?.stage}`
+              return lastActivity
+          },
+     },
     { key: 'tags', title: 'Tags', dataIndex: 'tags', sortable: false },
 
   ];
@@ -99,7 +106,7 @@ const Deals = () => {
     }
   }, [users.length, ownerOptions.length, initializeOwnerOptions]);
 
-  const openDetail = (deal: DealData) => {
+  const openDetail = (deal: Deal) => {
     setSelectedDeal(deal)
     setIsDetailOpen(true)
   }

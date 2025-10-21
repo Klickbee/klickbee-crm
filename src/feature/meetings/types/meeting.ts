@@ -10,7 +10,7 @@ export interface Meeting {
   tags?: string[];
   notes?: string;
   attachedFiles?: string[];
-  meetingLink?: string;
+  link?: string;
   repeatFrequency?: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
   status?: MeetingStatus;
   files?: Array<{ url: string; name: string; size: number }>;

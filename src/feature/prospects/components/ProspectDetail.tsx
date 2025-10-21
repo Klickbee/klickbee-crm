@@ -91,11 +91,10 @@ export default function ProspectDetail({
       title={prospect.fullName ?? "Prospect Details"}
       notes={prospect.notes ??undefined}
       details={details}
-      attachments={prospect.files?.map(file => file.url) ?? []}
       onClose={onClose}
       onDelete={onDelete ? () => onDelete(prospect.id) : undefined}
-        onEdit={onEdit ? () => onEdit(prospect as Prospect) : undefined}
-           editLabel="Edit Prospect"
+      onEdit={onEdit ? () => onEdit(prospect as Prospect) : undefined}
+      editLabel="Edit Prospect"
       onAddNotes={onAddNotes ? () => onAddNotes(prospect.id) : undefined}
       onExport={onExport ? () => onExport(prospect.id) : undefined}
       isDeleting={isDeleting}

@@ -54,11 +54,13 @@ export const updateMeetingSchema = z
     linkedId: z.string().trim().optional(),
     location: z.string().optional(),
     assignedId: z.string().optional(),
+    link: z.string().optional(),
     participants: z.array(z.string().trim().min(1)).optional(),
     status: z.enum(statusValues).optional(),
     tags: z.array(z.string().trim().min(1)).optional(),
     notes: z.string().optional(),
     files: z.any().optional(),
+    ownerId: z.string().optional(),
   })
   .transform((data) => ({
     ...data,

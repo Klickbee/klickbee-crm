@@ -10,6 +10,7 @@ import DealModal from "./DealModal"
 import { useSearchParams } from "next/navigation"
 import { Deal } from '../types'
 import { useDealStore } from "../stores/useDealStore"
+import { useSession } from "next-auth/react";
 
 type DealsHeaderProps = {
   view: 'table' | 'grid';
@@ -29,6 +30,7 @@ export function DealsHeader({ view, setView, selectedDeals = [], selectedDealRow
   const [closedDate, setClosedDate] = useState<Date | null>(null);
   const searchParams = useSearchParams()
     const setSearchTerm = useDealStore((s) => s.setSearchTerm);
+    const { data: session } = useSession();
 
   // Export/Import via store (already destructured above)
   const [showActionDropdown, setShowActionDropdown] = useState(false);

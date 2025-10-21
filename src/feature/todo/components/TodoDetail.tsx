@@ -110,7 +110,7 @@ export default function TodoDetail({
         </span>
       ),
     },
-        { label: "Linked To", value: typeof task.linkedTo === 'object' ? task.linkedTo?.name : task.linkedTo ?? "-" },
+        { label: "Linked To", value: typeof task.linkedTo === 'object' ? task.linkedTo?.name || task.linkedTo?.email || "-" : task.linkedTo || "-" },
 
     task.dueDate && { label: "Due Date", value: formatDate(task.dueDate) },
     task.lastUpdate && { label: "Last Update", value: formatDate(task.lastUpdate) },
@@ -122,7 +122,7 @@ export default function TodoDetail({
       title={task.taskName ?? "Task Details"}
       notes={task.notes ??undefined}
       details={details}
-      attachments={task.files?.map(file => file.url) ?? []}
+      attachments={task.files}
       onClose={onClose}
       onDelete={onDelete ? () => onDelete(task.id) : undefined}
       onEdit={onEdit ? () => onEdit(task as TaskData) : undefined}

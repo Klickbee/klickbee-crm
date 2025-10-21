@@ -180,7 +180,7 @@ export const MeetingsSidebar: React.FC<MeetingsSidebarProps> = ({
                     <span className="text-sm  text-gray-900">
                       {formatMeetingTime(meeting)}
                     </span>
-                    {meeting.meetingLink && (
+                    {meeting.link && (
                       <Video className="w-4 h-4 text-blue-500" />
                     )}
                   </div>
@@ -189,9 +189,9 @@ export const MeetingsSidebar: React.FC<MeetingsSidebarProps> = ({
                     {meeting.title}
                   </h4>
 
-                  {meeting.meetingLink && (
-                    <div className="text-xs text-blue-600 truncate">
-                      {meeting.meetingLink}
+                  {meeting.link && (
+                    <div className="text-xs  truncate">
+                      {meeting.link}
                     </div>
                   )}
                 </div>

@@ -111,11 +111,20 @@ export default function CustomerForm({
                 email: initialData.email || '',
                 status: initialData.status || '',
                 phone: initialData.phone || '',
-                owner: getOptionLabel(userOptions,
-                    typeof initialData.owner === 'object' && initialData.owner
-                        ? initialData.owner.id
-                        : initialData.ownerId || ''
-                ),
+                 owner: (() => {
+                    if (typeof initialData.owner === 'object' && initialData.owner) {
+                        return initialData.owner.id || '';
+                    }
+                    if (typeof initialData.owner === 'string') {
+                        // Use IIFE to help TypeScript with type narrowing
+                        return (() => {
+                            const ownerString = initialData.owner as string;
+                            const option = userOptions.find(opt => opt.id === ownerString);
+                            return option ? option.id : ownerString;
+                        })();
+                    }
+                    return '';
+                })(),
                 tags: (() => {
                     const tags = initialData.tags;
                     if (!tags) return [];

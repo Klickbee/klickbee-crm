@@ -189,15 +189,7 @@ export const useCompaniesStore = create<CompanyStore>((set, get) => ({
 
       const created: Company = await res.json();
       // Mirror customers pattern: keep server-created fields but inject owner from submitted payload
-      set({ companies: [ ...get().companies, { ...created, owner: company.owner? {
-                  id: company.owner.id as string,
-                  name: company.owner.name,
-                  email: (company.owner as any).email || "",
-                }
-              : undefined,
-          },
-        ],
-      });
+      set({ companies: [...get().companies, created] });
       get().applyFilters(); // Apply filters after adding company
     } catch (err: any) {
       console.error("addCompany error:", err);

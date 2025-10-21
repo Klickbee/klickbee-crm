@@ -2,7 +2,7 @@ export type Customer = {
   id: string;
   userId: string;
   fullName: string;
-  company: string;
+  company: string | { fullName: string };
   email?: string;
   phone?: string;
   status: 'Active' | 'FollowUp' | 'inactive';

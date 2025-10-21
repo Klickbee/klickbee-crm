@@ -195,7 +195,7 @@ export const useCustomersStore = create<CustomerStore>((set, get) => ({
       }
 
       const created: Customer = await res.json();
-      set({ customers: [...get().customers, {...created, owner:{id: customer.owner?.id, name: customer.owner?.name, email: customer.owner?.email}}] });
+      set({ customers: [...get().customers, created] });
       get().applyFilters();
       toast.success("Customer created successfully!");
     } catch (err: any) {

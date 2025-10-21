@@ -166,15 +166,8 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
       }
 
       const created: TaskData = await res.json();
-      set({ todos: [ ...get().todos, { ...created, linkedTo: todo.linkedId? {
-                  id: todo.linkedId as string,
-                  name: '', // Will be populated from the API response
-                  email: "",
-                }
-              : undefined,
-          },
-        ],
-      });      get().applyFilters();
+      set({ todos: [...get().todos, created] });
+      get().applyFilters();
       toast.success("Todo created successfully!");
     } catch (err: any) {
       console.error("addTodo error:", err);

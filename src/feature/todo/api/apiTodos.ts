@@ -97,7 +97,7 @@ export async function GET(req: Request) {
     };
     const todos = await prisma.todo.findMany({
       where,
-      include:{linkedTo: true, assignedTo: true, owner: true},
+      include:{linkedTo: true, assignedTo: true,},
       orderBy: { createdAt: "desc" },
       take: Math.min(limit, 200),
     });

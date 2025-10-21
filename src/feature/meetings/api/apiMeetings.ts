@@ -34,9 +34,9 @@ export async function POST(req: Request) {
       startDate: toDate(bodyRaw.startDate),
       startTime: toDate(bodyRaw.startTime),
       endTime: toDate(bodyRaw.endTime),
-      ownerId: bodyRaw.owner.id,
-      linkedId: bodyRaw.linkedTo, 
-      assignedTo: bodyRaw.assignedTo && bodyRaw.assignedTo.trim() !== "" ? bodyRaw.assignedTo : null,
+      ownerId: session.user.id,
+      linkedId: bodyRaw.linkedId, 
+      assignedId: bodyRaw.assignedId && bodyRaw.assignedId.trim() !== "" ? bodyRaw.assignedId : null,
     });
     if (!parsed.success) {
       return NextResponse.json(
@@ -51,7 +51,6 @@ export async function POST(req: Request) {
       startDate: parsedData.startDate,
       startTime: parsedData.startTime,
       endTime: parsedData.endTime,
-      ownerId: parsedData.ownerId,
       repeatMeeting: parsedData.repeatMeeting ?? false,
       frequency: parsedData.frequency,
       repeatOn: parsedData.repeatOn ?? null,
@@ -59,20 +58,21 @@ export async function POST(req: Request) {
       ends: parsedData.ends,
       linkedId: parsedData.linkedId || session.user.id,
       location: parsedData.location ?? null,
-      assignedId: parsedData.assignedTo|| session.user.id,
+      assignedId: parsedData.assignedId || session.user.id,
+      link: parsedData.link ?? null,
       participants: parsedData.participants ?? [],
       status: parsedData.status,
       tags: parsedData.tags ?? [],
       notes: parsedData.notes ?? null,
       files: parsedData.files ?? undefined,
+      ownerId: session.user.id,
     };
 
     const created = await withActivityLogging(
       async () => {
-        return await prisma.meeting.create({
+        return await prisma.meeting.create({    
           data,
           include: {
-            owner: true,
             linkedTo: true,
             assignedTo: true
           },
@@ -111,7 +111,6 @@ export async function GET(req: Request) {
       include: {
         linkedTo: true,
         assignedTo: true,
-        owner: true,
       },
       orderBy: { createdAt: "desc" },
       take: Math.min(limit, 200),
@@ -134,7 +133,6 @@ export async function handleMethodWithId(req: Request, id: string) {
         include: {
           linkedTo: true,
           assignedTo: true,
-          owner: true,
         }
       });
       if (!meeting) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -166,14 +164,16 @@ export async function handleMethodWithId(req: Request, id: string) {
           repeatOn: parsedData.repeatOn ?? undefined,
           repeatEvery: parsedData.repeatEvery,
           ends: parsedData.ends,
-          linkedId: parsedData.linkedTo || session.user.id,
+          linkedId: parsedData.linkedId || session.user.id,
           location: parsedData.location ?? undefined,
-          assignedId: parsedData.assignedTo && parsedData.assignedTo.trim() !== "" ? parsedData.assignedTo : null,
+          assignedId: parsedData.assignedId && parsedData.assignedId.trim() !== "" ? parsedData.assignedId : null,
+          link: parsedData.link ?? undefined,
           participants: parsedData.participants ?? undefined,
           status: parsedData.status,
           tags: parsedData.tags ?? undefined,
           notes: parsedData.notes ?? undefined,
           files: parsedData.files ?? undefined,
+          ownerId: session.user.id,
         };
 
       const getPreviousData = async () => {

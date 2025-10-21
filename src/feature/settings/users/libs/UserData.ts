@@ -23,7 +23,10 @@ function transformUserForUI(dbUser: any): UserType {
       minute: '2-digit',
       hour12: true
     }) : 'Never',
-    status: dbUser.status === 'Active' ? 'Active' : 'Invite Send'
+    status: dbUser.status === 'Active' ? 'Active' :
+            dbUser.status === 'Invite' ? 'Invite Sent' :
+            dbUser.status === 'Inactive' ? 'Inactive' :
+            dbUser.status === 'Deleted' ? 'Deleted' : 'Invite'
   };
 }
 

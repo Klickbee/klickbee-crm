@@ -116,17 +116,16 @@ export const MeetingDetailModal: React.FC<MeetingDetailModalProps> = ({
         </span>
       ),
     },
-    meeting.meetingLink && {
+    meeting.link && {
       label: "Link/Location",
       value: (
         <a
-          href={meeting.meetingLink}
+          href={meeting.link}
           target="_blank"
           rel="noopener noreferrer"
           className="text-blue-600 hover:underline flex items-center gap-1"
         >
-          <Video className="w-4 h-4" />
-          {meeting.meetingLink}
+          {meeting.link}
         </a>
       ),
     },
@@ -190,22 +189,6 @@ export const MeetingDetailModal: React.FC<MeetingDetailModalProps> = ({
         </p>
       )
     },
-    meeting?.files && Array.isArray(meeting.files) && meeting.files.length > 0 && {
-      label: "Attached Files",
-      value: (
-        <div className="space-y-2">
-          {(meeting.files as any[]).map((file, idx) => (
-            <div
-              key={idx}
-              className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-md"
-            >
-              <span className="text-sm text-blue-600">{typeof file === 'string' ? file : file.name || `File ${idx + 1}`}</span>
-
-            </div>
-          ))}
-        </div>
-      )
-    },
   ].filter(Boolean) as { label: string; value: React.ReactNode }[];
 
   return (
@@ -214,7 +197,7 @@ export const MeetingDetailModal: React.FC<MeetingDetailModalProps> = ({
       title={meeting.title ?? "Meeting Details"}
       notes={meeting.notes}
       details={details}
-      attachments={meeting.files?.map(file => file.url) ?? []}
+      attachments={meeting.files}
       onClose={onClose}
       onDelete={onDelete && meeting.id ? () => onDelete(meeting.id!) : undefined}
       onEdit={onEdit ? () => onEdit(meeting as Meeting) : undefined}

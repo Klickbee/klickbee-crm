@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import toast from 'react-hot-toast';
 
 interface EmailSettings {
   host: string;
@@ -10,7 +11,9 @@ interface EmailSettings {
 
 interface EmailStore {
   settings: EmailSettings;
-  isLoading: boolean;
+  isSaving: boolean;
+  isSendingTest: boolean;
+  isLoadingSettings: boolean;
   error: string | null;
   setSettings: (settings: Partial<EmailSettings>) => void;
   saveSettings: () => Promise<void>;
@@ -29,7 +32,9 @@ const initialSettings: EmailSettings = {
 
 export const useEmailStore = create<EmailStore>((set, get) => ({
   settings: initialSettings,
-  isLoading: false,
+  isSaving: false,
+  isSendingTest: false,
+  isLoadingSettings: false,
   error: null,
   setSettings: (newSettings) => {
     set((state) => ({
@@ -37,7 +42,7 @@ export const useEmailStore = create<EmailStore>((set, get) => ({
     }));
   },
   saveSettings: async () => {
-    set({ isLoading: true, error: null });
+    set({ isSaving: true, error: null });
     try {
       const response = await fetch('/api/email', {
         method: 'POST',
@@ -47,15 +52,16 @@ export const useEmailStore = create<EmailStore>((set, get) => ({
       if (!response.ok) {
         throw new Error('Failed to save email settings');
       }
+      toast.success('Email settings saved successfully!');
       // Optionally handle response data here
     } catch (error) {
       set({ error: error instanceof Error ? error.message : 'An error occurred' });
     } finally {
-      set({ isLoading: false });
+      set({ isSaving: false });
     }
   },
   sendInvite: async (to: string) => {
-    set({ isLoading: true, error: null });
+    set({ isSendingTest: true, error: null });
     try {
       const response = await fetch('/api/email/test', {
         method: 'POST',
@@ -65,15 +71,16 @@ export const useEmailStore = create<EmailStore>((set, get) => ({
       if (!response.ok) {
         throw new Error('Failed to send test email');
       }
+      toast.success(`Test email sent successfully to ${to}!`);
       // Optionally handle response data here
     } catch (error) {
       set({ error: error instanceof Error ? error.message : 'An error occurred' });
     } finally {
-      set({ isLoading: false });
+      set({ isSendingTest: false });
     }
   },
   loadSettings: async () => {
-    set({ isLoading: true, error: null });
+    set({ isLoadingSettings: true, error: null });
     try {
       const response = await fetch('/api/email', {
         method: 'GET',
@@ -87,7 +94,7 @@ export const useEmailStore = create<EmailStore>((set, get) => ({
     } catch (error) {
       set({ error: error instanceof Error ? error.message : 'An error occurred' });
     } finally {
-      set({ isLoading: false });
+      set({ isLoadingSettings: false });
     }
   },
   resetError: () => set({ error: null }),

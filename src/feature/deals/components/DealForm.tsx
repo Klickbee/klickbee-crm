@@ -93,7 +93,7 @@ export default function DealForm({
 
 
     // Helper function to convert option IDs to labels
-    const getOptionLabel = (options: {id: string, label: string}[], value: string) => {
+         const getOptionLabel = (options: {id: string, label: string}[], value: string) => {
         // First try to find by ID
         const optionById = options.find(opt => opt.id === value);
         if (optionById) return optionById.label;
@@ -105,7 +105,6 @@ export default function DealForm({
         // If not found in options, return the value as-is (for dynamic values)
         return value;
     };
-
     // Get initial values based on mode and initial data
     const getInitialValues = (): DealFormValues => {
         if (mode === 'edit' && initialData) {
@@ -151,7 +150,18 @@ export default function DealForm({
                 stage: initialData.stage || 'New',
                 amount: initialData.amount || 0,
                 currency: 'EUR', // Default currency, you might want to store this in the deal data
-                owner: ownerValue, // Keep as ID for SearchableDropdown
+                owner: (() => {
+                    if (typeof initialData.owner === 'object' && initialData.owner) {
+                        return initialData.owner.id || '';
+                    }
+                    if (typeof initialData.owner === 'string') {
+                        // If it's already a string, check if it's an ID or a name
+                        // For now, assume it's an ID if it's in userOptions, otherwise return as-is
+                        const option = userOptions.find(opt => opt.id === initialData.owner || opt.label === initialData.owner);
+                        return option ? option.id : initialData.owner;
+                    }
+                    return '';
+                })(),
                 closeDate: initialData.closeDate
                     ? new Date(initialData.closeDate).toISOString().split('T')[0]
                     : '',

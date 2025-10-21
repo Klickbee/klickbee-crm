@@ -1,14 +1,13 @@
 'use client';
 import React from 'react';
 import DetailModal from '@/components/detailPage'; // the reusable modal we built earlier
-import { DealData } from '../libs/DealsData';
 import { Badge } from '@/components/ui/Table';
 import { Deal } from '../types';
 import AvatarInitials from '@/components/ui/AvatarInitials'
 
 interface DealDetailProps {
   isOpen: boolean;
-  deal: DealData | null;
+  deal: Deal | null;
   onClose: () => void;
   onDelete?: (id: string) => void;
   onEdit?: (deal: Deal) => void;
@@ -47,6 +46,14 @@ export default function DealDetail({
     return 'Unknown Contact';
   };
 
+  const getOwnerName = (owner: any) => {
+    if (!owner) return 'No Owner';
+    if (typeof owner === 'string') return owner;
+    if (typeof owner === 'object' && owner?.name) return owner.name;
+    if (typeof owner === 'object' && owner?.email) return owner.email;
+    return 'Unknown Owner';
+  };
+
   const getCurrencySymbol = (currency?: string) => {
     switch (currency?.toUpperCase()) {
       case 'EUR': return '€';
@@ -76,14 +83,14 @@ export default function DealDetail({
       label: 'Owner',
       value: (
         <span className="flex items-center gap-2">
-          <AvatarInitials name={deal.owner} size={24} />
-          {deal.owner}
+          <AvatarInitials name={getOwnerName(deal.owner)} size={24} />
+          {getOwnerName(deal.owner)}
         </span>
       ),
     },
     deal.priority && { label: 'Tags', value: deal.priority },
-    deal.date && { label: 'Closed Date', value: deal.date },
-    (deal as any).lastActivity && { label: 'Last Activity', value: formatDate((deal as any).lastActivity) },
+    deal.closeDate && { label: 'Closed Date', value: deal.closeDate },
+    (deal as any).lastActivity && { label:  'Last Activity', value: formatDate((deal as any).lastActivity) },
 
   ].filter(Boolean) as { label: string; value: React.ReactNode }[];
 
@@ -93,7 +100,7 @@ export default function DealDetail({
       title={deal.dealName}
       details={details}
       notes={deal.notes}
-      attachments={deal.attachments ?? []}
+      attachments={deal.files}
       onClose={onClose}
       onDelete={onDelete ? () => onDelete(deal.id) : undefined}
       onEdit={onEdit ? () => onEdit(deal as Deal) : undefined}

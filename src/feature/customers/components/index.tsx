@@ -7,6 +7,7 @@ import { useCustomersStore } from '../stores/useCustomersStore';
 import { useUserStore } from '../../user/store/userStore';
 import CustomerDetail from './CustomerDetail';
 import Loading from '@/components/ui/Loading';
+import { DateConvertion } from '@/libs/utils/dateConvertion';
 
 export const customerColumns: TableColumn<Customer>[] = [
   {
@@ -76,16 +77,22 @@ export const customerColumns: TableColumn<Customer>[] = [
     key: 'createdAt',
     title: 'Last Contact',
     dataIndex: 'createdAt',
-    sortable: true,
-    render: (dateString: string) => {
-      if (!dateString) return '-';
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric'
-      });
-    },
+    sortable: false,
+     render: (_val, record) => {
+                  const dateString = (record as Customer )?.lastContact;
+                    const time =  DateConvertion(dateString);
+                 const company = (record as Customer)?.company;
+                 let companyName = 'Unknown Company';
+
+                 if (typeof company === 'string') {
+                   companyName = company;
+                 } else if (typeof company === 'object' && company !== null && company.fullName) {
+                   companyName = company.fullName;
+                 }
+
+                 const lastActivity = time === '-' ? time : `${time} - ${companyName}`
+                    return lastActivity
+                },
   },
   {
     key: 'tags',

@@ -27,7 +27,7 @@ export const createDealSchema = z.object({
   files: z.array(
     z.object({
       name: z.string(),
-      url: z.string().url(),
+      url: z.string(),
       size: z.number().optional(),
       mimeType: z.string().optional()
     })

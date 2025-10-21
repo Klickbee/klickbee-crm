@@ -16,7 +16,7 @@ interface DetailModalProps {
   details: DetailItem[]; // Dynamic key-value fields
   description?: string;
   notes?: string;
-  attachments?: string[];
+attachments?: { url: string; name?: string; size?: number; mimeType?: string }[];
   activityLog?: { action: string; user: string; timestamp: Date }[];
   onClose: () => void;
   onDelete?: () => void;
@@ -134,10 +134,10 @@ const DetailModal: React.FC<DetailModalProps> = ({
                     className="flex items-center justify-between  px-4 py-3  gap-4"
                   >
                     <div className="flex-1 min-w-0">
-                      <span className="text-sm text-blue-600 block truncate">{file}</span>
+                      <span className="text-sm text-blue-600 block truncate">{file.url}</span>
                     </div>
                     <button
-                      onClick={() => handleFileDownload(file)}
+                      onClick={() => handleFileDownload(file.url)}
                       className="flex items-center text-gray-600 border border-[var(--border-gray)] px-3 rounded-md shadow-sm text-sm py-1 hover:text-gray-800 whitespace-nowrap"
                     >
                       <Download className="w-4 h-4 mr-2" />
