@@ -96,8 +96,8 @@ const DetailModal: React.FC<DetailModalProps> = ({
                   key={idx}
                   className={`flex ${item.fullWidth ? 'items-start' : 'items-center'}`}
                 >
-                  <span className="w-28 font-medium">{item.label}</span>:
-                  <span className="ml-2 flex items-center">{item.value}</span>
+                  <span className="w-28 font-medium capitalize">{item.label}</span>:
+                  <span className="ml-2 flex items-center capitalize">{item.value}</span>
                 </div>
               ))}
             </div>
@@ -108,7 +108,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
           {description && (
             <section className='p-6 space-y-8'>
               <h3 className="font-medium text-gray-900 mb-2">Description</h3>
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">{description}</p>
+              <p className="text-sm text-gray-700 whitespace-pre-wrap capitalize">{description}</p>
             </section>
           )}
 </div>
@@ -117,7 +117,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
           {notes && (
             <section className='p-6 space-y-8'> 
               <h3 className="font-medium text-gray-900 mb-2">Notes</h3>
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">{notes}</p>
+              <p className="text-sm text-gray-700 whitespace-pre-wrap capitalize">{notes}</p>
             </section>
           )}
 </div>
@@ -134,7 +134,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
                     className="flex items-center justify-between  px-4 py-3  gap-4"
                   >
                     <div className="flex-1 min-w-0">
-                      <span className="text-sm text-blue-600 block truncate">{file.url}</span>
+                      <span className="text-sm text-blue-600 block truncate ">{file.url}</span>
                     </div>
                     <button
                       onClick={() => handleFileDownload(file.url)}
@@ -160,9 +160,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
               <div className="space-y-3 text-sm">
                 {activityLog.map((log, idx) => (
                   <div key={idx}>
-                    <div className="text-gray-900">
-                      {log.action} by {log.user}
-                    </div>
+                    <div className="text-gray-900 capitalize">{log.action} by {log.user}</div>
                     <div className="text-xs text-gray-500">
                       {new Date(log.timestamp).toLocaleString()}
                     </div>

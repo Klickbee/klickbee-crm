@@ -181,14 +181,6 @@ export const MeetingDetailModal: React.FC<MeetingDetailModalProps> = ({
         </p>
       )
     },
-    meeting.notes !== undefined && meeting.notes !== null && {
-      label: "Notes",
-      value: (
-        <p className="text-sm whitespace-pre-wrap">
-          {meeting.notes || "No notes added"}
-        </p>
-      )
-    },
   ].filter(Boolean) as { label: string; value: React.ReactNode }[];
 
   return (

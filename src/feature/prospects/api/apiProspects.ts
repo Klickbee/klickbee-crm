@@ -147,6 +147,7 @@ export async function handleMethodWithId(req: Request, id: string) {
         status: parsedData.status,
         tags: parsedData.tags ?? undefined,
         notes: parsedData.notes ?? undefined,
+        ownerId: parsedData.ownerId,
       };
       
       const getPreviousData = async () => {

@@ -89,7 +89,7 @@ export default function DealDetail({
       ),
     },
     deal.priority && { label: 'Tags', value: deal.priority },
-    deal.closeDate && { label: 'Closed Date', value: deal.closeDate },
+    deal.closeDate && { label: 'Closed Date', value:formatDate((deal as any).closeDate) },
     (deal as any).lastActivity && { label:  'Last Activity', value: formatDate((deal as any).lastActivity) },
 
   ].filter(Boolean) as { label: string; value: React.ReactNode }[];

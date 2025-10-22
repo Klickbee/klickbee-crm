@@ -67,7 +67,7 @@ export function PipelineCard({ range = "this_month" }: { range?: string }) {
 
   if (loading) {
     return (
-      <section className="rounded-xl h-[488px] border border-[var(--border-gray)] bg-white">
+      <section className="rounded-xl h-[488px] border border-[var(--border-gray)] bg-white shadow-sm">
         <div className="flex h-[58px] items-center justify-between p-[16px] border-b border-[var(--border-gray)]">
           <h3 className="text-sm font-semibold text-[var(--foreground)]">Pipeline</h3>
           <button  onClick={() => router.push("/deals")}
@@ -88,7 +88,7 @@ export function PipelineCard({ range = "this_month" }: { range?: string }) {
 
   if (error || !pipelineData) {
     return (
-      <section className="rounded-xl h-[488px] border border-[var(--border-gray)] bg-white">
+      <section className="rounded-xl h-[488px] border border-[var(--border-gray)] bg-white shadow-sm">
         <div className="flex h-[58px] items-center justify-between p-[16px] border-b border-[var(--border-gray)]">
           <h3 className="text-sm font-semibold text-[var(--foreground)]">Pipeline</h3>
           <button onClick={() => router.push("/deals")}
@@ -108,7 +108,7 @@ export function PipelineCard({ range = "this_month" }: { range?: string }) {
 
 
   return (
-    <section className="rounded-xl h-[488px] border border-[var(--border-gray)] bg-white">
+    <section className="rounded-xl h-[488px] border border-[var(--border-gray)] bg-white shadow-sm">
       <div className="flex h-[58px] items-center justify-between p-[16px] border-b border-[var(--border-gray)]">
         <h3 className="text-sm font-semibold text-[var(--foreground)]">{title}</h3>
         <button onClick={() => router.push("/deals")}
@@ -179,7 +179,7 @@ export function PipelineCard({ range = "this_month" }: { range?: string }) {
             <div
               key={i}
               className={`px-3 py-2 text-center ${
-                i === conversionRates.length - 1
+                rate <= 30
                   ? "text-[#8B5CF6] font-semibold"
                   : "text-muted-foreground"
               }`}

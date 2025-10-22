@@ -51,6 +51,14 @@ const getContactName = (contact: any) => {
   return 'Unknown Contact';
 };
 
+const getOwnerName = (owner: any) => {
+  if (!owner) return 'No Owner';
+  if (typeof owner === 'string') return owner;
+  if (typeof owner === 'object' && owner?.name) return owner.name;
+  if (typeof owner === 'object' && owner?.email) return owner.email;
+  return 'Unknown Owner';
+};
+
 export function DealCard({ deal, className }: DealCardProps) {
   const badgeClass = stageBadgeClass[deal.stage] ?? "bg-muted text-muted-foreground"
 
@@ -90,8 +98,8 @@ export function DealCard({ deal, className }: DealCardProps) {
 
         {/* Owner */}
         <div className="mt-4 flex items-center gap-2">
-          <AvatarInitials name={deal.owner} size={24} />
-          <span className="text-xs text-foreground/80">{deal.owner}</span>
+          <AvatarInitials name={getOwnerName(deal.owner)} size={24} />
+          <span className="text-xs text-foreground/80 capitalize">{getOwnerName(deal.owner)}</span>
         </div>
       </CardContent>
     </Card>

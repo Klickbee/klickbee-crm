@@ -79,7 +79,7 @@ export function TodoCard({ task, className }: TodoCardProps) {
         </div>
 
         <h4 className="text-sm font-semibold text-pretty leading-tight">{task.taskName}</h4>
-        <p className="mt-1 text-xs text-[var(--brand-gray)] ">{typeof task.linkedTo === 'object' ? task.linkedTo?.name : task.linkedTo ?? ""}</p>
+        <p className="mt-1 text-xs text-[var(--brand-gray)] capitalize ">{typeof task.linkedTo === 'object' ? task.linkedTo?.name : task.linkedTo ?? ""}</p>
         {task.dueDate && (
           <div className="text-xs mt-2 text-[var(--brand-gray)] flex items-center gap-2">
             <Calendar className="h-3.5 w-3.5" />
@@ -94,7 +94,7 @@ export function TodoCard({ task, className }: TodoCardProps) {
             name={typeof task.assignedTo === 'object' ? task.assignedTo?.name ?? '' : String(task.assignedTo ?? '')}
             size={24}
           />
-          <span className="text-xs text-foreground/80">{typeof task.assignedTo === 'object' ? task.assignedTo?.name : task.assignedTo ?? ""}</span>
+          <span className="text-xs text-foreground/80 capitalize">{typeof task.assignedTo === 'object' ? task.assignedTo?.name : task.assignedTo ?? ""}</span>
         </div>
       </CardContent>
     </Card>

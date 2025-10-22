@@ -72,6 +72,38 @@ const formatTime = (createdAt: string): string => {
   return created.toLocaleDateString();
 }
 
+// Format meeting time from 24-hour format to 12-hour format with AM/PM
+const formatMeetingTime = (timeString: string): string => {
+  if (!timeString) return '';
+
+  // Handle ISO date format (2025-10-22T12:00:00.000Z) or regular time format (HH:mm)
+  let timeMatch;
+
+  // Try ISO format first (common for APIs)
+  if (timeString.includes('T')) {
+    timeMatch = timeString.match(/T(\d{1,2}):(\d{2})/);
+  } else {
+    // Try regular time format as fallback
+    timeMatch = timeString.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+  }
+
+  if (!timeMatch) {
+    console.warn('Time format not matched:', timeString);
+    return timeString; // Return original if format doesn't match
+  }
+
+  let hours = parseInt(timeMatch[1], 10);
+  const minutes = timeMatch[2];
+
+  // Convert 24-hour to 12-hour format
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12; // Convert 0 to 12
+
+  // Format with leading zero for minutes and space before AM/PM
+  return `${hours}:${minutes} ${ampm}`;
+};
+
 // Generate activity description based on API data
 const generateActivityDescription = (activity: any): { action: string, description: string } => {
   const { action, entityType, metadata } = activity;
@@ -270,7 +302,7 @@ const generateActivityDescription = (activity: any): { action: string, descripti
         const meetingTitle = meetingData?.title || 'Untitled Meeting';
         return {
           action: `scheduled meeting "${meetingTitle}"`,
-          description: `${user} scheduled a new meeting "${meetingTitle}".`
+          description: `${user} scheduled a new meeting "${meetingTitle}" on ${formatMeetingTime(meetingData?.startTime)}-${formatMeetingTime(meetingData?.endTime)}.`
         };
 
       case 'Update':

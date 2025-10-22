@@ -27,8 +27,11 @@ export const authOptions: NextAuthOptions = {
         if (!user.password) {
           throw new Error('Please contact support - account setup incomplete')
         }
-
+    
         // Block login if user is not Active
+        if (user.status === 'Deleted') {
+          throw new Error('Your account is removed. Please contact your admin.')
+        }
         if (user.status !== 'Active') {
           throw new Error('Account is not active. Please Check your email for the invitation.')
         }

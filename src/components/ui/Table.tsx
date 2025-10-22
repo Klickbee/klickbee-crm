@@ -67,7 +67,8 @@ const Badge: React.FC<{
 const formatCellValue = (value: any) => {
   if (value === null || value === undefined) return '-'
   if (typeof value === 'string' && value.trim() === '') return '-'
-  return String(value)
+  const str = String(value)
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
 }
 
 // Table Row Component
@@ -114,7 +115,7 @@ const TableRow = <T,>({
       {columns.map((column) => (
         <td 
           key={column.key} 
-          className="px-6 py-3 text-sm text-[var(--foreground)] whitespace-nowrap"
+          className="px-6 py-3 text-sm text-[var(--foreground)] whitespace-nowrap capitalize"
           style={{ width: column.width }}
         >
           {column.avatar ? (

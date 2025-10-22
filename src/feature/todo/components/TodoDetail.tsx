@@ -2,6 +2,7 @@
 import type { TaskData } from "../types/types";
 import { ArrowUp, AlertTriangle, Minus, ChevronUp } from 'lucide-react';
 import DetailModal from "@/components/detailPage";
+import AvatarInitials from "@/components/ui/AvatarInitials";
 // Helper function to format dates
 const formatDate = (dateString: string | undefined) => {
   if (!dateString) return null;
@@ -98,14 +99,10 @@ export default function TodoDetail({
       label: "Assigned To",
       value: (
         <span className="flex items-center gap-2">
-          {task.assignedImage && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={task.assignedImage}
-              alt={typeof task.assignedTo === 'object' ? task.assignedTo?.name ?? "Assignee" : task.assignedTo ?? "Assignee"}
-              className="w-6 h-6 rounded-full"
-            />
-          )}
+   <AvatarInitials
+            name={typeof task.assignedTo === 'object' ? task.assignedTo?.name ?? '' : String(task.assignedTo ?? '')}
+            size={24}
+          />
           {typeof task.assignedTo === 'object' ? task.assignedTo?.name : task.assignedTo ?? "-"}
         </span>
       ),

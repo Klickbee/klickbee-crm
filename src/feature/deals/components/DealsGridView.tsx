@@ -69,7 +69,7 @@ const handleMove = React.useCallback(async  ({ itemId, fromKey, toKey }: { itemI
       ),
     }));
 
-    await updateDeal(dealToUpdate.id, { ...dealToUpdate, stage: newStage });
+    await updateDeal(dealToUpdate.id, { stage: newStage });
 
     toast.success(`Deal moved to ${readableStage}`);
   } catch (err: any) {
