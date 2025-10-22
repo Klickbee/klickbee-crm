@@ -80,22 +80,42 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const limit = Number(url.searchParams.get("limit") ?? 50);
     const ownerId = url.searchParams.get("ownerId");
-    const status = url.searchParams.get("status");
     const search = url.searchParams.get("search");
+    
+    // New filter parameters
+    const status = url.searchParams.get("status")?.split(",").filter(Boolean) || [];
+    const owners = url.searchParams.get("owners")?.split(",").filter(Boolean) || [];
+    const tags = url.searchParams.get("tags")?.split(",").filter(Boolean) || [];
 
-    let where: Record<string, any> = {};
-    if(ownerId){
-      where.ownerId = ownerId
+    const where: any = {
+      ...(ownerId ? { ownerId } : {}),
+      ...(search
+        ? {
+            fullName: {
+              contains: search,
+              mode: Prisma.QueryMode.insensitive,
+            },
+          }
+        : {}),
+    };
+
+    // Add status filtering
+    if (status.length > 0) {
+      where.status = { in: status };
     }
-    if(status){
-      where.status = status;
+
+    // Add owner filtering
+    if (owners.length > 0) {
+      where.ownerId = { in: owners };
     }
-    if(search){
-      where.fullName = {
-        contains: search,
-        mode: Prisma.QueryMode.insensitive,
-      }
+
+    // Add tags filtering
+    if (tags.length > 0) {
+      where.tags = {
+        hasSome: tags
+      };
     }
+
     const companies = await prisma.company.findMany({
       where,
       include: {

@@ -16,11 +16,12 @@ interface TodoStore {
   loading: boolean;
   error: string | null;
   filters: TodoFilters;
+  searchTerm: string;
 
   fetchTodos: (ownerId?: string) => Promise<void>;
   setSearchTerm: (search: string) => void;
   setFilters: (filters: TodoFilters) => void;
-  applyFilters: () => void;
+  applyFilters: () => Promise<void>;
   resetFilters: () => void;
   generateOwnerOptions: () => FilterOption[];
   initializeOwnerOptions: () => void;
@@ -53,6 +54,7 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
       { id: 'Urgent', label: 'Urgent', checked: false },
     ],
   },
+  searchTerm: "",
 
   // Build owner filter options from users
   generateOwnerOptions: () => {
@@ -71,41 +73,67 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
 
   setFilters: (filters: TodoFilters) => set({ filters }),
 
-  applyFilters: () => {
-    const { todos, filters } = get();
-    let filtered = [...todos];
+  applyFilters: async () => {
+    const { filters, searchTerm } = get();
+    
+    try {
+      set({ loading: true });
+      
+      // Build query parameters
+      const params = new URLSearchParams();
+      
+      // Search term
+      if (searchTerm.trim()) {
+        params.append('search', searchTerm.trim());
+      }
+      
+      // Status filter
+      const activeStatus = filters.status.filter((s: any) => s.checked && s.id !== 'all');
+      if (activeStatus.length > 0) {
+        params.append('status', activeStatus.map((f: any) => f.id).join(','));
+      }
 
-    // Status filter
-    const selStatus = filters.status.filter((f) => f.checked && f.id !== 'all').map((f) => f.id);
-    if (selStatus.length > 0) {
-      filtered = filtered.filter((t) => selStatus.includes(t.status));
-    }
+      // Priority filter
+      const activePriority = filters.priority.filter((p: any) => p.checked && p.id !== 'all');
+      if (activePriority.length > 0) {
+        params.append('priority', activePriority.map((f: any) => f.id).join(','));
+      }
 
-    // Priority filter
-    const selPriority = filters.priority.filter((f) => f.checked && f.id !== 'all').map((f) => f.id);
-    if (selPriority.length > 0) {
-      filtered = filtered.filter((t) => selPriority.includes(t.priority));
-    }
-
-    // Owner filter - match assignedTo name/email/id; handle 'me' with current user ID
-    const selOwners = filters.owner.filter((o) => o.checked && o.id !== 'all').map((o) => o.id);
-    if (selOwners.length > 0) {
-      filtered = filtered.filter((t) => {
-        if (!t.assignedTo && !t.assignedId) return false;
-        const currentUserId = useUserStore.getState().getCurrentUserId();
-        if (selOwners.includes('me')) {
-          return t.assignedId === currentUserId;  // Use assignedId for ID matching
+      // Owner filter
+      const activeOwners = filters.owner.filter((o: any) => o.checked && o.id !== 'all');
+      if (activeOwners.length > 0) {
+        const ownerIds = activeOwners
+          .map((f: any) => {
+            if (f.id === "me") {
+              const currentUserId = useUserStore.getState().getCurrentUserId();
+              return currentUserId;
+            }
+            return f.id;
+          })
+          .filter(Boolean);
+        if (ownerIds.length > 0) {
+          params.append('assignedId', ownerIds.join(','));
         }
-        // For other owners, match by assignedId or string assignedTo
-        const assignedId = t.assignedId || (typeof t.assignedTo === 'string' ? t.assignedTo : '');
-        return selOwners.includes(assignedId);
-      });
-    }
+      }
 
-    set({ filteredTodos: filtered });
+      // Make API call with filters
+      const queryString = params.toString();
+      const url = queryString ? `/api/admin/todos?${queryString}` : '/api/admin/todos';
+      const res = await fetch(url);
+      
+      if (!res.ok) throw new Error("Failed to fetch filtered todos");
+
+      const data: any[] = await res.json();
+      set({ todos: data, filteredTodos: data, loading: false });
+      
+    } catch (err: any) {
+      console.error("applyFilters error:", err);
+      toast.error("Failed to apply filters");
+      set({ error: err.message, loading: false });
+    }
   },
 
-  resetFilters: () => {
+  resetFilters: async () => {
     const initial: TodoFilters = {
       status: [
         { id: 'all', label: 'All Status', checked: true },
@@ -123,15 +151,14 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
         { id: 'Urgent', label: 'Urgent', checked: false },
       ],
     };
-    set({ filters: initial, filteredTodos: get().todos });
+    set({ filters: initial, searchTerm: "" });
+    await get().fetchTodos();
   },
-    setSearchTerm: (search: string) => {
-  const { todos } = get();
-  const filtered = todos.filter((d) =>
-    d.taskName?.toLowerCase().includes(search.toLowerCase())
-  );
-  set({ filteredTodos: filtered });
-},
+
+  setSearchTerm: (search: string) => {
+    set({ searchTerm: search });
+    get().applyFilters();
+  },
 
   //  Fetch todos from API
   fetchTodos: async (ownerId?: string) => {

@@ -104,8 +104,35 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const limit = Number(url.searchParams.get("limit") ?? 50);
     const ownerId = url.searchParams.get("ownerId");
+    const search = url.searchParams.get("search");
+    
+    // New filter parameters
+    const status = url.searchParams.get("status")?.split(",").filter(Boolean) || [];
+    const owners = url.searchParams.get("owners")?.split(",").filter(Boolean) || [];
+    const tags = url.searchParams.get("tags")?.split(",").filter(Boolean) || [];
 
-    const where = ownerId ? { ownerId } : undefined;
+    const where: any = {
+      ...(ownerId ? { ownerId } : {}),
+
+    };
+
+    // Add status filtering
+    if (status.length > 0) {
+      where.status = { in: status };
+    }
+
+    // Add owner filtering
+    if (owners.length > 0) {
+      where.ownerId = { in: owners };
+    }
+
+    // Add tags filtering
+    if (tags.length > 0) {
+      where.tags = {
+        hasSome: tags
+      };
+    }
+
     const meetings = await prisma.meeting.findMany({
       where,
       include: {

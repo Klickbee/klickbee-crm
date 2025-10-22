@@ -2,14 +2,29 @@
 import { Button } from "@/components/ui/Button"
 import { DropDown } from "@/components/ui/DropDown"
 import { Search, LayoutGrid, List, Download, Upload, Plus, ChevronDown } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Filter from "@/components/filter"
 import { type FilterData } from "../libs/filterData"
 import ProspectModel from './ProspectModel'
 import { Prospect } from "../types/types"
 import { useProspectsStore } from "../stores/useProspectsStore"
 
+// Custom hook for debounced search
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
 
 // Values must match FilterData ids in prospects filterData.ts
 const statusOptions = [
@@ -42,8 +57,17 @@ export function ProspectHeader({ selectedProspects = [], selectedProspectRows = 
       const [showNewProspect, setShowNewProspect] = useState<boolean>(false);
   const [editProspect, setEditProspect] = useState<Prospect | null>(null);
   const setSearchTerm = useProspectsStore((state) => state.setSearchTerm);
+  const [searchInput, setSearchInput] = useState("");
   
   const [showActionDropdown, setShowActionDropdown] = useState(false);
+
+  // Debounce search input with 500ms delay
+  const debouncedSearchTerm = useDebounce(searchInput, 500);
+
+  // Effect to trigger search when debounced value changes
+  useEffect(() => {
+    setSearchTerm(debouncedSearchTerm);
+  }, [debouncedSearchTerm, setSearchTerm]);
 
        const handleEditDeal = (prospect: Prospect) => {
          setEditProspect(prospect);
@@ -133,12 +157,13 @@ export function ProspectHeader({ selectedProspects = [], selectedProspectRows = 
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             placeholder="Search"
+            value={searchInput}
             className="
               pl-9 w-full h-[36px]
               bg-card border border-[var(--border-gray)] rounded-md
               text-sm outline-none shadow-sm
             "
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => setSearchInput(e.target.value)}
           />
         </div>
 

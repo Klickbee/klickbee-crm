@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/Button"
 import { CalendarDropDown } from "@/components/ui/CalendarDropDown"
 import { DropDown } from "@/components/ui/DropDown"
 import { Search, LayoutGrid, List, Download, Upload, Plus, ChevronDown } from "lucide-react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Filter from "@/components/filter"
 import { type FilterData } from "@/feature/deals/libs/filterData"
 import DealModal from "./DealModal"
@@ -20,6 +20,24 @@ type DealsHeaderProps = {
   onClearSelection?: () => void;
 }
 const searchableCategories: (keyof FilterData)[] = ["owner", "tags"];
+
+// Custom hook for debounced search
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
 export function DealsHeader({ view, setView, selectedDeals = [], selectedDealRows = [], onClearSelection }: DealsHeaderProps) {
   const [selectedUser, setSelectedUser] = useState("Closed")
   const [showFilter, setShowFilter] = useState(false)
@@ -28,9 +46,18 @@ export function DealsHeader({ view, setView, selectedDeals = [], selectedDealRow
   const [showNewDealer, setShowNewDealer] = useState<boolean>(false);
   const [editDeal, setEditDeal] = useState<Deal | null>(null);
   const [closedDate, setClosedDate] = useState<Date | null>(null);
+  const [searchInput, setSearchInput] = useState("");
   const searchParams = useSearchParams()
-    const setSearchTerm = useDealStore((s) => s.setSearchTerm);
-    const { data: session } = useSession();
+  const setSearchTerm = useDealStore((s) => s.setSearchTerm);
+  const { data: session } = useSession();
+
+  // Debounce search input with 500ms delay
+  const debouncedSearchTerm = useDebounce(searchInput, 500);
+
+  // Effect to trigger search when debounced value changes
+  useEffect(() => {
+    setSearchTerm(debouncedSearchTerm);
+  }, [debouncedSearchTerm, setSearchTerm]);
 
   // Export/Import via store (already destructured above)
   const [showActionDropdown, setShowActionDropdown] = useState(false);
@@ -104,13 +131,13 @@ export function DealsHeader({ view, setView, selectedDeals = [], selectedDealRow
   ];
 
   // ✅ Toggle checkbox
-  const handleToggle = (category: keyof FilterData, id: string) => {
+  const handleToggle = async (category: keyof FilterData, id: string) => {
   const newFilters = { ...filters } as FilterData;
   newFilters[category] = newFilters[category].map((item) =>
     item.id === id ? { ...item, checked: !item.checked } : item
   );
   setFilters(newFilters);
-  applyFilters();
+  await applyFilters();
 };
 
   return (
@@ -130,13 +157,13 @@ export function DealsHeader({ view, setView, selectedDeals = [], selectedDealRow
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             placeholder="Search"
+            value={searchInput}
             className="
               pl-9 w-full h-[36px]
               bg-card border border-[var(--border-gray)] rounded-md
               text-sm outline-none shadow-sm
             "
-             onChange={(e) => setSearchTerm(e.target.value)}
-
+            onChange={(e) => setSearchInput(e.target.value)}
           />
         </div>
 

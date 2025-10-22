@@ -1,10 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Search } from "lucide-react";
 import { ViewType } from "../types/meeting";
 import { Button } from "@/components/ui/Button";
 import { DropDown } from "@/components/ui/DropDown";
 import { useMeetingsStore } from "../stores/useMeetingsStore";
-
 interface CalendarHeaderProps {
   currentDate: Date;
   currentView: ViewType;
@@ -22,7 +21,10 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
 }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const { filters, setFilters, applyFilters, initializeOwnerOptions } = useMeetingsStore();
+  const { filters, setFilters, applyFilters, initializeOwnerOptions, setSearchTerm } = useMeetingsStore();
+
+
+ 
 
   // Initialize owner options when component mounts
   useEffect(() => {
@@ -67,6 +69,8 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
         bg-background
       ">
         <div className="flex items-center gap-2">
+
+          
           <DropDown
             options={filters.owner.map(opt => ({ value: opt.id, label: opt.label }))}
             value={getSelectedValue('owner')}

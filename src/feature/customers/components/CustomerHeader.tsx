@@ -3,13 +3,29 @@ import Filter from "@/components/filter"
 import { Button } from "@/components/ui/Button"
 import { DropDown } from "@/components/ui/DropDown"
 import { Search, LayoutGrid, List, Download, Upload, Plus, ChevronDown } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { type FilterData } from "../libs/fillterData"
 import CustomerModal from "./CustomersModel"
 import { useSearchParams } from "next/navigation"
 import { Customer } from "../types/types"
 import { useCustomersStore } from "../stores/useCustomersStore"
 
+// Custom hook for debounced search
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
 
 const statusOptions = [
   { value: "all", label: "All Status" },
@@ -44,7 +60,15 @@ export function CustomerHeader({ editCustomer, showEditModal, onEditCustomer, on
   const [showActionDropdown, setShowActionDropdown] = useState(false);
   const searchParams = useSearchParams()
   const setSearchTerm = useCustomersStore((state) => state.setSearchTerm);
-  
+  const [searchInput, setSearchInput] = useState("");
+
+  // Debounce search input with 500ms delay
+  const debouncedSearchTerm = useDebounce(searchInput, 500);
+
+  // Effect to trigger search when debounced value changes
+  useEffect(() => {
+    setSearchTerm(debouncedSearchTerm);
+  }, [debouncedSearchTerm, setSearchTerm]);
   
   useEffect(() => {
     const newParam = searchParams.get("new")
@@ -138,12 +162,13 @@ export function CustomerHeader({ editCustomer, showEditModal, onEditCustomer, on
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             placeholder="Search"
+            value={searchInput}
             className="
               pl-9 w-full h-[36px]
               bg-card border border-[var(--border-gray)] rounded-md
               text-sm outline-none shadow-sm
             "
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => setSearchInput(e.target.value)}
           />
         </div>
 

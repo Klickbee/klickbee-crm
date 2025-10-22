@@ -87,10 +87,14 @@ export async function GET(req: Request) {
     const companyId = url.searchParams.get("companyId");
     const contactId = url.searchParams.get("contactId");
     const search = url.searchParams.get("search");
+    
+    // New filter parameters
+    const stages = url.searchParams.get("stages")?.split(",").filter(Boolean) || [];
+    const owners = url.searchParams.get("owners")?.split(",").filter(Boolean) || [];
+    const tags = url.searchParams.get("tags")?.split(",").filter(Boolean) || [];
+    const closeDateFrom = url.searchParams.get("closeDateFrom");
 
-
-
-      const where = {
+    const where: any = {
       ...(ownerId ? { ownerId } : {}),
       ...(companyId ? { companyId } : {}),
       ...(contactId ? { contactId } : {}),
@@ -102,8 +106,33 @@ export async function GET(req: Request) {
             },
           }
         : {}),
-
     };
+
+    // Add stage filtering
+    if (stages.length > 0) {
+      where.stage = { in: stages };
+    }
+
+    // Add owner filtering
+    if (owners.length > 0) {
+      where.ownerId = { in: owners };
+    }
+
+    // Add tags filtering
+    if (tags.length > 0) {
+      where.tags = {
+        hasSome: tags
+      };
+    }
+
+    // Add close date filtering
+    if (closeDateFrom) {
+      // const closeDate = new Date(closeDateFrom);
+      where.closeDate = {
+        gte: closeDateFrom
+      };
+    }
+    
     const deals = await prisma.deal.findMany({
       where,
       include: { owner: true, company: true , contact: true },

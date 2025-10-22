@@ -12,9 +12,9 @@ const userOptions = [
 
 
 const timePeriodOptions = [
-  { value: "this-week", label: "This Week" },
-  { value: "this-month", label: "This Month" },
-  { value: "this-year", label: "This Year" },
+  { value: "this_week", label: "This Week" },
+  { value: "this_month", label: "This Month" },
+  { value: "this_year", label: "This Year" },
 ]
 
 export function DashboardHeader({

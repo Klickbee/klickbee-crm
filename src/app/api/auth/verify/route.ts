@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/libs/prisma"
 import { randomBytes } from "crypto"
 import { hash } from "bcryptjs"
+import { sendEmail } from "@/libs/email"
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
@@ -58,26 +59,27 @@ export async function POST(req: Request) {
     if (user.status === 'Active') {
       return NextResponse.json({ error: "User is already active" }, { status: 400 })
     }
-
+    const action = user.status === 'Invite' ? 'set_password' : 'verify';
     // Generate a simple verification token (in production, store this in DB)
     const token = randomBytes(32).toString('hex')
-    const verificationUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/auth/verify?token=${token}&email=${encodeURIComponent(email)}`
+    const verificationUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/verify?token=${token}&email=${encodeURIComponent(email)}&action=${action}`
 
-    // For invited users, they need to set password first
-    if (user.status === 'Invite') {
-      // Store a temporary password reset token or use the verification token for password setup
-      return NextResponse.json({
-        success: true,
-        action: 'set_password',
-        verificationUrl,
-        message: 'Please set your password to activate your account'
-      })
-    }
+    action === 'verify' ? await sendEmail({
+      to: email,
+      subject: "Activate your Klickbee CRM account",
+      text: `Your account has been created successfully! Please click the link below to verify and activate your account:\n\n${verificationUrl}\n\nIf you didn't create this account, please ignore this email.`,
+      html: `<p>Your account has been created successfully!</p><p>Please click the button below to verify and activate your account:</p><p><a href="${verificationUrl}" style="background-color: #000; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Verify Account</a></p><p>If the button doesn't work, copy and paste this link into your browser:</p><p>${verificationUrl}</p><p>If you didn't create this account, please ignore this email.</p>`,
+    }) : await sendEmail({
+      to: email,
+      subject: "Resend Verification Link",
+      text: `You've been invited to Klickbee CRM. Please click the link below to set your password and activate your account:\n\n${verificationUrl}\n\nIf you didn't expect this invitation, please ignore this email.`,
+      html: `<p>You've been invited to <b>Klickbee CRM</b>.</p><p>Please click the button below to set your password and activate your account:</p><p><a href="${verificationUrl}" style="background-color: #000; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Set Password & Activate</a></p><p>If the button doesn't work, copy and paste this link into your browser:</p><p>${verificationUrl}</p><p>If you didn't expect this invitation, please ignore this email.</p>`,
+    })
 
     // For inactive users (from signup), just verify them
     return NextResponse.json({
       success: true,
-      action: 'verify',
+      action: action,
       verificationUrl,
       message: 'Please verify your email to activate your account'
     })

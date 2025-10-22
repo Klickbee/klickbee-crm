@@ -14,12 +14,13 @@ interface DealStore {
   error: string | null;
   filters: FilterData;
   closedDateFilter: Date | null;
+  searchTerm: string;
 
   fetchDeals: (ownerId?: string) => Promise<void>;
-  setSearchTerm (search: string): void;
+  setSearchTerm: (search: string) => void;
   setFilters: (filters: FilterData) => void;
-  applyFilters: () => void;
-  resetFilters: () => void;
+  applyFilters: () => Promise<void>;
+  resetFilters: () => Promise<void>;
   setClosedDateFilter: (date: Date | null) => void;
   generateOwnerOptions: () => any[];
   initializeOwnerOptions: () => void;
@@ -60,6 +61,7 @@ export const useDealStore = create<DealStore>((set, get) => ({
     ],
   },
   closedDateFilter: null,
+  searchTerm: "",
 
   // Build owner filter options
   generateOwnerOptions: () => {
@@ -93,68 +95,102 @@ export const useDealStore = create<DealStore>((set, get) => ({
     get().applyFilters();
   },
 
-  applyFilters: () => {
-    const { deals, filters, closedDateFilter } = get();
-    let filtered = [...deals];
+  applyFilters: async () => {
+    const { filters, closedDateFilter, searchTerm } = get();
+    
+    try {
+      set({ loading: true });
+      
+      // Build query parameters
+      const params = new URLSearchParams();
+      
+      // Search term
+      if (searchTerm.trim()) {
+        params.append('search', searchTerm.trim());
+      }
+      
+      // Status filter -> map to stage field
+      const activeStatus = filters.status.filter((s: any) => s.checked && s.id !== "all");
+      if (activeStatus.length > 0) {
+        const map: Record<string, string> = {
+          new: 'New',
+          contacted: 'Contacted',
+          proposal: 'Proposal',
+          negotiation: 'Negotiation',
+          won: 'Won',
+          lost: 'Lost',
+        };
+        const stages = activeStatus.map((f: any) => map[f.id]).filter(Boolean);
+        if (stages.length > 0) {
+          params.append('stages', stages.join(','));
+        }
+      }
 
-    // Status filter -> map to stage field
-    const activeStatus = filters.status.filter((s: any) => s.checked && s.id !== "all");
-    if (activeStatus.length > 0) {
-      const map: Record<string, string> = {
-        new: 'New',
-        contacted: 'Contacted',
-        proposal: 'Proposal',
-        negotiation: 'Negotiation',
-        won: 'Won',
-        lost: 'Lost',
-      };
-      filtered = filtered.filter((d: any) =>
-        activeStatus.some((f: any) => (map[f.id] ? d.stage === map[f.id] : false))
-      );
+      // Owner filter
+      const activeOwners = filters.owner.filter((o: any) => o.checked && o.id !== "all");
+      if (activeOwners.length > 0) {
+        const ownerIds = activeOwners
+          .map((f: any) => {
+            if (f.id === "me") {
+              const currentUserId = useUserStore.getState().getCurrentUserId();
+              return currentUserId;
+            }
+            return f.id;
+          })
+          .filter(Boolean);
+        if (ownerIds.length > 0) {
+          params.append('owners', ownerIds.join(','));
+        }
+      }
+
+      // Tags filter
+      const activeTags = filters.tags.filter((t: any) => t.checked && t.id !== "all");
+      if (activeTags.length > 0) {
+        const tags = activeTags.map((f: any) => f.label).filter(Boolean);
+        if (tags.length > 0) {
+          params.append('tags', tags.join(',').toLowerCase());
+        }
+      }
+
+      // Closed date filter
+      if (closedDateFilter) {
+        const date = new Date(closedDateFilter);
+        date.setHours(0, 0, 0, 0);
+
+        // Convert to ISO string without shifting to UTC
+        const localISO = new Date(
+          date.getTime() - date.getTimezoneOffset() * 60000
+        ).toISOString();
+        params.append('closeDateFrom', localISO);
+      }
+
+      // Make API call with filters
+      const queryString = params.toString();
+      const url = queryString ? `/api/admin/deals?${queryString}` : '/api/admin/deals';
+      const res = await fetch(url);
+      
+      if (!res.ok) throw new Error("Failed to fetch filtered deals");
+
+      const data: any[] = await res.json();
+      const cleanData: Deal[] = Array.isArray(data)
+        ? data.map((d: any) => ({
+            ...d,
+            owner: typeof d.owner === 'object' && d.owner ? (d.owner.name || d.owner.email || '')
+                  : (typeof d.owner === 'string' ? d.owner : ''),
+            ownerId: typeof d.owner === 'object' && d.owner ? d.owner.id : (d.ownerId ?? undefined),
+          }))
+        : [];
+      
+      set({ deals: cleanData, filteredDeals: cleanData, loading: false });
+      
+    } catch (err: any) {
+      console.error("applyFilters error:", err);
+      toast.error("Failed to apply filters");
+      set({ error: err.message, loading: false });
     }
-
-    // Owner filter
-    const activeOwners = filters.owner.filter((o: any) => o.checked && o.id !== "all");
-    if (activeOwners.length > 0) {
-      filtered = filtered.filter((d: any) =>
-        activeOwners.some((f: any) => {
-          if (f.id === "me") {
-            const currentUserId = useUserStore.getState().getCurrentUserId();
-            return d.ownerId === currentUserId;
-          }
-          // Store fetch maps owner to name string; also check ownerId if present
-          return d.ownerId === f.id || d.owner === f.label;
-        })
-      );
-    }
-
-    // Tags filter (deal.tags may be string or array)
-    const activeTags = filters.tags.filter((t: any) => t.checked && t.id !== "all");
-    if (activeTags.length > 0) {
-      filtered = filtered.filter((d: any) => {
-        const tagsArr: string[] = Array.isArray(d.tags)
-          ? d.tags
-          : (typeof d.tags === 'string' ? d.tags.split(',').map((t: string) => t.trim()) : []);
-        const tagsLower = tagsArr.map((t) => t.toLowerCase());
-        return activeTags.some((f: any) => tagsLower.includes(f.label.toLowerCase()));
-      });
-    }
-
-    // Closed date filter
-    if (closedDateFilter) {
-      filtered = filtered.filter((d: any) => {
-        if (!d.closeDate) return false;
-        const dealDate = new Date(d.closeDate);
-        const filterDate = new Date(closedDateFilter);
-        // Filter for deals with closeDate >= selected date
-        return dealDate >= filterDate;
-      });
-    }
-
-    set({ filteredDeals: filtered });
   },
 
-  resetFilters: () => {
+  resetFilters: async () => {
     const initial = {
       status: [
         { id: "all", label: "All Status", checked: true },
@@ -175,7 +211,9 @@ export const useDealStore = create<DealStore>((set, get) => ({
         { id: "architecture", label: "Architecture", checked: false },
       ],
     };
-    set({ filters: initial, filteredDeals: get().deals, closedDateFilter: null });
+    set({ filters: initial, closedDateFilter: null, searchTerm: "" });
+    // Fetch all deals without filters
+    await get().fetchDeals();
   },
 
   // 🔧 Test function to set current user (for debugging)
@@ -190,12 +228,9 @@ export const useDealStore = create<DealStore>((set, get) => ({
   },
 
   setSearchTerm: (search: string) => {
-  const { deals } = get();
-  const filtered = deals.filter((d) =>
-    d.dealName?.toLowerCase().includes(search.toLowerCase())
-  );
-  set({ filteredDeals: filtered });
-},
+    set({ searchTerm: search });
+    get().applyFilters();
+  },
 
   fetchDeals: async (ownerId?: string) => {
     set({ loading: true });
@@ -213,8 +248,7 @@ export const useDealStore = create<DealStore>((set, get) => ({
             ownerId: typeof d.owner === 'object' && d.owner ? d.owner.id : (d.ownerId ?? undefined),
           }))
         : [];
-      set({ deals: cleanData, loading: false });
-      get().applyFilters();
+      set({ deals: cleanData, filteredDeals: cleanData, loading: false });
 
       // Initialize current user if not set and we have users data
       const { users, currentUser } = useUserStore.getState();

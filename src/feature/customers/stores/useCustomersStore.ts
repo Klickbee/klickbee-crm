@@ -15,11 +15,12 @@ interface CustomerStore {
   isExporting: boolean;
   error: string | null;
   filters: FilterData;
+  searchTerm: string;
 
   fetchCustomers: (ownerId?: string) => Promise<void>;
   setSearchTerm: (search: string) => void;
   setFilters: (filters: FilterData) => void;
-  applyFilters: () => void;
+  applyFilters: () => Promise<void>;
   resetFilters: () => void;
   generateOwnerOptions: () => any[];
   initializeOwnerOptions: () => void;
@@ -59,6 +60,7 @@ export const useCustomersStore = create<CustomerStore>((set, get) => ({
       { id: "architecture", label: "Architecture", checked: false },
     ],
   },
+  searchTerm: "",
 
   // Helper: build owner options from users
   generateOwnerOptions: () => {
@@ -91,50 +93,78 @@ export const useCustomersStore = create<CustomerStore>((set, get) => ({
     set({ filters: newFilters });
   },
 
-  applyFilters: () => {
-    const { customers, filters } = get();
-    let filtered = [...customers];
+  applyFilters: async () => {
+    const { filters, searchTerm } = get();
+    
+    try {
+      set({ loading: true });
+      
+      // Build query parameters
+      const params = new URLSearchParams();
+      
+      // Search term
+      if (searchTerm.trim()) {
+        params.append('search', searchTerm.trim());
+      }
+      
+      // Status filter
+      const activeStatus = filters.status.filter((s: any) => s.checked && s.id !== "all");
+      if (activeStatus.length > 0) {
+        const statusMap: Record<string, string> = {
+          active: 'Active',
+          'follow-up': 'FollowUp',
+          inactive: 'inactive',
+        };
+        const statuses = activeStatus.map((f: any) => statusMap[f.id]).filter(Boolean);
+        if (statuses.length > 0) {
+          params.append('status', statuses.join(','));
+        }
+      }
 
-    // Status filter
-    const activeStatus = filters.status.filter((s: any) => s.checked && s.id !== "all");
-    if (activeStatus.length > 0) {
-      filtered = filtered.filter((customer: Customer) =>
-        activeStatus.some((f: any) => {
-          if (f.id === "active") return customer.status === "Active";
-          if (f.id === "follow-up") return customer.status === "FollowUp";
-          if (f.id === "inactive") return customer.status === "inactive";
-          return false;
-        })
-      );
+      // Owner filter
+      const activeOwners = filters.owner.filter((o: any) => o.checked && o.id !== "all");
+      if (activeOwners.length > 0) {
+        const ownerIds = activeOwners
+          .map((f: any) => {
+            if (f.id === "me") {
+              const currentUserId = useUserStore.getState().getCurrentUserId();
+              return currentUserId;
+            }
+            return f.id;
+          })
+          .filter(Boolean);
+        if (ownerIds.length > 0) {
+          params.append('owners', ownerIds.join(','));
+        }
+      }
+
+      // Tags filter
+      const activeTags = filters.tags.filter((t: any) => t.checked && t.id !== "all");
+      if (activeTags.length > 0) {
+        const tags = activeTags.map((f: any) => f.label).filter(Boolean);
+        if (tags.length > 0) {
+          params.append('tags', tags.join(',').toLowerCase());
+        }
+      }
+
+      // Make API call with filters
+      const queryString = params.toString();
+      const url = queryString ? `/api/admin/customers?${queryString}` : '/api/admin/customers';
+      const res = await fetch(url);
+      
+      if (!res.ok) throw new Error("Failed to fetch filtered customers");
+
+      const data: any[] = await res.json();
+      set({ customers: data, filteredCustomers: data, loading: false });
+      
+    } catch (err: any) {
+      console.error("applyFilters error:", err);
+      toast.error("Failed to apply filters");
+      set({ error: err.message, loading: false });
     }
-
-    // Owner filter
-    const activeOwners = filters.owner.filter((o: any) => o.checked && o.id !== "all");
-    if (activeOwners.length > 0) {
-      filtered = filtered.filter((customer: Customer) =>
-        activeOwners.some((f: any) => {
-          if (f.id === "me") {
-            // TODO: Replace with actual current user id if available
-            return customer.owner?.id === "current-user-id";
-          }
-          return customer.owner?.id === f.id;
-        })
-      );
-    }
-
-    // Tags filter (customer.tags is string[])
-    const activeTags = filters.tags.filter((t: any) => t.checked && t.id !== "all");
-    if (activeTags.length > 0) {
-      filtered = filtered.filter((customer: Customer) => {
-        const tags = (customer.tags || []).filter((t): t is string => typeof t === 'string').map((t) => t.toLowerCase());
-        return activeTags.some((f: any) => tags.includes(f.label.toLowerCase()));
-      });
-    }
-
-    set({ filteredCustomers: filtered });
   },
 
-  resetFilters: () => {
+  resetFilters: async () => {
     const initial = {
       status: [
         { id: "all", label: "All Status", checked: true },
@@ -152,15 +182,13 @@ export const useCustomersStore = create<CustomerStore>((set, get) => ({
         { id: "architecture", label: "Architecture", checked: false },
       ],
     };
-    set({ filters: initial, filteredCustomers: get().customers });
+    set({ filters: initial, searchTerm: "" });
+    await get().fetchCustomers();
   },
 
   setSearchTerm: (search: string) => {
-    const { customers } = get();
-    const filtered = customers.filter((c) =>
-      c.fullName?.toLowerCase().includes(search.toLowerCase())
-    );
-    set({ filteredCustomers: filtered });
+    set({ searchTerm: search });
+    get().applyFilters();
   },
   // 🧠 Fetch customers from API
   fetchCustomers: async (ownerId?: string) => {

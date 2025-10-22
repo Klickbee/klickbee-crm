@@ -15,11 +15,12 @@ interface ProspectStore {
   isExporting: boolean;
   error: string | null;
   filters: FilterData;
+  searchTerm: string;
 
   fetchProspects: (ownerId?: string) => Promise<void>;
   setSearchTerm: (search: string) => void;
   setFilters: (filters: FilterData) => void;
-  applyFilters: () => void;
+  applyFilters: () => Promise<void>;
   resetFilters: () => void;
   generateOwnerOptions: () => any[];
   initializeOwnerOptions: () => void;
@@ -62,6 +63,7 @@ export const useProspectsStore = create<ProspectStore>((set, get) => ({
       { id: "architecture", label: "Architecture", checked: false },
     ],
   },
+  searchTerm: "",
 
   // Build owner filter options from users
   generateOwnerOptions: () => {
@@ -93,66 +95,81 @@ export const useProspectsStore = create<ProspectStore>((set, get) => ({
     set({ filters: newFilters });
   },
 
-  applyFilters: () => {
-    const { prospects, filters } = get();
-    let filtered = [...prospects];
+  applyFilters: async () => {
+    const { filters, searchTerm } = get();
+    
+    try {
+      set({ loading: true });
+      
+      // Build query parameters
+      const params = new URLSearchParams();
+      
+      // Search term
+      if (searchTerm.trim()) {
+        params.append('search', searchTerm.trim());
+      }
+      
+      // Status filter
+      const activeStatus = filters.status.filter((s: any) => s.checked && s.id !== "all");
+      if (activeStatus.length > 0) {
+        const statusMap: Record<string, string> = {
+          new: 'New',
+          Cold: 'Cold',
+          Qualified: 'Qualified',
+          Warmlead: 'Warmlead',
+          converted: 'Converted',
+          notintrested: 'Notintrested',
+        };
+        const statuses = activeStatus.map((f: any) => statusMap[f.id]).filter(Boolean);
+        if (statuses.length > 0) {
+          params.append('status', statuses.join(','));
+        }
+      }
 
-    // Status filter mapping (ids to Prospect['status'] values)
-    const activeStatus = filters.status.filter((s: any) => s.checked && s.id !== "all");
-    if (activeStatus.length > 0) {
-      filtered = filtered.filter((p: Prospect) =>
-        activeStatus.some((f: any) => {
-          const map: Record<string, Prospect['status']> = {
-            new: 'New',
-            Cold: 'Cold',
-            Qualified: 'Qualified',
-            Warmlead: 'Warmlead',
-            converted: 'Converted',
-            notintrested: 'Notintrested',
-          };
-          const expected = map[f.id];
-          return expected ? p.status === expected : false;
-        })
-      );
-    }
-
-    // Owner filter: compare owner id (if object) or owner name/email string to option id/label
-    const activeOwners = filters.owner.filter((o: any) => o.checked && o.id !== "all");
-    if (activeOwners.length > 0) {
-      filtered = filtered.filter((p: Prospect) =>
-        activeOwners.some((f: any) => {
-          if (f.id === "me") {
-            // Get the current user's ID using the store's method
-            const currentUserId = useUserStore.getState().getCurrentUserId();
-            const currentUser = useUserStore.getState().currentUser;
-            if (typeof p.owner === 'object') return p.owner?.id === currentUserId;
-            if (typeof p.owner === 'string') {
-              return p.owner === currentUser?.name || p.owner === currentUser?.email;
+      // Owner filter
+      const activeOwners = filters.owner.filter((o: any) => o.checked && o.id !== "all");
+      if (activeOwners.length > 0) {
+        const ownerIds = activeOwners
+          .map((f: any) => {
+            if (f.id === "me") {
+              const currentUserId = useUserStore.getState().getCurrentUserId();
+              return currentUserId;
             }
-            return false;
-          }
-          if (typeof p.owner === 'object') {
-            return p.owner?.id === f.id || p.owner?.email === f.label || p.owner?.name === f.label;
-          }
-          // owner stored as string (name/email)
-          return typeof p.owner === 'string' && (p.owner === f.label);
-        })
-      );
-    }
+            return f.id;
+          })
+          .filter(Boolean);
+        if (ownerIds.length > 0) {
+          params.append('owners', ownerIds.join(','));
+        }
+      }
 
-    // Tags filter
-    const activeTags = filters.tags.filter((t: any) => t.checked && t.id !== "all");
-    if (activeTags.length > 0) {
-      filtered = filtered.filter((p: Prospect) => {
-        const tags = (p.tags || []).map((t) => t.toLowerCase());
-        return activeTags.some((f: any) => tags.includes(f.label.toLowerCase()));
-      });
-    }
+      // Tags filter
+      const activeTags = filters.tags.filter((t: any) => t.checked && t.id !== "all");
+      if (activeTags.length > 0) {
+        const tags = activeTags.map((f: any) => f.label).filter(Boolean);
+        if (tags.length > 0) {
+          params.append('tags', tags.join(',').toLowerCase());
+        }
+      }
 
-    set({ filteredProspects: filtered });
+      // Make API call with filters
+      const queryString = params.toString();
+      const url = queryString ? `/api/admin/prospects?${queryString}` : '/api/admin/prospects';
+      const res = await fetch(url);
+      
+      if (!res.ok) throw new Error("Failed to fetch filtered prospects");
+
+      const data: any[] = await res.json();
+      set({ prospects: data, filteredProspects: data, loading: false });
+      
+    } catch (err: any) {
+      console.error("applyFilters error:", err);
+      toast.error("Failed to apply filters");
+      set({ error: err.message, loading: false });
+    }
   },
 
-  resetFilters: () => {
+  resetFilters: async () => {
     const initial = {
       status: [
         { id: "all", label: "All Status", checked: true },
@@ -173,15 +190,13 @@ export const useProspectsStore = create<ProspectStore>((set, get) => ({
         { id: "architecture", label: "Architecture", checked: false },
       ],
     };
-    set({ filters: initial, filteredProspects: get().prospects });
+    set({ filters: initial, searchTerm: "" });
+    await get().fetchProspects();
   },
 
   setSearchTerm: (search: string) => {
-    const { prospects } = get();
-    const filtered = prospects.filter((p) =>
-      p.fullName?.toLowerCase().includes(search.toLowerCase())
-    );
-    set({ filteredProspects: filtered });
+    set({ searchTerm: search });
+    get().applyFilters();
   },
   // 🧠 Fetch prospects from API
   fetchProspects: async (ownerId?: string) => {

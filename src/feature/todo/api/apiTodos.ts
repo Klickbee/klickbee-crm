@@ -82,19 +82,39 @@ export async function GET(req: Request) {
     const linkedId = url.searchParams.get("linkedId");
     const assignedId = url.searchParams.get("assignedId");
     const search = url.searchParams.get("search");
+    
+    // New filter parameters
+    const status = url.searchParams.get("status")?.split(",").filter(Boolean) || [];
+    const priority = url.searchParams.get("priority")?.split(",").filter(Boolean) || [];
+    const assignedIds = url.searchParams.get("assignedId")?.split(",").filter(Boolean) || [];
 
-    const where = {
+    const where: any = {
       ...(linkedId ? { linkedId } : {}),
-      ...(assignedId ? { assignedId } : {}),
-       ...(search
-              ? {
-                    taskName: {
-                    contains: search,
-                    mode: Prisma.QueryMode.insensitive,
-                  },
-                }
-              : {}),
+      ...(search
+        ? {
+            taskName: {
+              contains: search,
+              mode: Prisma.QueryMode.insensitive,
+            },
+          }
+        : {}),
     };
+
+    // Add status filtering
+    if (status.length > 0) {
+      where.status = { in: status };
+    }
+
+    // Add priority filtering
+    if (priority.length > 0) {
+      where.priority = { in: priority };
+    }
+
+    // Add assigned user filtering
+    if (assignedIds.length > 0) {
+      where.assignedId = { in: assignedIds };
+    }
+
     const todos = await prisma.todo.findMany({
       where,
       include:{linkedTo: true, assignedTo: true,},

@@ -2,7 +2,7 @@
   import { Button } from "@/components/ui/Button"
 import { DropDown } from "@/components/ui/DropDown"
 import { Search, LayoutGrid, List, Plus, ChevronDown } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import TodoModel from "./TodoModel"
 import { useSearchParams } from "next/navigation"
 import { CalendarDropDown } from "@/components/ui/CalendarDropDown"
@@ -25,6 +25,23 @@ const priorityOptions = [
   { value: "High", label: "High" },
   { value: "Urgent", label: "Urgent" },
 ]
+
+// Custom hook for debounced search
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
 
 type TodoHeaderProps = {
   view: 'table' | 'grid';
@@ -63,12 +80,21 @@ export function TodoHeader({ view, setView, selectedTodos = [], selectedTodoRows
     const [showNewTask, setShowNewTask] = useState<boolean>(false);
       const searchParams = useSearchParams()
       const setSearchTerm = useTodoStore((state) => state.setSearchTerm);
+      const [searchInput, setSearchInput] = useState("");
       // Date filter state
       const [dueDate, setDueDate] = useState<Date | null>(new Date())
       const dateLabel = dueDate
         ? new Intl.DateTimeFormat('en-US', { month: 'long', day: '2-digit', year: 'numeric' }).format(dueDate)
         : 'Select date'
       const [editTask, setEditTask] = useState<TaskData | null>(null);
+
+  // Debounce search input with 500ms delay
+  const debouncedSearchTerm = useDebounce(searchInput, 500);
+
+  // Effect to trigger search when debounced value changes
+  useEffect(() => {
+    setSearchTerm(debouncedSearchTerm);
+  }, [debouncedSearchTerm, setSearchTerm]);
   
   // Get bulk operations from store
   const { bulkDeleteTodos, bulkUpdateTodos } = useTodoStore();
@@ -156,12 +182,13 @@ export function TodoHeader({ view, setView, selectedTodos = [], selectedTodoRows
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             placeholder="Search"
+            value={searchInput}
             className="
               pl-9 w-full h-[36px]
               bg-card border border-[var(--border-gray)] rounded-md
               text-sm outline-none shadow-sm
             "
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => setSearchInput(e.target.value)}
           />
         </div>
 

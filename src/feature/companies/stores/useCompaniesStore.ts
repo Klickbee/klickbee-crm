@@ -12,11 +12,12 @@ interface CompanyStore {
   loading: boolean;
   error: string | null;
   filters: FilterData;
+  searchTerm: string;
 
   fetchCompanies: (ownerId?: string) => Promise<void>;
   setSearchTerm: (search: string) => void;
   setFilters: (filters: FilterData) => void;
-  applyFilters: () => void;
+  applyFilters: () => Promise<void>;
   resetFilters: () => void;
   generateOwnerOptions: () => any[];
   initializeOwnerOptions: () => void;
@@ -52,6 +53,7 @@ export const useCompaniesStore = create<CompanyStore>((set, get) => ({
       { id: "architecture", label: "Architecture", checked: false },
     ],
   },
+  searchTerm: "",
 
   // Helper function to generate owner filter options from users
   generateOwnerOptions: () => {
@@ -84,51 +86,78 @@ export const useCompaniesStore = create<CompanyStore>((set, get) => ({
     set({ filters: newFilters });
   },
 
-  applyFilters: () => {
-    const { companies, filters } = get();
-    let filtered = [...companies];
+  applyFilters: async () => {
+    const { filters, searchTerm } = get();
+    
+    try {
+      set({ loading: true });
+      
+      // Build query parameters
+      const params = new URLSearchParams();
+      
+      // Search term
+      if (searchTerm.trim()) {
+        params.append('search', searchTerm.trim());
+      }
+      
+      // Status filter
+      const activeStatus = filters.status.filter((s: any) => s.checked && s.id !== "all");
+      if (activeStatus.length > 0) {
+        const statusMap: Record<string, string> = {
+          active: 'Active',
+          'follow-up': 'FollowUp',
+          inactive: 'inactive',
+        };
+        const statuses = activeStatus.map((f: any) => statusMap[f.id]).filter(Boolean);
+        if (statuses.length > 0) {
+          params.append('status', statuses.join(','));
+        }
+      }
 
-    // Apply status filter
-    const activeStatusFilters = filters.status.filter((s: any) => s.checked && s.id !== "all");
-    if (activeStatusFilters.length > 0) {
-      filtered = filtered.filter((company: Company) =>
-        activeStatusFilters.some((filter: any) => {
-          if (filter.id === "active") return company.status === "Active";
-          if (filter.id === "follow-up") return company.status === "FollowUp";
-          if (filter.id === "inactive") return company.status === "inactive";
-          return false;
-        })
-      );
+      // Owner filter
+      const activeOwners = filters.owner.filter((o: any) => o.checked && o.id !== "all");
+      if (activeOwners.length > 0) {
+        const ownerIds = activeOwners
+          .map((f: any) => {
+            if (f.id === "me") {
+              const currentUserId = useUserStore.getState().getCurrentUserId();
+              return currentUserId;
+            }
+            return f.id;
+          })
+          .filter(Boolean);
+        if (ownerIds.length > 0) {
+          params.append('owners', ownerIds.join(','));
+        }
+      }
+
+      // Tags filter
+      const activeTags = filters.tags.filter((t: any) => t.checked && t.id !== "all");
+      if (activeTags.length > 0) {
+        const tags = activeTags.map((f: any) => f.label).filter(Boolean);
+        if (tags.length > 0) {
+          params.append('tags', tags.join(',').toLowerCase());
+        }
+      }
+
+      // Make API call with filters
+      const queryString = params.toString();
+      const url = queryString ? `/api/admin/companies?${queryString}` : '/api/admin/companies';
+      const res = await fetch(url);
+      
+      if (!res.ok) throw new Error("Failed to fetch filtered companies");
+
+      const data: any[] = await res.json();
+      set({ companies: data, filteredCompanies: data, loading: false });
+      
+    } catch (err: any) {
+      console.error("applyFilters error:", err);
+      toast.error("Failed to apply filters");
+      set({ error: err.message, loading: false });
     }
-
-    // Apply owner filter
-    const activeOwnerFilters = filters.owner.filter((o: any) => o.checked && o.id !== "all");
-    if (activeOwnerFilters.length > 0) {
-      filtered = filtered.filter((company: Company) =>
-        activeOwnerFilters.some((filter: any) => {
-          if (filter.id === "me") {
-            // This would need to be implemented based on current user logic
-            return company.owner?.id === "current-user-id";
-          }
-          return company.owner?.id === filter.id;
-        })
-      );
-    }
-
-    // Apply tags filter
-    const activeTagFilters = filters.tags.filter((t: any) => t.checked && t.id !== "all");
-    if (activeTagFilters.length > 0) {
-      filtered = filtered.filter((company: Company) =>
-        company.tags && typeof company.tags === 'string' && activeTagFilters.some((filter: any) =>
-          company.tags!.toLowerCase().includes(filter.label.toLowerCase())
-        )
-      );
-    }
-
-    set({ filteredCompanies: filtered });
   },
 
-  resetFilters: () => {
+  resetFilters: async () => {
     const initialFilters = {
       status: [
         { id: "all", label: "All Status", checked: true },
@@ -146,15 +175,13 @@ export const useCompaniesStore = create<CompanyStore>((set, get) => ({
         { id: "architecture", label: "Architecture", checked: false },
       ],
     };
-    set({ filters: initialFilters, filteredCompanies: get().companies });
+    set({ filters: initialFilters, searchTerm: "" });
+    await get().fetchCompanies();
   },
 
   setSearchTerm: (search: string) => {
-    const { companies } = get();
-    const filtered = companies.filter((c) =>
-      c.fullName?.toLowerCase().includes(search.toLowerCase())
-    );
-    set({ filteredCompanies: filtered });
+    set({ searchTerm: search });
+    get().applyFilters();
   },
   fetchCompanies: async (ownerId?: string) => {
     set({ loading: true });

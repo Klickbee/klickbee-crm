@@ -18,23 +18,17 @@ type DealSlideOverProps = {
 }
 
 export default function DealSlideOver({ open, onClose, mode = 'add', deal }: DealSlideOverProps) {
- const addDeal = useDealStore((s) => s.addDeal);
- const updateDeal = useDealStore((s) => s.updateDeal);
+
+  const addDeal = useDealStore((s) => s.addDeal);
+  const updateDeal = useDealStore((s) => s.updateDeal);
   const { users, loading: usersLoading, fetchUsers } = useUserStore();
 
-    useEffect(() => {
-        if (users.length === 0) {
-            fetchUsers();
-        }
-    }, [users]);
-
-
-    // Create user options for the dropdown
-    const userOptions = users.map((user: any) => ({
-        id: user.id,
-        value: user.id,
-        label: user.name || user.email
-    }));
+  // Create user options for the dropdown
+  const userOptions = users.map((user: any) => ({
+      id: user.id,
+      value: user.id,
+      label: user.name || user.email
+  }));
 
   const handleSubmit = async (values: any) => {
     try {

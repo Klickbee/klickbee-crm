@@ -79,23 +79,43 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const limit = Number(url.searchParams.get("limit") ?? 50);
     const ownerId = url.searchParams.get("ownerId");
-const companyId = url.searchParams.get("companyId");
-const search = url.searchParams.get("search");
-  
+    const companyId = url.searchParams.get("companyId");
+    const search = url.searchParams.get("search");
+    
+    // New filter parameters
+    const status = url.searchParams.get("status")?.split(",").filter(Boolean) || [];
+    const owners = url.searchParams.get("owners")?.split(",").filter(Boolean) || [];
+    const tags = url.searchParams.get("tags")?.split(",").filter(Boolean) || [];
 
-
-      const where = {
+    const where: any = {
       ...(ownerId ? { ownerId } : {}),
       ...(companyId ? { companyId } : {}),
       ...(search
-              ? {
-                    fullName: {
-                    contains: search,
-                    mode: Prisma.QueryMode.insensitive,
-                  },
-                }
-              : {}),
+        ? {
+            fullName: {
+              contains: search,
+              mode: Prisma.QueryMode.insensitive,
+            },
+          }
+        : {}),
     };
+
+    // Add status filtering
+    if (status.length > 0) {
+      where.status = { in: status };
+    }
+
+    // Add owner filtering
+    if (owners.length > 0) {
+      where.ownerId = { in: owners };
+    }
+
+    // Add tags filtering
+    if (tags.length > 0) {
+      where.tags = {
+        hasSome: tags
+      };
+    }
     const customers = await prisma.customer.findMany({
       where,
       include: {

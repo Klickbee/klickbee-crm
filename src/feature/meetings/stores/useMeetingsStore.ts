@@ -13,10 +13,12 @@ interface MeetingStore {
   isExporting: boolean;
   error: string | null;
   filters: FilterData;
+  searchTerm: string;
 
   fetchMeetings: (ownerId?: string) => Promise<void>;
+  setSearchTerm: (search: string) => void;
   setFilters: (filters: FilterData) => void;
-  applyFilters: () => void;
+  applyFilters: () => Promise<void>;
   resetFilters: () => void;
   generateOwnerOptions: () => any[];
   initializeOwnerOptions: () => void;
@@ -42,6 +44,7 @@ export const useMeetingsStore = create<MeetingStore>((set, get) => ({
   isExporting: false,
   error: null,
   filters: meetingFilterData,
+  searchTerm: "",
 
   // Helper: build owner options from users
   generateOwnerOptions: () => {
@@ -73,50 +76,79 @@ export const useMeetingsStore = create<MeetingStore>((set, get) => ({
     set({ filters: newFilters });
   },
 
-  applyFilters: () => {
-    const { meetings, filters } = get();
-    let filtered = [...meetings];
+  applyFilters: async () => {
+    const { filters, searchTerm } = get();
+    
+    try {
+      set({ loading: true });
+      
+      // Build query parameters
+      const params = new URLSearchParams();
+      
+      // Search term
+      if (searchTerm.trim()) {
+        params.append('search', searchTerm.trim());
+      }
+      
+      // Status filter
+      const activeStatus = filters.status.filter((s: any) => s.checked && s.id !== "all");
+      if (activeStatus.length > 0) {
+        const statusMap: Record<string, string> = {
+          scheduled: 'Scheduled',
+          confirmed: 'Confirmed',
+          cancelled: 'Cancelled',
+        };
+        const statuses = activeStatus.map((f: any) => statusMap[f.id]).filter(Boolean);
+        if (statuses.length > 0) {
+          params.append('status', statuses.join(','));
+        }
+      }
 
-    // Status filter
-    const activeStatus = filters.status.filter((s: any) => s.checked && s.id !== "all");
-    if (activeStatus.length > 0) {
-      filtered = filtered.filter((meeting: Meeting) =>
-        activeStatus.some((f: any) => {
-          if (f.id === "scheduled") return meeting.status === "Scheduled";
-          if (f.id === "confirmed") return meeting.status === "Confirmed";
-          if (f.id === "cancelled") return meeting.status === "Cancelled";
-          return false;
-        })
-      );
+      // Owner filter
+      const activeOwners = filters.owner.filter((o: any) => o.checked && o.id !== "all");
+      if (activeOwners.length > 0) {
+        const ownerIds = activeOwners
+          .map((f: any) => {
+            if (f.id === "me") {
+              const currentUserId = useUserStore.getState().getCurrentUserId();
+              return currentUserId;
+            }
+            return f.id;
+          })
+          .filter(Boolean);
+        if (ownerIds.length > 0) {
+          params.append('owners', ownerIds.join(','));
+        }
+      }
+
+      // Tags filter
+      const activeTags = filters.tags.filter((t: any) => t.checked && t.id !== "all");
+      if (activeTags.length > 0) {
+        const tags = activeTags.map((f: any) => f.label).filter(Boolean);
+        if (tags.length > 0) {
+          params.append('tags', tags.join(',').toLowerCase());
+        }
+      }
+
+      // Make API call with filters
+      const queryString = params.toString();
+      const url = queryString ? `/api/admin/meetings?${queryString}` : '/api/admin/meetings';
+      const res = await fetch(url);
+      
+      if (!res.ok) throw new Error("Failed to fetch filtered meetings");
+
+      const data: any[] = await res.json();
+      const cleanData: Meeting[] = data.map(convertDates);
+      set({ meetings: cleanData, filteredMeetings: cleanData, loading: false });
+      
+    } catch (err: any) {
+      console.error("applyFilters error:", err);
+      toast.error("Failed to apply filters");
+      set({ error: err.message, loading: false });
     }
-
-    // Owner filter
-    const activeOwners = filters.owner.filter((o: any) => o.checked && o.id !== "all");
-    if (activeOwners.length > 0) {
-      filtered = filtered.filter((meeting: Meeting) =>
-        activeOwners.some((f: any) => {
-          if (f.id === "me") {
-            // TODO: Replace with actual current user id if available
-            return meeting.ownerId === "current-user-id";
-          }
-          return meeting.ownerId === f.id;
-        })
-      );
-    }
-
-    // Tags filter (meeting.tags is string[])
-    const activeTags = filters.tags.filter((t: any) => t.checked && t.id !== "all");
-    if (activeTags.length > 0) {
-      filtered = filtered.filter((meeting: Meeting) => {
-        const tags = (meeting.tags || []).filter((t): t is string => typeof t === 'string').map((t) => t.toLowerCase());
-        return activeTags.some((f: any) => tags.includes(f.label.toLowerCase()));
-      });
-    }
-
-    set({ filteredMeetings: filtered });
   },
 
-  resetFilters: () => {
+  resetFilters: async () => {
     const initial = {
       status: [
         { id: "all", label: "All Status", checked: true },
@@ -129,7 +161,13 @@ export const useMeetingsStore = create<MeetingStore>((set, get) => ({
         { id: "all", label: "All Tags", checked: true },
       ],
     };
-    set({ filters: initial, filteredMeetings: get().meetings });
+    set({ filters: initial, searchTerm: "" });
+    await get().fetchMeetings();
+  },
+
+  setSearchTerm: (search: string) => {
+    set({ searchTerm: search });
+    get().applyFilters();
   },
 
   // 🧠 Fetch meetings from API
