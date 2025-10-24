@@ -86,7 +86,7 @@ const Deals = () => {
               return lastActivity
           },
      },
-    { key: 'tags', title: 'Tags', dataIndex: 'tags', sortable: false },
+    { key: 'tags', title: 'Tags', dataIndex: 'tags', sortable: false, render: (tags) => Array.isArray(tags) ? tags.join(', ') : tags || '-' },
 
   ];
 

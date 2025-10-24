@@ -25,7 +25,7 @@ const formatCurrency = (amount: number) => {
 }
 
 const formatRangeDisplay = (range: string): string => {
-  return range.replace(/^(this-|last-|previous-)/i, '')
+  return range.replace(/^(this_|last_|previous_)/i, '')
 }
 
 export const fetchMetricsData = async (range: string): Promise<MetricData[]> => {

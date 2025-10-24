@@ -8,7 +8,7 @@ import TasksCard from './TasksCard'
 import AgendaCard from './AgendaCard'
 
 const DashBoard = () => {
-  const [selectedTimePeriod, setSelectedTimePeriod] = useState("this-month")
+  const [selectedTimePeriod, setSelectedTimePeriod] = useState("this_month")
 
   return (
     <div className='p-6 flex flex-col gap-[16px]'>

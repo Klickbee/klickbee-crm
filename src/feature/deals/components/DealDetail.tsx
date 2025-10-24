@@ -69,8 +69,6 @@ export default function DealDetail({
       year: 'numeric',
       month: 'short',
       day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
     });
   };
 
@@ -88,7 +86,7 @@ export default function DealDetail({
         </span>
       ),
     },
-    deal.priority && { label: 'Tags', value: deal.priority },
+    deal.tags && deal.tags.length > 0 && { label: 'Tags', value: Array.isArray(deal.tags) ? deal.tags.join(', ') : deal.tags },
     deal.closeDate && { label: 'Closed Date', value:formatDate((deal as any).closeDate) },
     (deal as any).lastActivity && { label:  'Last Activity', value: formatDate((deal as any).lastActivity) },
 

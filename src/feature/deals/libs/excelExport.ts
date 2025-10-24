@@ -11,17 +11,16 @@ export const exportDealsToExcel = (deals: Deal[], filename?: string) => {
     // Prepare data for Excel export
     const exportData = deals.map(deal => ({
       'Deal Name': deal.dealName || '',
-      'Company': deal.company || '',
-      'Contact': deal.contact || '',
+      'Company': deal.company && typeof deal.company === 'object' ? deal.company.fullName || 'Unknown Company' : deal.company || 'Unknown Company',
+      'Contact': deal.contact && typeof deal.contact === 'object' ? deal.contact.fullName || 'Unknown Contact' : deal.contact || 'Unknown Contact',
       'Stage': deal.stage || '',
       'Amount': deal.amount ? `$${deal.amount.toLocaleString()}` : '$0',
       'Owner': deal.owner || 'Unknown',
       'Activity': deal.activity || '',
-      'Tags': deal.tags || '',
+      'Tags': Array.isArray(deal.tags) ? deal.tags.join(', ') : deal.tags || '',
       'Close Date': deal.closeDate ? new Date(deal.closeDate).toLocaleDateString() : '',
-      'Priority': deal.priority || '',
       'Notes': deal.notes || '',
-      'Attachments': Array.isArray(deal.attachments) ? deal.attachments.join(', ') : deal.attachments || '',
+      'Attachments': Array.isArray(deal.files) ? deal.files.map(f => f.name || f.url).join(', ') : deal.files || '',
     }));
 
     // Create workbook and worksheet
@@ -39,7 +38,6 @@ export const exportDealsToExcel = (deals: Deal[], filename?: string) => {
       { wch: 20 }, // Activity
       { wch: 30 }, // Tags
       { wch: 12 }, // Close Date
-      { wch: 12 }, // Priority
       { wch: 40 }, // Notes
       { wch: 30 }, // Attachments
     ];
@@ -95,7 +93,6 @@ export const exportDealsWithColumns = (
       activity: 'Activity',
       tags: 'Tags',
       closeDate: 'Close Date',
-      priority: 'Priority',
       notes: 'Notes',
       attachments: 'Attachments',
     };
@@ -117,7 +114,7 @@ export const exportDealsWithColumns = (
             value = value ? new Date(value as string).toLocaleDateString() : '';
             break;
           case 'attachments':
-            value = Array.isArray(deal.attachments) ? deal.attachments.join(', ') : deal.attachments || '';
+            value = Array.isArray(deal.files) ? deal.files.map(f => f.name || f.url).join(', ') : deal.files || '';
             break;
           default:
             value = value || '';

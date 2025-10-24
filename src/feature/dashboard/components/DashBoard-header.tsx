@@ -18,7 +18,7 @@ const timePeriodOptions = [
 ]
 
 export function DashboardHeader({
-  selectedTimePeriod = "this-month",
+  selectedTimePeriod = "this_month",
   onTimePeriodChange
 }: {
   selectedTimePeriod?: string;
