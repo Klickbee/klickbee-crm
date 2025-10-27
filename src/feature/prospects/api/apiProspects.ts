@@ -38,7 +38,7 @@ export async function POST(req: Request) {
       status: parsedData.status,
       tags: parsedData.tags ?? [],
       notes: parsedData.notes || null,
-      ownerId: parsedData.ownerId,
+      ownerId: parsedData.ownerId ?? session.user.id,
       userId: parsedData.userId,
     }
 
@@ -168,6 +168,7 @@ export async function handleMethodWithId(req: Request, id: string) {
         tags: parsedData.tags ?? undefined,
         notes: parsedData.notes ?? undefined,
         ownerId: parsedData.ownerId,
+        lastContact: undefined as Date | undefined,
       };
       
       const getPreviousData = async () => {

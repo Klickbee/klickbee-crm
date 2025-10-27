@@ -34,7 +34,7 @@ export async function POST(req: Request) {
       startDate: toDate(bodyRaw.startDate),
       startTime: toDate(bodyRaw.startTime),
       endTime: toDate(bodyRaw.endTime),
-      ownerId: session.user.id,
+      ownerId: bodyRaw.ownerId ?? session.user.id,
       linkedId: bodyRaw.linkedId, 
       assignedId: bodyRaw.assignedId && bodyRaw.assignedId.trim() !== "" ? bodyRaw.assignedId : null,
     });

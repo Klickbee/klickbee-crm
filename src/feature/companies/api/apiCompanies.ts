@@ -18,7 +18,7 @@ export async function POST(req: Request) {
 
     const parsed = createCompanySchema.safeParse({
       ...body,
-      ownerId: body.owner.id,
+      ownerId: body.owner.id ?? session.user.id,
       userId: session.user.id,
     });
 

@@ -18,7 +18,7 @@ export async function POST(req: Request) {
     // ✅ validate with zod
     const parsed = createDealSchema.safeParse({
       ...body,
-      ownerId: body.owner.id,
+      ownerId: body.owner.id ?? session.user.id,
     });
 
     if (!parsed.success) {

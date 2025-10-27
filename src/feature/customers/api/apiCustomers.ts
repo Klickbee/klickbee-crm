@@ -18,7 +18,7 @@ export async function POST(req: Request) {
 
     const parsed = createCustomerSchema.safeParse({
       ...body,
-      ownerId: body.owner.id,
+      ownerId: body.owner.id ?? session.user.id,
       userId: session.user.id,
     });
 
@@ -169,6 +169,7 @@ export async function handleMethodWithId(req: Request, id: string) {
           notes: parsedData.notes ?? undefined,
           files: parsedData.files ?? undefined,
           ownerId: parsedData.ownerId,
+          lastContact:  undefined as Date | undefined,
       };
 
       const getPreviousData = async () => {
