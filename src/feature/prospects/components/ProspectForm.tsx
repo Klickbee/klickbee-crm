@@ -29,7 +29,7 @@ const schema = Yup.object({
     email: Yup.string().trim().email("Please enter a valid email address").required("Email is required"),
     phone: Yup.string().trim().matches(/^[+]?[0-9\s\-()]{10,}$/, "Please enter a valid phone number"),
     status: Yup.string().oneOf(["New", "Qualified", "Converted", "Cold", "Warmlead", "Notintrested"]).required("Status is required"),
-    owner: Yup.string().trim().required("Owner is required"),
+    owner: Yup.string().trim(),
     tags: Yup.array().of(Yup.string().trim().min(1)).max(10, "Up to 10 tags allowed"),
     notes: Yup.string(),
 })

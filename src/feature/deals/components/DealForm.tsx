@@ -192,7 +192,7 @@ export default function DealForm({
             .min(0, "Amount cannot be negative")
             .required("Amount is required"),
         currency: Yup.string().oneOf(["USD", "EUR", "GBP"]).required("Currency is required"),
-        owner: Yup.string().trim().required("Owner is required"),
+        owner: Yup.string().trim(),
         closeDate: Yup.string().nullable(),
         tags: Yup.array().of(Yup.string().trim().min(1)).max(10, "Up to 10 tags"),
         notes: Yup.string(),

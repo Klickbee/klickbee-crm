@@ -38,7 +38,7 @@ export async function POST(req: Request) {
       status: parsedData.status,
       tags: parsedData.tags ?? [],
       notes: parsedData.notes || null,
-      ownerId: parsedData.ownerId ?? session.user.id,
+      ownerId: parsedData.ownerId || session.user.id,
       userId: parsedData.userId,
     }
 
@@ -150,7 +150,7 @@ export async function handleMethodWithId(req: Request, id: string) {
       }
 
       const body = await req.json();
-      const parsed = updateProspectSchema.safeParse({ ...body, id, ownerId: body.owner });
+      const parsed = updateProspectSchema.safeParse({ ...body, id, ownerId: body.owner || session.user.id });
       if (!parsed.success) {
         return NextResponse.json(
           { error: "Validation error", details: parsed.error.flatten() },
@@ -167,7 +167,7 @@ export async function handleMethodWithId(req: Request, id: string) {
         status: parsedData.status,
         tags: parsedData.tags ?? undefined,
         notes: parsedData.notes ?? undefined,
-        ownerId: parsedData.ownerId,
+        ownerId: parsedData.ownerId || session.user.id,
         lastContact: undefined as Date | undefined,
       };
       
