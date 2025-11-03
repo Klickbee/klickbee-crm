@@ -18,7 +18,7 @@ export async function POST(req: Request) {
 
     const parsed = createCustomerSchema.safeParse({
       ...body,
-      ownerId: body.owner.id,
+      ownerId: body.owner.id || session.user.id,
       userId: session.user.id,
     });
 
@@ -39,7 +39,7 @@ const data = {
         tags: parsedData.tags ?? [],
         notes: parsedData.notes || null,
         files: parsedData.files ?? undefined,
-        ownerId: parsedData.ownerId,
+        ownerId: parsedData.ownerId || session.user.id,
         userId: parsedData.userId,
       }
 
@@ -168,7 +168,8 @@ export async function handleMethodWithId(req: Request, id: string) {
           tags: parsedData.tags ?? undefined,
           notes: parsedData.notes ?? undefined,
           files: parsedData.files ?? undefined,
-          ownerId: parsedData.ownerId,
+          ownerId: parsedData.ownerId || session.user.id,
+          lastContact:  undefined as Date | undefined,
       };
 
       const getPreviousData = async () => {

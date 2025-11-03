@@ -18,8 +18,9 @@ export async function POST(req: Request) {
     // ✅ validate with zod
     const parsed = createDealSchema.safeParse({
       ...body,
-      ownerId: body.owner.id,
+      ownerId: body.owner.id || session.user.id,
     });
+
 
     if (!parsed.success) {
       return NextResponse.json(
@@ -34,7 +35,7 @@ export async function POST(req: Request) {
         stage: parsedData.stage,
         amount: parsedData.amount,
         currency: parsedData.currency,
-        ownerId: parsedData.ownerId,
+        ownerId: parsedData.ownerId || session.user.id,
         companyId: parsedData.companyId ?? null,
         contactId: parsedData.contactId ?? null,
         closeDate: parsedData.closeDate ? new Date(parsedData.closeDate) : null,
@@ -43,6 +44,7 @@ export async function POST(req: Request) {
         files: parsedData.files ?? undefined,
 
       }
+
 
     const created = await withActivityLogging(
           async () => {
@@ -181,7 +183,7 @@ export async function handleMethodWithId(req: Request, id: string) {
           dealName: parsedData.dealName,
           companyId: parsedData.companyId,
           contactId: parsedData.contactId,
-          ownerId: parsedData.ownerId,
+          ownerId: parsedData.ownerId || session.user.id,
           stage: parsedData.stage,
           amount: parsedData.amount,
           currency: parsedData.currency,

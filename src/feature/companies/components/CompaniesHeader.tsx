@@ -8,6 +8,7 @@ import Filter from "@/components/filter"
 import CompanyModel from './CompaniesModel'
 import { Company } from "../types/types"
 import { useCompaniesStore } from "../stores/useCompaniesStore"
+import { useSearchParams } from "next/navigation"
 
 // Custom hook for debounced search
 function useDebounce<T>(value: T, delay: number): T {
@@ -60,9 +61,17 @@ export function CompaniesHeader({ editCompany, showEditModal, onEditCompany, onC
   const [showActionDropdown, setShowActionDropdown] = useState(false);
   const setSearchTerm = useCompaniesStore((state) => state.setSearchTerm);
   const [searchInput, setSearchInput] = useState("");
+  const searchParams = useSearchParams()
 
   // Debounce search input with 500ms delay
   const debouncedSearchTerm = useDebounce(searchInput, 500);
+
+  useEffect(() => {
+    const newParam = searchParams.get("new")
+    if (newParam === "company") {
+      setShowNewCompany(true)
+    }
+  }, [searchParams])
 
   // Effect to trigger search when debounced value changes
   useEffect(() => {

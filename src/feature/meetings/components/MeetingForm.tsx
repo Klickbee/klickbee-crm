@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { Meeting } from "../types/meeting";
 import SearchableDropdown from "@/components/ui/SearchableDropdown";
 import CalendarDropDown from "@/components/ui/CalendarDropDown";
+import CustomDropdown from "@/components/ui/CustomDropdown";
 
 // ✅ Enhanced Yup validation with comprehensive rules
 const MeetingSchema = Yup.object().shape({
@@ -58,7 +59,7 @@ const MeetingSchema = Yup.object().shape({
       const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
       return timeRegex.test(value);
     })
-    .test("is-after-start", "End time must be after start time", function(value) {
+    .test("is-after-start", "End time must be after start time", function (value) {
       const { startTime } = this.parent;
       if (!startTime || !value) return true;
       return value > startTime;
@@ -235,9 +236,9 @@ export default function MeetingForm({ onSubmit, onClose, mode = 'add', initialDa
         participants: initialData.participants || [],
         status: initialData.status && typeof initialData.status === 'string' ?
           (initialData.status === 'Confirmed' ? 'confirmed' :
-           initialData.status === 'Cancelled' ? 'cancelled' :
-           initialData.status === 'Scheduled' ? 'scheduled' :
-           (initialData.status as string).toLowerCase()) : '',
+            initialData.status === 'Cancelled' ? 'cancelled' :
+              initialData.status === 'Scheduled' ? 'scheduled' :
+                (initialData.status as string).toLowerCase()) : '',
         tags: initialData.tags || [],
         notes: initialData.notes || '',
         files: initialData.files || [],
@@ -342,27 +343,27 @@ export default function MeetingForm({ onSubmit, onClose, mode = 'add', initialDa
 
           {/* Date & Time */}
           <div className="grid grid-cols-3 gap-4 p-4">
-              <div>
-             <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">
+            <div>
+              <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">
                 Date
               </label>
               <CalendarDropDown
-             
-              label="Select Date"
-              value={values.startDate ? (() => {
-                // Ensure proper date parsing for the CalendarDropDown
-                const dateStr = values.startDate;
-                if (typeof dateStr === 'string' && dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                  return new Date(dateStr + 'T12:00:00.000Z'); // Add noon time to avoid timezone issues
-                }
-                return new Date(dateStr);
-              })() : null}
-                buttonClassName=" h-10 mt-1 w-30 text-sm whitespace-nowrap"
-          triggerIcon="calendar"
 
-              onChange={(date) => setFieldValue("startDate", date.toISOString().split('T')[0])}
-          />
-          </div>
+                label="Select Date"
+                value={values.startDate ? (() => {
+                  // Ensure proper date parsing for the CalendarDropDown
+                  const dateStr = values.startDate;
+                  if (typeof dateStr === 'string' && dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                    return new Date(dateStr + 'T12:00:00.000Z'); // Add noon time to avoid timezone issues
+                  }
+                  return new Date(dateStr);
+                })() : null}
+                buttonClassName=" h-10 mt-1 w-30 text-sm whitespace-nowrap"
+                triggerIcon="calendar"
+
+                onChange={(date) => setFieldValue("startDate", date.toISOString().split('T')[0])}
+              />
+            </div>
             <TextInput label="Start Time" type="time" name="startTime" />
             <TextInput label="End Time" type="time" name="endTime" />
           </div>
@@ -374,12 +375,27 @@ export default function MeetingForm({ onSubmit, onClose, mode = 'add', initialDa
             {values.repeatMeeting && (
               <div>
                 <div className="grid grid-cols-2 gap-4 mt-2">
-                  <SelectInput label="Frequency" name="frequency">
-                    <option value="Daily">Daily</option>
-                    <option value="Weekly">Weekly</option>
-                    <option value="Monthly">Monthly</option>
-                    <option value="Yearly">Yearly</option>
-                  </SelectInput>
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="frequency" className="text-sm font-medium">
+                      Frequency
+                    </label>
+
+                    <CustomDropdown
+                      name="frequency"
+                      value={values.frequency}
+                      onChange={(val) => setFieldValue("frequency", val)}
+                      placeholder="Select Frequency"
+                      options={[
+                        { value: "Daily", label: "Daily" },
+                        { value: "Weekly", label: "Weekly" },
+                        { value: "Monthly", label: "Monthly" },
+                        { value: "Yearly", label: "Yearly" },
+                      ]}
+                    />
+
+                    <ErrorMessage name="frequency" component="div" className="text-sm text-red-600" />
+                  </div>
+
                   <div>
                     <label htmlFor="repeatEvery">Repeat Every</label>
                     <div className="flex rounded-md shadow-sm border border-[var(--border-gray)] focus-within:ring-1">
@@ -392,11 +408,26 @@ export default function MeetingForm({ onSubmit, onClose, mode = 'add', initialDa
                 </div>
                 <div className="grid grid-cols-2 gap-4 mt-2">
                   <TextInput label="Repeat On" name="repeatOn" placeholder="e.g. Monday" />
-                  <SelectInput label="Ends" name="ends">
-                    <option value="Never">Never</option>
-                    <option value="After">After</option>
-                    <option value="OnDate">On Date</option>
-                  </SelectInput>
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="ends" className="text-sm font-medium">
+                      Ends
+                    </label>
+
+                    <CustomDropdown
+                      name="ends"
+                      value={values.ends}
+                      onChange={(val) => setFieldValue("ends", val)}
+                      placeholder="Select Option"
+                      options={[
+                        { value: "Never", label: "Never" },
+                        { value: "After", label: "After" },
+                        { value: "OnDate", label: "On Date" },
+                      ]}
+                    />
+
+                    <ErrorMessage name="ends" component="div" className="text-sm text-red-600" />
+                  </div>
+
                 </div>
               </div>
             )}
@@ -426,7 +457,7 @@ export default function MeetingForm({ onSubmit, onClose, mode = 'add', initialDa
 
             {/* Assigned To */}
             <div>
-            <label htmlFor="assignedTo" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="assignedTo" className="block text-sm font-medium text-gray-700 mb-1">
                 Assigned To
               </label>
               <SearchableDropdown

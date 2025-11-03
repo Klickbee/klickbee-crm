@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Search } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface Option {
   id: string;
@@ -31,6 +32,8 @@ export default function SearchableDropdown({
     const option = options.find(opt => opt.value === val);
     return option ? option.label : val;
   };
+
+  const router = useRouter();
 
   const [query, setQuery] = useState(() => {
     const displayLabel = getDisplayLabel(value);
@@ -67,25 +70,31 @@ export default function SearchableDropdown({
           }}
           onFocus={() => setIsOpen(true)}
         onBlur={(e) => {
-  if (!dropdownRef.current?.contains(e.relatedTarget)) {
-    setIsOpen(false);
-  }
-}}
+          if (!dropdownRef.current?.contains(e.relatedTarget)) {
+            setIsOpen(false);
+          }
+        }}
 
           className={`w-full rounded-md text-sm border border-[var(--border-gray)] shadow-sm bg-background ${
             showIcon ? "pl-10" : "pl-3"
-          } pr-3 py-2 outline-none focus:ring-1 focus:ring-gray-400`}
+          } pr-3 py-2 outline-none focus:ring-1 focus:ring-[#E4E4E7]`}
         />
       </div>
 
       {isOpen && (
-        <div className="absolute z-50 mt-1 w-full rounded-md border border-[var(--border-gray)] bg-white shadow-lg max-h-48 overflow-y-auto">
+        <div className="absolute z-50 mt-[.5px] w-full rounded-md border-2 border-[#E4E4E7] bg-white max-h-48 overflow-y-auto" style={{ boxShadow: "0 2px 4px -2px rgba(0, 0, 0, 0.1), 0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}>
           {filteredOptions.length > 0 ? (
             filteredOptions.map((option) => (
               <div
                 key={option.id}
                 className="px-3 py-2 cursor-pointer text-sm hover:bg-gray-100"
               onMouseDown={() => {
+                if(option.value === "add-company") {
+                  router.push("/contact/companies?new=company");
+                }
+                if(option.value === "add-contact") {
+                  router.push("/contact/customers?new=contact");
+                }
             // ✅ onMouseDown fires before onBlur, so selection works properly
             onChange(option.value);
             setQuery(option.label);

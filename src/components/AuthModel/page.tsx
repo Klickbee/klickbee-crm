@@ -1,7 +1,7 @@
 "use client"
 
 import { signIn } from "next-auth/react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Formik, Form, Field, ErrorMessage } from "formik"
 import * as Yup from "yup"
 import { useSession } from "next-auth/react"
@@ -17,9 +17,11 @@ export function AuthModal() {
   const {data: session} = useSession()
   const router = useRouter()
 
-  if(session?.user) {
-    router.push("/")
-  }
+  useEffect(() => {
+    if (session?.user) {
+      router.push("/");
+    }
+  }, [session, router]);
   // Validation schema
   const SignupSchema = Yup.object().shape({
     name: isSignUp

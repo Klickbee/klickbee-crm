@@ -18,7 +18,7 @@ export async function POST(req: Request) {
 
     const parsed = createCompanySchema.safeParse({
       ...body,
-      ownerId: body.owner.id,
+      ownerId: body.owner.id || session.user.id,
       userId: session.user.id,
     });
 
@@ -41,7 +41,7 @@ export async function POST(req: Request) {
         assing: parsedData.assing ?? [],
         notes: parsedData.notes || null,
         files: parsedData.files ?? undefined,
-        ownerId: parsedData.ownerId,
+        ownerId: parsedData.ownerId || session.user.id,
         userId: parsedData.userId,
       }
 
@@ -170,7 +170,7 @@ export async function handleMethodWithId(req: Request, id: string) {
           assing: parsedData.assing ?? undefined,
           notes: parsedData.notes ?? undefined,
           files: parsedData.files ?? undefined,
-          ownerId: parsedData.ownerId,
+          ownerId: parsedData.ownerId || session.user.id,
         };
 
         const getPreviousData = async () => {
