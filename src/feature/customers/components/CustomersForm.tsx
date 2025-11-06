@@ -14,6 +14,7 @@ import InputWithDropDown from "@/components/ui/InputWithDropDown"
 import { useCompaniesStore } from "@/feature/companies/stores/useCompaniesStore"
 import { getCompanyOptions } from "@/feature/deals/libs/companyData"
 import { Customer } from "../types/types"
+import CustomDropdown from "@/components/ui/CustomDropdown"
 
 type CustomerFormValues = {
     fullName: string
@@ -33,7 +34,7 @@ const schema = Yup.object({
     email: Yup.string().trim().email("Please enter a valid email address"),
     phone: Yup.string().trim().matches(/^[\+]?[0-9\-\(\)\s]+$/, "Please enter a valid phone number"),
     status: Yup.string().oneOf(["Active", "FollowUp", "inactive"]).required("Status is required"),
-    owner: Yup.string().trim().required("Owner is required"),
+    owner: Yup.string().trim(),
     tags: Yup.array().of(Yup.string().trim().min(1)).max(10, "Up to 10 tags"),
     notes: Yup.string(),
     files: Yup.array().of(Yup.mixed<File>()),
@@ -52,7 +53,7 @@ export default function CustomerForm({
     mode?: 'add' | 'edit'
     initialData?: Customer,
     usersLoading: Boolean,
-    userOptions: {id: string, value: string, label: string}[]
+    userOptions: { id: string, value: string, label: string }[]
 }) {
     const [tagInput, setTagInput] = useState("")
     const [uploading, setUploading] = useState(false);
@@ -63,7 +64,7 @@ export default function CustomerForm({
         useCompaniesStore.getState().fetchCompanies();
     }, []);
 
-    const getOptionLabel = (options: {id: string, label: string}[], value: string) => {
+    const getOptionLabel = (options: { id: string, label: string }[], value: string) => {
         // First try to find by ID
         const optionById = options.find(opt => opt.id === value);
         if (optionById) return optionById.label;
@@ -111,7 +112,7 @@ export default function CustomerForm({
                 email: initialData.email || '',
                 status: initialData.status || '',
                 phone: initialData.phone || '',
-                 owner: (() => {
+                owner: (() => {
                     if (typeof initialData.owner === 'object' && initialData.owner) {
                         return initialData.owner.id || '';
                     }
@@ -265,23 +266,20 @@ export default function CustomerForm({
                                 maxOptions={20}
                             />
                         </FieldBlock>
-
                         <FieldBlock name="status" label="Status">
-                            <Field
-                                as="select"
-                                id="status"
+                            <CustomDropdown
                                 name="status"
-                                className="w-full text-sm rounded-md shadow-sm border  border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
-                            >
-                                                                <option value="" disabled>Select Status</option>
-
-                                <option value="Active">Active</option>
-                                <option value="FollowUp">Follow Up</option>
-                                <option value="inactive">inactive</option>
-
-
-                            </Field>
+                                value={values.status}
+                                onChange={(val) => setFieldValue("status", val)}
+                                placeholder="Select Status"
+                                options={[
+                                    { value: "Active", label: "Active" },
+                                    { value: "FollowUp", label: "Follow Up" },
+                                    { value: "inactive", label: "Inactive" },
+                                ]}
+                            />
                         </FieldBlock>
+
 
 
                         <TagInput name='Tags' values={values.tags} setValue={(values: string[]) => setFieldValue('tags', values)} input={tagInput} setInput={(value: string) => setTagInput(value)} />

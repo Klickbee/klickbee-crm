@@ -12,6 +12,7 @@ import SearchableDropdown from "@/components/ui/SearchableDropdown"
 import toast from "react-hot-toast"
 import { TaskData } from "../types/types"
 import CalendarDropDown from "@/components/ui/CalendarDropDown"
+import CustomDropdown from "@/components/ui/CustomDropdown"
 
 type TodoFormValues = {
     taskName: string
@@ -202,33 +203,35 @@ export default function TodoForm({
 
                         <div className="grid grid-cols-2 gap-3">
                             <FieldBlock name="status" label="Status">
-                                <Field
-                                    as="select"
-                                    id="status"
-                                    name="status"
-                                    className="w-full text-sm rounded-md shadow-sm border  border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
-                                >
-                                    <option value="" disabled>Select Status</option>
-                                    <option value="to-do">Todo</option>
-                                    <option value="in-progress">In Progress</option>
-                                    <option value="on-hold">On Hold</option>
-                                    <option value="done">Done</option>
-                                </Field>
+                                <CustomDropdown
+                                name="status"
+                                value={values.status}
+                                onChange={(val) => setFieldValue("status", val)}
+                                placeholder="Select Status"
+                                options={[
+                                    { value: "to-do", label: "Todo" },
+                                    { value: "in-progress", label: "In Progress" },
+                                    { value: "on-hold", label: "On Hold" },
+                                    { value: "done", label: "Done" },
+                                ]}
+                                />
+
                             </FieldBlock>
 
                             <FieldBlock name="priority" label="Priority">
-                                <Field
-                                    as="select"
-                                    id="priority"
-                                    name="priority"
-                                    className="w-full text-sm rounded-md shadow-sm border  border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
-                                >
-                                    <option value="" disabled>Select Priority</option>
-                                    <option value="high">High</option>
-                                    <option value="urgent">Urgent</option>
-                                    <option value="medium">Medium</option>
-                                    <option value="low">Low</option>
-                                </Field>
+                               <CustomDropdown
+                                name="priority"
+                                value={values.priority}
+                                onChange={(val) => setFieldValue("priority", val)}
+                                placeholder="Select Priority"
+                                options={[
+                                    { value: "urgent", label: "Urgent" },
+                                    { value: "high", label: "High" },
+                                    { value: "medium", label: "Medium" },
+                                    { value: "low", label: "Low" },
+                                ]}
+                                />
+
                             </FieldBlock>
                         </div>
 

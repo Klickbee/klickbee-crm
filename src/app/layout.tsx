@@ -29,7 +29,6 @@ export default function RootLayout({
           <AuthProvider>
             <ProtectedLayout>{children}</ProtectedLayout>
                   <Toaster position="top-right"  reverseOrder={false} />
-
           </AuthProvider>
         </QueryProvider>
       </body>

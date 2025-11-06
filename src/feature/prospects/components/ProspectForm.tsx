@@ -11,6 +11,7 @@ import { useCompaniesStore } from "@/feature/companies/stores/useCompaniesStore"
 import { Prospect } from "../types/types"
 import { getCompanyOptions } from "../libs/companyData"
 import TagInput from "@/components/ui/TagInput"
+import CustomDropdown from "@/components/ui/CustomDropdown"
 type ProspectFormValues = {
     fullName: string
     company: string
@@ -28,7 +29,7 @@ const schema = Yup.object({
     email: Yup.string().trim().email("Please enter a valid email address").required("Email is required"),
     phone: Yup.string().trim().matches(/^[+]?[0-9\s\-()]{10,}$/, "Please enter a valid phone number"),
     status: Yup.string().oneOf(["New", "Qualified", "Converted", "Cold", "Warmlead", "Notintrested"]).required("Status is required"),
-    owner: Yup.string().trim().required("Owner is required"),
+    owner: Yup.string().trim(),
     tags: Yup.array().of(Yup.string().trim().min(1)).max(10, "Up to 10 tags allowed"),
     notes: Yup.string(),
 })
@@ -47,7 +48,7 @@ const initialValues: ProspectFormValues = {
 export default function ProspectForm({
     onSubmit,
     onCancel,
-     mode = 'add',
+    mode = 'add',
     initialData,
     usersLoading,
     userOptions,
@@ -55,16 +56,16 @@ export default function ProspectForm({
     onSubmit: (values: ProspectFormValues) => void
     onCancel: () => void
     mode?: 'add' | 'edit'
-  initialData?: Prospect
-  usersLoading: boolean
-  userOptions: { id: string; value: string; label: string }[]
+    initialData?: Prospect
+    usersLoading: boolean
+    userOptions: { id: string; value: string; label: string }[]
 }) {
     const [tagInput, setTagInput] = useState("")
     // Fetch companies for company dropdown
     useEffect(() => {
         useCompaniesStore.getState().fetchCompanies();
     }, []);
-       const getOptionLabel = (options: {id: string, label: string}[], value: string) => {
+    const getOptionLabel = (options: { id: string, label: string }[], value: string) => {
         // First try to find by ID
         const optionById = options.find(opt => opt.id === value);
         if (optionById) return optionById.label;
@@ -77,64 +78,64 @@ export default function ProspectForm({
         return value;
     };
     const getInitialValues = (): ProspectFormValues => {
-    if (mode === 'edit' && initialData) {
-      const { companies } = useCompaniesStore.getState();
+        if (mode === 'edit' && initialData) {
+            const { companies } = useCompaniesStore.getState();
 
-      // Handle company field - could be ID, name, or object
-      let companyValue = '';
-      if (initialData.company) {
-        if (typeof initialData.company === 'string') {
-          // First check if it's already a company ID
-          const companyById = companies.find(c => c.id === initialData.company);
-          if (companyById) {
-            companyValue = companyById.id;
-          } else {
-            // If not an ID, check if it's a company name
-            const companyByName = companies.find(c =>
-              c.fullName?.toLowerCase() === initialData.company?.toLowerCase()
-            );
-            if (companyByName) {
-              companyValue = companyByName.id;
-            } else {
-              // If no match found, leave empty (user can select again)
-              companyValue = '';
+            // Handle company field - could be ID, name, or object
+            let companyValue = '';
+            if (initialData.company) {
+                if (typeof initialData.company === 'string') {
+                    // First check if it's already a company ID
+                    const companyById = companies.find(c => c.id === initialData.company);
+                    if (companyById) {
+                        companyValue = companyById.id;
+                    } else {
+                        // If not an ID, check if it's a company name
+                        const companyByName = companies.find(c =>
+                            c.fullName?.toLowerCase() === initialData.company?.toLowerCase()
+                        );
+                        if (companyByName) {
+                            companyValue = companyByName.id;
+                        } else {
+                            // If no match found, leave empty (user can select again)
+                            companyValue = '';
+                        }
+                    }
+                } else if (typeof initialData.company === 'object' && initialData.company && 'id' in initialData.company) {
+                    companyValue = (initialData.company as { id: string }).id;
+                }
             }
-          }
-        } else if (typeof initialData.company === 'object' && initialData.company && 'id' in initialData.company) {
-          companyValue = (initialData.company as { id: string }).id;
+
+            const initialVals = {
+                fullName: initialData.fullName || '',
+                company: companyValue,
+                email: initialData.email || '',
+                status: initialData.status || '',
+                phone: initialData.phone || '',
+                owner: getOptionLabel(userOptions,
+                    typeof initialData.owner === 'object' && initialData.owner
+                        ? initialData.owner.id
+                        : initialData.owner || ''
+                ),
+                tags: (() => {
+                    const tags = initialData.tags;
+                    if (!tags) return [];
+                    if (Array.isArray(tags)) {
+                        return (tags as string[]).filter(Boolean);
+                    }
+                    if (typeof tags === 'string') {
+                        return (tags as string).split(',').map(tag => tag.trim()).filter(Boolean);
+                    }
+                    return [];
+                })(),
+                notes: initialData.notes || '',
+            };
+            return initialVals;
         }
-      }
+        return initialValues;
+    };
 
-      const initialVals = {
-        fullName: initialData.fullName || '',
-        company: companyValue,
-        email: initialData.email || '',
-        status: initialData.status || '',
-        phone: initialData.phone || '',
-        owner: getOptionLabel(userOptions,
-          typeof initialData.owner === 'object' && initialData.owner
-            ? initialData.owner.id
-            : initialData.owner || ''
-        ),
-        tags: (() => {
-          const tags = initialData.tags;
-          if (!tags) return [];
-          if (Array.isArray(tags)) {
-            return (tags as string[]).filter(Boolean);
-          }
-          if (typeof tags === 'string') {
-            return (tags as string).split(',').map(tag => tag.trim()).filter(Boolean);
-          }
-          return [];
-        })(),
-        notes: initialData.notes || '',
-      };
-      return initialVals;
-    }
-    return initialValues;
-  };
 
-    
 
 
     return (
@@ -233,22 +234,23 @@ export default function ProspectForm({
                         </FieldBlock>
 
                         <FieldBlock name="status" label="Status">
-                            <Field
-                                as="select"
-                                id="status"
-                                name="status"
-                                className="w-full text-sm rounded-md shadow-sm border  border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
-                            >
-                                <option value="" disabled>Select Status</option>
 
-                                <option value="New">New</option>
-                                <option value="Cold">Cold</option>
-                                <option value="Qualified">Qualified</option>
-                                <option value="Warmlead">Warm Lead</option>
-                                <option value="Converted">Converted</option>
-                                <option value="Notintrested">Not Intrested</option>
+                                <CustomDropdown
+                                    name="status"
+                                    value={values.status}
+                                    onChange={(val) => setFieldValue("status", val)}
+                                    placeholder="Select Status"
+                                    options={[
+                                        { value: "New", label: "New" },
+                                        { value: "Cold", label: "Cold" },
+                                        { value: "Qualified", label: "Qualified" },
+                                        { value: "Warmlead", label: "Warm Lead" },
+                                        { value: "Converted", label: "Converted" },
+                                        { value: "Notintrested", label: "Not Interested" },
+                                    ]}
+                                />
 
-                            </Field>
+
                         </FieldBlock>
 
 

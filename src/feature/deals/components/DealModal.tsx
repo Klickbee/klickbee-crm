@@ -21,7 +21,7 @@ export default function DealSlideOver({ open, onClose, mode = 'add', deal }: Dea
 
   const addDeal = useDealStore((s) => s.addDeal);
   const updateDeal = useDealStore((s) => s.updateDeal);
-  const { users, loading: usersLoading, fetchUsers } = useUserStore();
+  const { users, loading: usersLoading } = useUserStore();
 
   // Create user options for the dropdown
   const userOptions = users.map((user: any) => ({

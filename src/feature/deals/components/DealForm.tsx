@@ -17,6 +17,7 @@ import toast from "react-hot-toast"
 import { Deal } from '../types'
 import CalendarDropDown from "@/components/ui/CalendarDropDown"
 import { options } from "../libs/currencyOptions"
+import CustomDropdown from "@/components/ui/CustomDropdown"
 
 type DealFormValues = {
   dealName: string
@@ -191,7 +192,7 @@ export default function DealForm({
             .min(0, "Amount cannot be negative")
             .required("Amount is required"),
         currency: Yup.string().oneOf(["USD", "EUR", "GBP"]).required("Currency is required"),
-        owner: Yup.string().trim().required("Owner is required"),
+        owner: Yup.string().trim(),
         closeDate: Yup.string().nullable(),
         tags: Yup.array().of(Yup.string().trim().min(1)).max(10, "Up to 10 tags"),
         notes: Yup.string(),
@@ -271,27 +272,49 @@ export default function DealForm({
 
                         <div className="grid grid-cols-2 gap-3">
                             <FieldBlock name="stage" label="Stage">
-                                <Field
-                                    as="select"
-                                    id="stage"
-                                    name="stage"
-                                    placeholder='stage'
-                                    className="w-full text-sm rounded-md shadow-sm border  border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
-                                >
-                                    <option value="New">New</option>
-                                    <option value="Contacted">Contacted</option>
-                                    <option value="Proposal">Proposal Sent</option>
-                                    <option value="Negotiation">Negotiation</option>
-                                    <option value="Won">Won</option>
-                                    <option value="Lost">Lost</option>
-                                </Field>
+                            <CustomDropdown
+                                name="stage"
+                                value={values.stage}
+                                onChange={(val) => setFieldValue("stage", val)}
+                                openByDefault={true} // 👈 opens automatically when form loads
+                                options={[
+                                { value: "New", label: "New" },
+                                { value: "Contacted", label: "Contacted" },
+                                { value: "Proposal", label: "Proposal Sent" },
+                                { value: "Negotiation", label: "Negotiation" },
+                                { value: "Won", label: "Won" },
+                                { value: "Lost", label: "Lost" },
+                                ]}
+                            />
                             </FieldBlock>
 
-                            <FieldBlock name="amount" label="Amount">
-                                <InputWithDropDown inputName='amount' optionName="currency" options={options} />
-                            </FieldBlock>
+  <FieldBlock name="amount" label="Amount">
+                        <div className="flex items-center">
+                            <Field
+                            id="amount"
+                            name="amount"
+                            type="number"
+                            placeholder="Enter amount"
+                            className="flex-1 text-sm w-25 rounded-md shadow-sm border border-[var(--border-gray)] bg-background   px-2 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
+                            />
+
+                            <CustomDropdown
+                        
+                            name="currency"
+                            value={values.currency}
+                            onChange={(val) => setFieldValue("currency", val)}
+                            placeholder="Currency"
+                            options={[
+                                { value: "USD", label: "$" },
+                                { value: "EUR", label: "€" },
+                                { value: "GBP", label: "£" },
+                            ]}
+                            />
                         </div>
+                        </FieldBlock>
 
+                        </div>
+                      
                         <FieldBlock name="owner" label="Owner">
                         <SearchableDropdown
                                 name="owner"
