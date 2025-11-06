@@ -9,6 +9,13 @@ import { useCompanyModalStore } from "@/feature/companies/stores/useCompanyModal
 import CompaniesModel from "@/feature/companies/components/CompaniesModel"
 import CustomersModel from "@/feature/customers/components/CustomersModel"
 import { useCustomerModalStore } from "@/feature/customers/stores/useCustomersModel"
+import { useMeetingModalStore } from "@/feature/meetings/stores/meetingModelStore"
+import { AddMeetingModal } from "@/feature/meetings/components/AddMeetingModal"
+import { Meeting } from "@/feature/meetings/types/meeting"
+import { useDealModalStore } from "@/feature/deals/stores/dealsModelStore"
+import { useTaskModalStore } from "@/feature/todo/stores/taskModelStore"
+import DealSlideOver from "@/feature/deals/components/DealModal"
+import TodoSlideOver from "@/feature/todo/components/TodoModel"
 
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
     const { status } = useSession()
@@ -17,7 +24,12 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
     const router = useRouter()
     const { isOpen: isCompanyOpen, closeModal: closeCompanyModal, mode: companyMode } = useCompanyModalStore();
     const { isOpen: isCustomerOpen, closeModal: closeCustomerModal, mode: customerMode } =useCustomerModalStore();
+    const { isOpen: isMeetingOpen, closeModal: closeMeetingModal, mode: MeetingMode } =useMeetingModalStore();
+    const { isOpen: isDealOpen, closeModal: closeDealModal, mode: DealMode } =useDealModalStore();
+    const { isOpen: isTaskOpen, closeModal: closeTaskModal, mode: TaskMode } =useTaskModalStore();
+
     const pathname = usePathname()
+    
 
     useEffect(() => {
         if (status === "unauthenticated" && pathname !== "/auth" && pathname !== "/verify") {
@@ -78,8 +90,13 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
                     </div>
                     <CompaniesModel open={isCompanyOpen} onClose={closeCompanyModal} mode={companyMode} />
                     <CustomersModel open={isCustomerOpen} onClose={closeCustomerModal} mode={customerMode} />
+                    <AddMeetingModal isOpen={isMeetingOpen} onClose={closeMeetingModal} mode={MeetingMode} />
+                    <DealSlideOver open={isDealOpen} onClose={closeDealModal} mode={DealMode} />
+                    <TodoSlideOver open={isTaskOpen} onClose={closeTaskModal} mode={TaskMode} />
+
                 </div> :
                 <>{children}</>
+
                 
         }
         </>

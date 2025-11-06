@@ -3,6 +3,10 @@ import { Plus } from "lucide-react"
 import { DropDown } from "../../../components/ui/DropDown"
 import { useState, useRef, useEffect } from "react"
  import { useRouter } from "next/navigation"
+import { useCustomerModalStore } from "@/feature/customers/stores/useCustomersModel"
+import { useMeetingModalStore } from "@/feature/meetings/stores/meetingModelStore"
+import { useDealModalStore } from "@/feature/deals/stores/dealsModelStore"
+import { useTaskModalStore } from "@/feature/todo/stores/taskModelStore"
 
 const userOptions = [
   { value: "all", label: "All Users" },
@@ -56,19 +60,19 @@ export function DashboardHeader({
   const handlePrimaryAction = () => {
     switch (actionLabel) {
       case "New Deal":
-        router.push("/deals?new=deal")
+        useDealModalStore.getState().openModal("add");
         break
       case "New Task":
         // TODO: update with the correct route once available
-        router.push("/todo?new=task")
+        useTaskModalStore.getState().openModal("add");
         break
       case "New Meeting":
         // TODO: update with the correct route once available
-        router.push("/meetings?new=meeting")
+        useMeetingModalStore.getState().openModal("add");
         break
       case "New Contact":
         // TODO: update with the correct route once available
-        router.push("/contact/customers?new=contact")
+        useCustomerModalStore.getState().openModal("add");
         break
       default:
         break

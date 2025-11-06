@@ -11,7 +11,7 @@ import { useUserStore } from '@/feature/user/store/userStore';
 interface AddMeetingModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (meeting: Omit<Meeting, 'id'>) => void;
+  onSave?: (meeting: Omit<Meeting, 'id'>) => void;
   mode?: 'add' | 'edit';
   meeting?: Meeting;
 }
@@ -19,7 +19,6 @@ interface AddMeetingModalProps {
 export const AddMeetingModal: React.FC<AddMeetingModalProps> = ({
   isOpen,
   onClose,
-  onSave,
   mode = 'add',
   meeting,
 }) => {

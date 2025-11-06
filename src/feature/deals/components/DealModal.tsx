@@ -9,6 +9,7 @@ import { useDealStore } from '../stores/useDealStore'
 import toast from "react-hot-toast"
 import { useEffect } from "react"
 import { useUserStore } from "@/feature/user/store/userStore"
+import { useSession } from "next-auth/react"
 
 type DealSlideOverProps = {
   open: boolean
@@ -21,7 +22,7 @@ export default function DealSlideOver({ open, onClose, mode = 'add', deal }: Dea
 
   const addDeal = useDealStore((s) => s.addDeal);
   const updateDeal = useDealStore((s) => s.updateDeal);
-  const { users, loading: usersLoading } = useUserStore();
+const { users, loading: usersLoading, currentUser, initializeCurrentUser } = useUserStore();
 
   // Create user options for the dropdown
   const userOptions = users.map((user: any) => ({
@@ -29,6 +30,12 @@ export default function DealSlideOver({ open, onClose, mode = 'add', deal }: Dea
       value: user.id,
       label: user.name || user.email
   }));
+const {data: currentUserId} = useSession();
+useEffect(() => {
+  if (open && !currentUser) {
+    initializeCurrentUser();
+  }
+}, [open, currentUser, initializeCurrentUser]);
 
   const handleSubmit = async (values: any) => {
     try {
@@ -99,6 +106,8 @@ export default function DealSlideOver({ open, onClose, mode = 'add', deal }: Dea
             initialData={deal}
             usersLoading={usersLoading}
             userOptions={userOptions}
+  currentUserId={currentUserId?.user?.id ?? undefined} // ✅ fixes the type
+
           />
         </div>
       </aside>

@@ -1,38 +1,42 @@
 import { useCompanyModalStore } from "@/feature/companies/stores/useCompanyModalStore";
 import { useCustomerModalStore } from "@/feature/customers/stores/useCustomersModel";
+import ReactDOM from "react-dom";
 
 type ModalProps = {
   open: boolean;
   onClose: () => void;
-  children: any;
+  children: React.ReactNode;
+  type?: "company" | "customer";
 };
 
-const Modal = ({ open, onClose, children }: ModalProps) => {
-  // ✅ Access modal states from Zustand
+const Modal = ({ open, onClose, children, type }: ModalProps) => {
   const { isOpen: isCompanyOpen } = useCompanyModalStore();
   const { isOpen: isCustomerOpen } = useCustomerModalStore();
 
-  // ✅ Hide backdrop if another modal is open
-  const backdropClass = isCompanyOpen || isCustomerOpen
-  ? "bg-black/25"
-  : "bg-black/50";
+  if (!open) return null;
 
-  return (
+  const backdropClass =
+    isCompanyOpen || isCustomerOpen ? "bg-black/25" : "bg-black/50";
+
+  let zIndex = 50;
+  if (type === "company" && isCustomerOpen) zIndex = 60;
+  if (type === "customer" && isCompanyOpen) zIndex = 40;
+
+  const modalContent = (
     <div
       id="filter-backdrop"
-      className={`w-full h-full fixed top-0 left-0 z-50 transition-colors duration-300 ${
-        backdropClass
-      }`}
-      aria-hidden={!open}
+      className={`fixed inset-0 flex items-center justify-center transition-colors duration-300 ${backdropClass}`}
+      style={{ zIndex }}
       onClick={(e) => {
-        // Close when clicking the backdrop only
         if ((e.target as HTMLElement).id === "filter-backdrop") onClose();
       }}
-      style={{ visibility: open ? "visible" : "hidden" }}
     >
       {children}
     </div>
   );
+
+  // ✅ Mount directly to <body>, bypassing layout stacking
+  return ReactDOM.createPortal(modalContent, document.body);
 };
 
 export default Modal;

@@ -54,6 +54,7 @@ export default function DealForm({
     initialData,
     usersLoading,
     userOptions,
+    currentUserId
 }: {
     onSubmit: (values: DealFormValues) => void
     onCancel: () => void
@@ -61,6 +62,8 @@ export default function DealForm({
     initialData?: Deal
     usersLoading: boolean
     userOptions: { id: string; value: string; label: string }[]
+   currentUserId?: any // 👈 add this
+
 }) {
     const [tagInput, setTagInput] = useState("")
     const [uploading, setUploading] = useState(false);
@@ -178,7 +181,12 @@ export default function DealForm({
             };
             return initialVals;
         }
-        return initialValues;
+    return {
+  ...initialValues,
+  owner:
+    userOptions.find((u) => u.id === currentUserId)?.id || "", // ✅ ensures ID matches dropdown options
+};
+
     };
 
     // Dynamic schema with validation for select fields
