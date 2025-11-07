@@ -27,9 +27,9 @@ const Modal = ({ open, onClose, children, type }: ModalProps) => {
       id="filter-backdrop"
       className={`fixed inset-0 flex items-center justify-center transition-colors duration-300 ${backdropClass}`}
       style={{ zIndex }}
-      onClick={(e) => {
-        if ((e.target as HTMLElement).id === "filter-backdrop") onClose();
-      }}
+      // onClick={(e) => {
+      //   if ((e.target as HTMLElement).id === "filter-backdrop") onClose();
+      // }}
     >
       {children}
     </div>
