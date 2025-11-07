@@ -1,44 +1,38 @@
 "use client"
 
 import type React from "react"
-
-import { useEffect, useState, type KeyboardEvent } from "react"
-import { Formik, Form, Field, ErrorMessage } from "formik"
-import * as Yup from "yup"
-import { Button } from "@/components/ui/Button"
+import {useState, useEffect} from "react"
+import {useForm} from "react-hook-form"
+import {zodResolver} from "@hookform/resolvers/zod"
+import * as z from "zod"
+import {Button} from "@/components/ui/Button"
 import TagInput from "@/components/ui/TagInput"
 import UploadButton from "@/components/ui/UploadButton"
-import { useUserStore } from "@/feature/user/store/userStore"
 import SearchableDropdown from "@/components/ui/SearchableDropdown"
-import { Company } from "../types/types"
+import {Company} from "../types/types"
 import CustomDropdown from "@/components/ui/CustomDropdown"
 
-type CompanyFormValues = {
-    fullName: string
-    industry: string
-    email: string
-    status: string
-    phone: string
-    website: string
-    owner: string
-    tags: string[]
-    assing: string[]
-    notes: string
-    files: File[]
-}
+type CompanyFormValues = z.infer<typeof zodSchema>;
 
-const schema = Yup.object({
-    fullName: Yup.string().trim().required("Company name is required"),
-    industry: Yup.string().trim().required("Industry is required"),
-    email: Yup.string().trim().email("Please enter a valid email address"),
-    website: Yup.string().trim().url("Please enter a valid website URL"),
-    status: Yup.string().oneOf(["Active", "FollowUp", "inactive"]).required("Status is required"),
-    phone: Yup.string().trim().matches(/^[\+]?[1-9][\d]{0,15}$/, "Please enter a valid phone number"),
-    owner: Yup.string().trim(),
-    tags: Yup.array().of(Yup.string().trim().min(1)).max(10, "Up to 10 tags allowed"),
-    assing: Yup.array().of(Yup.string().trim().min(1)).max(10, "Up to 10 assignments allowed"),
-    notes: Yup.string(),
-    files: Yup.array().of(Yup.mixed<File>()),
+const zodSchema = z.object({
+    fullName: z.string().min(1, "Company name is required"),
+    industry: z.string().min(1, "Industry is required"),
+    email: z.email("Please enter a valid email address").optional(),
+    website: z.hostname({error: "Please enter a valid website URL"}).or(z.url({error: "Please enter a valid website URL"})).optional(),
+    status: z.enum(["Active", "FollowUp", "inactive"], {
+        error: "Status is required",
+    }),
+    //phone regex
+    phone: z
+        .union([
+            z.literal(""), // chaîne vide acceptée
+            z.string().regex(/^\+?[0-9]{6,15}$/, { message: "Invalid phone number" })
+        ])
+        .optional(),    owner: z.string().optional(),
+    tags: z.array(z.string().min(1)).max(10, "Up to 10 tags allowed").optional(),
+    assign: z.array(z.string().min(1)).max(10, "Up to 10 assignments allowed").optional(),
+    notes: z.string().optional(),
+    files: z.array(z.instanceof(File)).optional(),
 })
 
 const initialValues: CompanyFormValues = {
@@ -46,285 +40,274 @@ const initialValues: CompanyFormValues = {
     industry: "",
     email: "",
     website: "",
-    status: "",
+    status: "Active",
     phone: "",
-    owner: "Claire Brunet",
+    owner: "",
     tags: [],
-    assing: [],
+    assign: [],
     notes: "",
     files: [],
 }
 
 export default function CompaniesForm({
-    onSubmit,
-    onCancel,
-    mode = 'add',
-    initialData,
-    usersLoading,
-    userOptions
-
-}: {
+                                          onSubmit,
+                                          onCancel,
+                                          mode = "add",
+                                          initialData,
+                                          userOptions,
+                                      }: {
     onSubmit: (values: CompanyFormValues) => void
     onCancel: () => void
-    mode?: 'add' | 'edit'
+    mode?: "add" | "edit"
     initialData?: Company
     usersLoading: boolean
-    userOptions: { id: string, value: string, label: string }[]
+    userOptions: { id: string; value: string; label: string }[]
 }) {
     const [tagInput, setTagInput] = useState("")
     const [assignInput, setAssignInput] = useState("")
-    const [uploading, setUploading] = useState(false);
-    const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
+    const [uploading, setUploading] = useState(false)
+    const [uploadedFiles, setUploadedFiles] = useState<any[]>([])
 
-    const getOptionLabel = (options: { id: string, label: string }[], value: string) => {
-        // First try to find by ID
-        const optionById = options.find(opt => opt.id === value);
-        if (optionById) return optionById.label;
-
-        // Then try to find by label (in case value is already a label)
-        const optionByLabel = options.find(opt => opt.label === value);
-        if (optionByLabel) return optionByLabel.label;
-
-        // If not found in options, return the value as-is (for dynamic values)
-        return value;
-    };
-
+    // 🧩 Compute initial values like avant
     const getInitialValues = (): CompanyFormValues => {
-        if (mode === 'edit' && initialData) {
+        if (mode === "edit" && initialData) {
             return {
-                fullName: initialData.fullName || '',
-                industry: initialData.industry || '',
-                email: initialData.email || '',
-                website: initialData.website || '',
-                status: initialData.status || '',
-                phone: initialData.phone || '',
+                fullName: initialData.fullName || "",
+                industry: initialData.industry || "",
+                email: initialData.email || "",
+                website: initialData.website || "",
+                status: initialData.status || "Active",
+                phone: initialData.phone || "",
                 owner: (() => {
-                    if (typeof initialData.owner === 'object' && initialData.owner) {
-                        return initialData.owner.id || '';
+                    if (typeof initialData.owner === "object" && initialData.owner) {
+                        return initialData.owner.id || ""
                     }
-                    if (typeof initialData.owner === 'string') {
-                        // Use IIFE to help TypeScript with type narrowing
-                        return (() => {
-                            const ownerString = initialData.owner as string;
-                            const option = userOptions.find(opt => opt.id === ownerString);
-                            return option ? option.id : ownerString;
-                        })();
+                    if (typeof initialData.owner === "string") {
+                        const ownerString = initialData.owner as string
+                        const option = userOptions.find((opt) => opt.id === ownerString)
+                        return option ? option.id : ownerString
                     }
-                    return '';
+                    return ""
                 })(),
                 tags: (() => {
-                    const tags = initialData.tags;
-                    if (!tags) return [];
+                    const tags = initialData.tags
+                    if (!tags) return []
                     if (Array.isArray(tags)) {
-                        return (tags as string[]).filter(Boolean);
+                        return (tags as string[]).filter(Boolean)
                     }
-                    if (typeof tags === 'string') {
-                        return (tags as string).split(',').map(tag => tag.trim()).filter(Boolean);
+                    if (typeof tags === "string") {
+                        return (tags as string)
+                            .split(",")
+                            .map((tag) => tag.trim())
+                            .filter(Boolean)
                     }
-                    return [];
+                    return []
                 })(),
-                assing: [], // Default empty for assignments
-                notes: '', // Company type doesn't have notes in the schema
-                files: [], // Default empty for files
-            };
+                assign: [],
+                notes: "",
+                files: [],
+            }
         }
-        return initialValues;
-    };
+        return initialValues
+    }
+
+    const {
+        register,
+        handleSubmit,
+        setValue,
+        reset,
+        formState: {errors},
+        watch,
+    } = useForm<CompanyFormValues>({
+        resolver: zodResolver(zodSchema),
+        defaultValues: getInitialValues(),
+    })
+
+    const values = watch()
+
+    useEffect(() => {
+        reset(getInitialValues())
+    }, [mode, initialData])
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
-        if (!files || files.length === 0) return;
-        const form = new FormData();
-        for (let i = 0; i < files.length; i++) form.append("file", files[i]);
+        const files = e.target.files
+        if (!files || files.length === 0) return
+        const form = new FormData()
+        for (let i = 0; i < files.length; i++) form.append("file", files[i])
 
-        setUploading(true);
-        const res = await fetch("/api/uploadFile", { method: "POST", body: form });
-        setUploading(false);
+        setUploading(true)
+        const res = await fetch("/api/uploadFile", {method: "POST", body: form})
+        setUploading(false)
         if (res.ok) {
-            const json = await res.json();
-            setUploadedFiles(prev => [...prev, ...json.files]);
+            const json = await res.json()
+            setUploadedFiles((prev) => [...prev, ...json.files])
+            setValue("files", json.files)
         } else {
-            alert("Upload failed");
+            alert("Upload failed")
         }
-    };
+    }
+
+    const submitHandler = (vals: CompanyFormValues) => {
+        const payload = {
+            ...vals,
+            assign: vals.assign ? vals.assign.map((t) => t.trim()).filter(Boolean) : [],
+            tags: vals.tags ? vals.tags.map((t) => t.trim()).filter(Boolean) : [],
+            files: uploadedFiles,
+        }
+        onSubmit(payload)
+        if (mode === "add") reset(initialValues)
+    }
 
     return (
-        <Formik<CompanyFormValues>
-            enableReinitialize
-            initialValues={getInitialValues()}
-            validationSchema={schema}
-            onSubmit={async (vals, { setSubmitting, resetForm }) => {
-                try {
-                    const payload = {
-                        ...vals,
-                        assing: vals.assing ? vals.assing.map((t) => t.trim()).filter(Boolean) : [],
-                        tags: vals.tags ? vals.tags.map((t) => t.trim()).filter(Boolean) : [],
-                        files: uploadedFiles,
-                        // Ensure owner is sent as user ID
-                        owner: vals.owner // This should now be the user ID from SearchableDropdown
-                    };
-
-                    // Run validation manually in case of async conditions
-                    await schema.validate(payload, { abortEarly: false });
-
-                    onSubmit(payload);
-
-                    // Only reset form in add mode, not in edit mode
-                    if (mode === 'add') {
-                        resetForm();
-                    }
-                } catch (error: any) {
-                    if (error.name === "ValidationError") {
-                        // Loop through validation errors
-                        error.inner.forEach((err: any) => {
-                            console.error(err.message);
-                        });
-                    } else {
-                        console.error("Failed to save company. Please try again.");
-                    }
-                } finally {
-                    setSubmitting(false);
-                }
-            }}
+        <form
+            onSubmit={handleSubmit(submitHandler)}
+            className="flex min-h-full flex-col gap-4"
         >
-            {({ isSubmitting, isValid, dirty, values, setFieldValue, resetForm }) => (
-                <Form className="flex min-h-full flex-col gap-4">
-                    {/* Fields container */}
-                    <div className="px-4 py-4 flex flex-col gap-4 ">
-                        <FieldBlock name="fullName" label="Full Name">
-                            <Field
-                                id="fullName"
-                                name="fullName"
-                                placeholder="Add a name"
-                                className="w-full font-medium rounded-md shadow-sm border border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
-                            />
-                        </FieldBlock>
+            <div className="px-4 py-4 flex flex-col gap-4 ">
+                <FieldBlock name="fullName" label="Company name" error={errors.fullName?.message}>
+                    <input
+                        id="fullName"
+                        {...register("fullName")}
+                        placeholder="Add a name"
+                        className="w-full font-medium rounded-md shadow-sm border border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
+                    />
+                </FieldBlock>
 
-                        <FieldBlock name="industry" label="Industry">
-                            <Field
-                                as="select"
-                                id="industry"
-                                name="industry"
-                                className="w-full text-sm rounded-md shadow-sm border  border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
-                            >
-                                <option value="" disabled>Select Industry</option>
-                                <option value="Technology">Technology</option>
-                                <option value="Healthcare">Healthcare</option>
-                                <option value="Finance">Finance</option>
-                                <option value="Education">Education</option>
-                                <option value="Retail">Retail</option>
-                                <option value="Manufacturing">Manufacturing</option>
-                                <option value="Real Estate">Real Estate</option>
-                                <option value="Other">Other</option>
-                            </Field>
-                        </FieldBlock>
+                <FieldBlock name="industry" label="Industry" error={errors.industry?.message}>
+                    <select
+                        id="industry"
+                        {...register("industry")}
+                        className="w-full text-sm rounded-md shadow-sm border border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
+                    >
+                        <option value="" disabled>
+                            Select Industry
+                        </option>
+                        <option value="Technology">Technology</option>
+                        <option value="Healthcare">Healthcare</option>
+                        <option value="Finance">Finance</option>
+                        <option value="Education">Education</option>
+                        <option value="Retail">Retail</option>
+                        <option value="Manufacturing">Manufacturing</option>
+                        <option value="Real Estate">Real Estate</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </FieldBlock>
 
-                        <FieldBlock name="website" label="Website">
-                            <Field
-                                id="website"
-                                name="website"
-                                placeholder="www.example.com"
-                                className="w-full font-medium rounded-md shadow-sm border border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
-                            />
-                        </FieldBlock>
+                <FieldBlock name="website" label="Website" error={errors.website?.message}>
+                    <input
+                        id="website"
+                        {...register("website")}
+                        placeholder="www.example.com"
+                        className="w-full font-medium rounded-md shadow-sm border border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
+                    />
+                </FieldBlock>
 
+                <FieldBlock name="email" label="Email" error={errors.email?.message}>
+                    <input
+                        id="email"
+                        {...register("email")}
+                        placeholder="eg. example@company.com"
+                        className="w-full font-medium rounded-md shadow-sm border border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
+                    />
+                </FieldBlock>
 
-                        <FieldBlock name="email" label="Email">
-                            <Field
-                                id="email"
-                                name="email"
-                                placeholder="eg. example@company.com"
-                                className="w-full font-medium rounded-md shadow-sm border border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
-                            />
-                        </FieldBlock>
+                <FieldBlock name="phone" label="Phone" error={errors.phone?.message}>
+                    <input
+                        id="phone"
+                        {...register("phone")}
+                        placeholder="+3345832812"
+                        className="w-full font-medium rounded-md shadow-sm border border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
+                    />
+                </FieldBlock>
 
+                <TagInput
+                    name="Assign People"
+                    values={values.assign}
+                    setValue={(v: string[]) => setValue("assign", v)}
+                    input={assignInput}
+                    setInput={setAssignInput}
+                />
 
+                <FieldBlock name="owner" label="Owner">
+                    <SearchableDropdown
+                        name="owner"
+                        value={values.owner || ""}
+                        options={userOptions}
+                        onChange={(val) => setValue("owner", val)}
+                        placeholder="Select Owner"
+                        showIcon={false}
+                        maxOptions={20}
+                    />
+                </FieldBlock>
 
-                        <FieldBlock name="phone" label="Phone">
-                            <Field
-                                id="phone"
-                                name="phone"
-                                placeholder="+33 45832812"
-                                className="w-full font-medium rounded-md shadow-sm border border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
-                            />
-                        </FieldBlock>
+                <FieldBlock name="status" label="Status" error={errors.status?.message}>
+                    <CustomDropdown
+                        name="status"
+                        value={values.status}
+                        onChange={(val) => setValue("status", val as "Active" | "FollowUp" | "inactive")}
+                        placeholder="Select Status"
+                        options={[
+                            {value: "Active", label: "Active"},
+                            {value: "FollowUp", label: "Follow Up"},
+                            {value: "inactive", label: "Inactive"},
+                        ]}
+                    />
+                </FieldBlock>
 
-                        <TagInput name='Assign People' values={values.assing} setValue={(values: string[]) => setFieldValue('assing', values)} input={assignInput} setInput={(value: string) => setAssignInput(value)} />
+                <TagInput
+                    name="Tags"
+                    values={values.tags}
+                    setValue={(v: string[]) => setValue("tags", v)}
+                    input={tagInput}
+                    setInput={setTagInput}
+                />
 
+                <FieldBlock name="notes" label="Notes" error={errors.notes?.message}>
+					<textarea
+                        id="notes"
+                        {...register("notes")}
+                        rows={4}
+                        placeholder="Add any internal notes or context..."
+                        className="w-full text-sm resize-y shadow-sm rounded-md border border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
+                    />
+                </FieldBlock>
 
-                        <FieldBlock name="owner" label="Owner">
-                            <SearchableDropdown
-                                name="owner"
-                                value={values.owner}
-                                options={userOptions}
-                                onChange={(val) => setFieldValue("owner", val)}
-                                placeholder="Select Owner"
-                                showIcon={false}
-                                maxOptions={20}
-                            />
-                        </FieldBlock>
+                <UploadButton
+                    values={values.files}
+                    setValue={(v) => setValue("files", v)}
+                    uploading={uploading}
+                    uploadFile={handleFileChange}
+                />
+            </div>
 
-                        <FieldBlock name="status" label="Status">
-                            <CustomDropdown
-                                name="status"
-                                value={values.status}
-                                onChange={(val) => setFieldValue("status", val)}
-                                placeholder="Select Status"
-                                options={[
-                                    { value: "Active", label: "Active" },
-                                    { value: "FollowUp", label: "Follow Up" },
-                                    { value: "inactive", label: "Inactive" },
-                                ]}
-                            />
-                        </FieldBlock>
-
-
-
-                        <TagInput name='Tags' values={values.tags} setValue={(values: string[]) => setFieldValue('tags', values)} input={tagInput} setInput={(value: string) => setTagInput(value)} />
-
-                        <FieldBlock name="notes" label="Notes">
-                            <Field
-                                as="textarea"
-                                id="notes"
-                                name="notes"
-                                rows={4}
-                                placeholder="Add any internal notes or context..."
-                                className="w-full text-sm resize-y shadow-sm rounded-md border  border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
-                            />
-                        </FieldBlock>
-                        <UploadButton values={values.files} setValue={(values) => setFieldValue('files', values)} uploading={uploading} uploadFile={(e) => handleFileChange(e)} />
-
-                    </div>
-
-                    {/* Footer: sticky to panel bottom */}
-                    <div className="mt-auto  border-t border-[var(--border-gray)] p-4 flex items-center gap-3">
-                        <Button
-                            type="button"
-                            className="flex-1"
-                            onClick={() => {
-                                resetForm()
-                                onCancel()
-                            }}
-                        >
-                            Cancel
-                        </Button>
-                        <Button type="submit" className="flex-1 bg-black text-white">
-                            Save Company
-                        </Button>
-                    </div>
-                </Form>
-            )}
-        </Formik>
+            <div className="mt-auto border-t border-[var(--border-gray)] p-4 flex items-center gap-3">
+                <Button
+                    type="button"
+                    className="flex-1"
+                    onClick={() => {
+                        reset()
+                        onCancel()
+                    }}
+                >
+                    Cancel
+                </Button>
+                <Button type="submit" className="flex-1 bg-black text-white">
+                    Save Company
+                </Button>
+            </div>
+        </form>
     )
 }
 
 function FieldBlock({
-    name,
-    label,
-    children,
-}: {
+                        name,
+                        label,
+                        error,
+                        children,
+                    }: {
     name: string
     label: string
+    error?: string
     children: React.ReactNode
 }) {
     return (
@@ -333,20 +316,11 @@ function FieldBlock({
                 {label}
             </label>
             {children}
-            <Error name={name} />
-        </div>
-    )
-}
-
-function Error({ name }: { name: string }) {
-    return (
-        <ErrorMessage
-            name={name}
-            render={(msg) => (
+            {error && (
                 <p role="alert" className="text-sm text-red-600">
-                    {msg}
+                    {error}
                 </p>
             )}
-        />
+        </div>
     )
 }
