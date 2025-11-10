@@ -1,3 +1,5 @@
+import {FileAttachment} from "@/components/detailPage";
+
 export type StatusType = 'Active' | 'FollowUp' | 'inactive';
 
 export type Company = {
@@ -16,7 +18,7 @@ export type Company = {
   status?: StatusType;
   lastContact?: string;
   tags?: string;
-  files?: Array<{ url: string; name: string; size: number }>;
+  files?: FileAttachment[];
   createdAt?: string;
   updatedAt?: string;
   notes?:string

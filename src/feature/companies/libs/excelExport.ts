@@ -95,6 +95,8 @@ export const exportCompaniesWithColumns = (
       tags: 'Tags',
       createdAt: 'Created Date',
       updatedAt: 'Updated Date',
+      files: 'Files',
+      notes: 'Notes',
     };
 
     // Prepare data with selected columns only

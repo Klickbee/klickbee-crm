@@ -90,9 +90,8 @@ export default function CustomerForm({
                     if (companyById) {
                         companyValue = companyById.id;
                     } else {
-                        // If not an ID, check if it's a company name
                         const companyByName = companies.find(c =>
-                            c.fullName?.toLowerCase() === initialData.company?.toLowerCase()
+                            c.fullName?.toLowerCase() === (initialData.company as string).toLowerCase()
                         );
                         if (companyByName) {
                             companyValue = companyByName.id;

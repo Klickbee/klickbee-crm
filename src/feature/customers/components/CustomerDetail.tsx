@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import DetailModal from "@/components/detailPage";
+import DetailModal, {FileAttachment} from "@/components/detailPage";
 import type { Customer } from "../types/types";
 
 // Helper function to render status badge
@@ -67,7 +67,7 @@ export default function CustomerDetail({
       title={customer.fullName ?? "Customer Details"}
       notes={customer.notes ??undefined}
       details={details}
-      attachments={customer.files?.map(file => file.url) ?? []}
+      attachments={customer.files?.map((file : FileAttachment) => file.url) as unknown as FileAttachment[] ?? [] as FileAttachment[]}
       onClose={onClose}
       onDelete={onDelete ? () => onDelete(customer.id) : undefined}
       onEdit={onEdit ? () => onEdit(customer as Customer) : undefined}

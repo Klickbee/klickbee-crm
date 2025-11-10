@@ -94,6 +94,7 @@ export const exportCustomersWithColumns = (
       owner: 'Owner',
       createdAt: 'Created Date',
       updatedAt: 'Updated Date',
+      lastContact: 'Last Contact',
     };
 
     // Prepare data with selected columns only

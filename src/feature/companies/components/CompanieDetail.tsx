@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import DetailModal from "@/components/detailPage";
+import DetailModal, {FileAttachment} from "@/components/detailPage";
 import type { Company } from "../types/types";
 import AvatarInitials from "@/components/ui/AvatarInitials";
 
@@ -74,7 +74,7 @@ export default function CompanieDetail({
       title={company.fullName ?? "Company Details"}
       notes={company.notes ??undefined}
       details={details}
-      attachments={company.files?.map(file => file.url) ?? []}
+      attachments={company.files?.map(file => file.url) as unknown as FileAttachment[] ?? []}
       onClose={onClose}
       onDelete={onDelete ? () => onDelete(company.id) : undefined}
       onEdit={onEdit ? () => onEdit(company as Company) : undefined}
