@@ -30,14 +30,21 @@ and data layer.
 
 ```
 src/
-├── app/                   # Next.js App Router
+├── app/                     # Next.js App Router
+├── components/              # Global components
 ├── feature/
-│   ├── company/            # Company management (list, details, forms)
-│   ├── contact/            # Contact management
-│   ├── opportunity/        # Sales pipeline & opportunities
-│   ├── activity/           # Notes, tasks, follow-ups
-│   ├── lib/                # Notes, tasks, follow-ups
-└── components/             # Global components
+│   ├── auth/                # Authentication (login, signup, etc.)
+│   ├── companies/           # Company management (list, details, forms)
+│   ├── customers/           # Customer management
+│   ├── dashboard/           # Main dashboard and analytics
+│   ├── deals/               # Deals and opportunities tracking
+│   ├── meetings/            # Meetings and appointments
+│   ├── prospects/           # Prospects and leads management
+│   ├── settings/            # App and user settings
+│   ├── todo/                # Task and to-do management
+│   └── user/                # User management and profiles
+├── libs/                    # Utility functions and shared logic
+└── types/                   # Global TypeScript types
 
 ```
 
