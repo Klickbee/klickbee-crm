@@ -162,8 +162,8 @@ Klickbee CRM uses **ESLint** and **TypeScript**
 | Company & Contact Management | ✅      | Core features implemented |
 | Opportunity Pipeline         | ✅      | Implemented               |
 | Notes & Activities           | ✅      | Available                 |
-| Dashboard & Stats            | 🔜     | Planned                   |
-| Automations & Workflows      | 🧩     | Concept stage             |
+| Dashboard & Stats            | ✅     | Implemented                   |
+| Automations & Workflows      | 🔜     | Coming on next release           |
 
 ---
 
