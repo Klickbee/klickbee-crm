@@ -3,9 +3,6 @@
     <img src="https://img.shields.io/badge/A%20demo%20is%20better%20than%20a%20thousand%20words-black?style=for-the-badge&logo=Supabase&logoColor=white" alt="A demo is better than a thousand words" />
   </a>
 </p>
-<p align="center">
-<img src="https://i.ibb.co/m5ZZ5B66/Dashboard.png" alt="Dashboard" border="0">
-</p>
 <h1 align="center">Klickbee CRM</h1>
 
 <p align="center"><strong>The open-source CRM built for agencies, freelancers, and digital businesses.</strong></p>
