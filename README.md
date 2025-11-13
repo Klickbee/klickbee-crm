@@ -1,6 +1,12 @@
 
 <h1 align="center">Klickbee CRM</h1>
 
+<h1 align="center">
+  
+  Due to GitHub Politics and the fact that [my account](https://github.com/JMauclair) has been recently suspended for no reasons, all our projects will be only on [Stralya Gitea](https://git.stralya.com/Klickbee/klickbee-crm)
+
+  </h1>
+
 <p align="center">
   <a href="https://app.supademo.com/demo/cmhvs1cli17ry17y0j39gcp3n?utm_source=github">
     <img src="https://img.shields.io/badge/A%20demo%20is%20better%20than%20a%20thousand%20words-black?style=for-the-badge&logo=Supabase&logoColor=white" alt="A demo is better than a thousand words" />
