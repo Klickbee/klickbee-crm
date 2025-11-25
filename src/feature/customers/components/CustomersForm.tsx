@@ -16,6 +16,7 @@ import { useCompaniesStore } from "@/feature/companies/stores/useCompaniesStore"
 import { getCompanyOptions } from "@/feature/deals/libs/companyData"
 import { Customer } from "../types/types"
 import CustomDropdown from "@/components/ui/CustomDropdown"
+import { useSession } from "next-auth/react"
 
 type CustomerFormValues = {
     fullName: string
@@ -59,6 +60,7 @@ export default function CustomerForm({
     const [tagInput, setTagInput] = useState("")
     const [uploading, setUploading] = useState(false);
     const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
+    const { data: session } = useSession()
 
     // Fetch companies for company dropdown
     useEffect(() => {
@@ -124,7 +126,7 @@ export default function CustomerForm({
                             return option ? option.id : ownerString;
                         })();
                     }
-                    return '';
+                    return session?.user?.id || (userOptions.length > 0 ? userOptions[0].id : '');
                 })(),
                 tags: (() => {
                     const tags = initialData.tags;
@@ -147,7 +149,7 @@ export default function CustomerForm({
             email: "",
             status: "",
             phone: "",
-            owner: userOptions.length > 0 ? userOptions[0].id : "",
+            owner: session?.user?.id || (userOptions.length > 0 ? userOptions[0].id : ""),
             tags: [],
             notes: "",
             files: [],

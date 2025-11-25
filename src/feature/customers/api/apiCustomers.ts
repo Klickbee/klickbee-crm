@@ -6,6 +6,31 @@ import { prisma } from "@/libs/prisma";
 import { createCustomerSchema, updateCustomerSchema } from "../schema/customerSchema";
 import { withActivityLogging } from "@/libs/apiUtils";
 import { ActivityAction, Prisma } from "@prisma/client";
+import { z } from "zod";
+
+const ensureOwnerExists = async (data: { ownerId?: string }, ctx: z.RefinementCtx) => {
+  if (!data.ownerId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Owner is required",
+      path: ["ownerId"],
+    });
+    return;
+  }
+
+  const existingOwner = await prisma.user.findUnique({ where: { id: data.ownerId } });
+
+  if (!existingOwner) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Owner must reference an existing user",
+      path: ["ownerId"],
+    });
+  }
+};
+
+const createCustomerSchemaWithOwnerValidation = createCustomerSchema.superRefine(ensureOwnerExists);
+const updateCustomerSchemaWithOwnerValidation = updateCustomerSchema.superRefine(ensureOwnerExists);
 
 export async function POST(req: Request) {
   try {
@@ -16,9 +41,9 @@ export async function POST(req: Request) {
 
     const body = await req.json();
 
-    const parsed = createCustomerSchema.safeParse({
+    const parsed = await createCustomerSchemaWithOwnerValidation.safeParseAsync({
       ...body,
-      ownerId: body.owner.id || session.user.id,
+      ownerId: body?.owner?.id || body?.owner || session.user.id,
       userId: session.user.id,
     });
 
@@ -150,7 +175,11 @@ export async function handleMethodWithId(req: Request, id: string) {
         }
 
       const body = await req.json();
-      const parsed = updateCustomerSchema.safeParse({ ...body, id, ownerId: body.owner });
+      const parsed = await updateCustomerSchemaWithOwnerValidation.safeParseAsync({
+        ...body,
+        id,
+        ownerId: body?.owner?.id || body?.ownerId || body?.owner || session.user.id,
+      });
       if (!parsed.success) {
         return NextResponse.json(
           { error: "Validation error", details: parsed.error.flatten() },
