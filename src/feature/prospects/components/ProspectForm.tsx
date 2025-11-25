@@ -199,11 +199,17 @@ export default function ProspectForm({
                         resetForm();
                     }
                 } catch (error: any) {
-                    if (error.name === "ValidationError") {
-                        // Loop through validation errors
-                        error.inner.forEach((err: any) => {
-                            console.error(err.message);
-                        });
+                    if (error instanceof Yup.ValidationError) {
+                        const validationErrors = Array.isArray(error.inner) ? error.inner : [];
+                        if (validationErrors.length === 0) {
+                            toast.error(error.message || "Please correct the highlighted fields.");
+                        } else {
+                            validationErrors.forEach((err: any) => {
+                                if (err?.message) {
+                                    toast.error(err.message);
+                                }
+                            });
+                        }
                     } else {
                         console.error("Failed to save prospect. Please try again.");
                     }
