@@ -8,10 +8,12 @@ export const createDealSchema = z.object({
   dealName: z.string().trim().min(1),
  companyId: z
     .string()
+    .uuid({ message: "Select a valid company" })
     .optional()
     .nullable(),
   contactId:z
     .string()
+    .uuid({ message: "Select a valid contact" })
     .optional()
     .nullable(),
   stage: dealStageEnum,
@@ -20,7 +22,7 @@ export const createDealSchema = z.object({
   return val;
 }, z.number().min(0, { message: "Amount cannot be negative" })),
   currency: currencyEnum,
-  ownerId: z.string(),
+  ownerId: z.string().uuid({ message: "Select a valid owner" }),
   closeDate: z.string().nullable().optional(),
   tags: z.array(z.string().trim().min(1)).max(10).optional().default([]),
   notes: z.string().optional().nullable(),

@@ -10,6 +10,7 @@ import { useCompaniesStore } from "../stores/useCompaniesStore"
 import { Company } from "../types/types"
 import { useEffect } from "react"
 import { useUserStore } from "@/feature/user/store/userStore"
+import { useSession } from "next-auth/react"
 
 type DealSlideOverProps = {
   open: boolean
@@ -21,6 +22,7 @@ type DealSlideOverProps = {
 export default function CompanySlideOver({ open, onClose, mode = 'add', company }: DealSlideOverProps) {
   const { addCompany, updateCompany } = useCompaniesStore();
     const { users, loading: usersLoading, fetchUsers } = useUserStore();
+    const { data: session } = useSession();
   
     useEffect(() => {
         if (users.length === 0) {
@@ -92,6 +94,7 @@ export default function CompanySlideOver({ open, onClose, mode = 'add', company 
             initialData={company}
               usersLoading={usersLoading}
             userOptions={userOptions}
+            currentUserId={session?.user?.id}
           />
         </div>
       </aside>

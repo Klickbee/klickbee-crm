@@ -10,6 +10,7 @@ import { Prospect } from "../types/types"
 import toast from "react-hot-toast"
 import { useUserStore } from "@/feature/user/store/userStore"
 import { useEffect } from "react"
+import { useSession } from "next-auth/react"
 
 type ProspectSlideOverProps = {
   open: boolean
@@ -22,6 +23,7 @@ export default function ProspectSlideOver({ open, onClose , mode = 'add', prospe
   const { addProspect } = useProspectsStore();
   const { updateProspect } = useProspectsStore();
    const { users, loading: usersLoading, fetchUsers } = useUserStore();
+   const { data: session } = useSession();
   
     useEffect(() => {
         if (users.length === 0) {
@@ -95,6 +97,7 @@ export default function ProspectSlideOver({ open, onClose , mode = 'add', prospe
             initialData={prospect}
             usersLoading={usersLoading}
             userOptions={userOptions}
+            currentUserId={session?.user?.id}
           />
         </div>
       </aside>

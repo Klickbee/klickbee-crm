@@ -6,6 +6,7 @@ export const createCustomerSchema = z.object({
   fullName: z.string().trim().min(1, "Full name is required"),
   companyId: z
     .string()
+    .uuid({ message: "Select a valid company" })
     .optional()
     .nullable(),
   email: z.string().trim().email().optional().or(z.literal("")),
@@ -14,15 +15,16 @@ export const createCustomerSchema = z.object({
   tags: z.array(z.string().trim().min(1)).optional().default([]),
   notes: z.string().optional().or(z.literal("")),
   files: z.any().optional(),
-  ownerId: z.string(),
+  ownerId: z.string().uuid({ message: "Select a valid owner" }),
   userId: z.string(),
 });
 
 export const updateCustomerSchema = z.object({
   id: z.string().trim().min(1),
   fullName: z.string().trim().optional(),
-   companyId: z
+  companyId: z
     .string()
+    .uuid({ message: "Select a valid company" })
     .optional()
     .nullable(),
   email: z.string().trim().email().optional(),
@@ -31,7 +33,7 @@ export const updateCustomerSchema = z.object({
   tags: z.array(z.string().trim().min(1)).optional(),
   notes: z.string().optional(),
   files: z.any().optional(),
-  ownerId: z.string(),
+  ownerId: z.string().uuid({ message: "Select a valid owner" }),
 });
 
 export type CreateCustomerInput = z.infer<typeof createCustomerSchema>;

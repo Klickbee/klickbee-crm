@@ -14,6 +14,7 @@ interface CustomerStore {
   isEditing: boolean;
   isExporting: boolean;
   error: string | null;
+  lastCreatedCustomerId: string | null;
   filters: FilterData;
   searchTerm: string;
 
@@ -22,6 +23,7 @@ interface CustomerStore {
   setFilters: (filters: FilterData) => void;
   applyFilters: () => Promise<void>;
   resetFilters: () => void;
+  clearLastCreatedCustomer: () => void;
   generateOwnerOptions: () => any[];
   initializeOwnerOptions: () => void;
   addCustomer: (customer: Omit<Customer, "id" | "ownerId" | "createdAt">) => Promise<void>;
@@ -43,6 +45,7 @@ export const useCustomersStore = create<CustomerStore>((set, get) => ({
   isEditing: false,
   isExporting: false,
   error: null,
+  lastCreatedCustomerId: null,
   filters: {
     status: [
       { id: "all", label: "All Status", checked: true },
@@ -61,6 +64,8 @@ export const useCustomersStore = create<CustomerStore>((set, get) => ({
     ],
   },
   searchTerm: "",
+
+  clearLastCreatedCustomer: () => set({ lastCreatedCustomerId: null }),
 
   // Helper: build owner options from users
   generateOwnerOptions: () => {
@@ -223,7 +228,7 @@ export const useCustomersStore = create<CustomerStore>((set, get) => ({
       }
 
       const created: Customer = await res.json();
-      set({ customers: [...get().customers, created] });
+      set({ customers: [...get().customers, created], lastCreatedCustomerId: created.id });
       get().applyFilters();
       toast.success("Customer created successfully!");
     } catch (err: any) {

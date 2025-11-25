@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import {useState, useEffect} from "react"
+import {useState, useEffect, useMemo} from "react"
 import {useForm} from "react-hook-form"
 import {zodResolver} from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -55,6 +55,7 @@ export default function CompaniesForm({
                                           mode = "add",
                                           initialData,
                                           userOptions,
+                                          currentUserId,
                                       }: {
     onSubmit: (values: CompanyFormValues) => void
     onCancel: () => void
@@ -62,11 +63,19 @@ export default function CompaniesForm({
     initialData?: Company
     usersLoading: boolean
     userOptions: { id: string; value: string; label: string }[]
+    currentUserId?: string
 }) {
     const [tagInput, setTagInput] = useState("")
     const [assignInput, setAssignInput] = useState("")
     const [uploading, setUploading] = useState(false)
     const [uploadedFiles, setUploadedFiles] = useState<any[]>([])
+
+    const ownerIds = useMemo(() => userOptions.map((u) => u.id), [userOptions]);
+    const formSchema = useMemo(() => zodSchema.extend({
+        owner: z.string().optional().refine((val) => !val || ownerIds.includes(val), {
+            message: "Select a valid owner",
+        }),
+    }), [ownerIds]);
 
     // 🧩 Compute initial values like avant
     const getInitialValues = (): CompanyFormValues => {
@@ -108,7 +117,12 @@ export default function CompaniesForm({
                 files: [],
             }
         }
-        return initialValues
+        return {
+            ...initialValues,
+            owner: currentUserId && ownerIds.includes(currentUserId)
+                ? currentUserId
+                : userOptions[0]?.id || "",
+        }
     }
 
     const {
@@ -119,7 +133,7 @@ export default function CompaniesForm({
         formState: {errors},
         watch,
     } = useForm<CompanyFormValues>({
-        resolver: zodResolver(zodSchema),
+        resolver: zodResolver(formSchema),
         defaultValues: getInitialValues(),
     })
 
@@ -127,7 +141,7 @@ export default function CompaniesForm({
 
     useEffect(() => {
         reset(getInitialValues())
-    }, [mode, initialData])
+    }, [mode, initialData, currentUserId, userOptions])
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files

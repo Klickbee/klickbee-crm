@@ -1,8 +1,9 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, type KeyboardEvent } from "react"
+import { useState, useEffect, useMemo, useRef, type KeyboardEvent } from "react"
 import { Formik, Form, Field, ErrorMessage } from "formik"
+import type { FormikProps } from "formik"
 import * as Yup from "yup"
 import { Button } from "@/components/ui/Button"
 import { Trash2, UploadCloud } from "lucide-react"
@@ -18,6 +19,7 @@ import { Deal } from '../types'
 import CalendarDropDown from "@/components/ui/CalendarDropDown"
 import { options } from "../libs/currencyOptions"
 import CustomDropdown from "@/components/ui/CustomDropdown"
+import { z, ZodError } from "zod"
 
 type DealFormValues = {
   dealName: string
@@ -65,6 +67,7 @@ export default function DealForm({
    currentUserId?: any // 👈 add this
 
 }) {
+    const formikRef = useRef<FormikProps<DealFormValues>>(null)
     const [tagInput, setTagInput] = useState("")
     const [uploading, setUploading] = useState(false);
     const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
@@ -74,6 +77,29 @@ export default function DealForm({
         useCompaniesStore.getState().fetchCompanies();
         useCustomersStore.getState().fetchCustomers();
     }, []);
+
+    useEffect(() => {
+        if (lastCreatedCompanyId) {
+            formikRef.current?.setFieldValue("company", lastCreatedCompanyId);
+            clearLastCreatedCompany();
+        }
+    }, [lastCreatedCompanyId, clearLastCreatedCompany]);
+
+    useEffect(() => {
+        if (lastCreatedCustomerId) {
+            formikRef.current?.setFieldValue("contact", lastCreatedCustomerId);
+            clearLastCreatedCustomer();
+        }
+    }, [lastCreatedCustomerId, clearLastCreatedCustomer]);
+
+    const {
+        lastCreatedCompanyId,
+        clearLastCreatedCompany,
+    } = useCompaniesStore();
+    const {
+        lastCreatedCustomerId,
+        clearLastCreatedCustomer,
+    } = useCustomersStore();
 
     // Fetch users for owner dropdown
   
@@ -187,6 +213,22 @@ export default function DealForm({
     userOptions.find((u) => u.id === currentUserId)?.id || "", // ✅ ensures ID matches dropdown options
 };
 
+    const companyOptions = getCompanyOptions();
+    const contactOptions = getContactOptions();
+    const ownerIds = useMemo(() => userOptions.map((u) => u.id), [userOptions]);
+
+    const selectionSchema = useMemo(() => z.object({
+        owner: z.string().optional().refine((val) => !val || ownerIds.includes(val), {
+            message: "Select a valid owner",
+        }),
+        company: z.string().optional().refine((val) => !val || companyOptions.some((o) => o.value === val && o.value !== "add-company"), {
+            message: "Select a valid company",
+        }),
+        contact: z.string().optional().refine((val) => !val || contactOptions.some((o) => o.value === val && o.value !== "add-contact"), {
+            message: "Select a valid contact",
+        }),
+    }), [ownerIds, companyOptions, contactOptions]);
+
     };
 
     // Dynamic schema with validation for select fields
@@ -212,7 +254,17 @@ export default function DealForm({
             enableReinitialize
             initialValues={getInitialValues()}
             validationSchema={schema}
+            innerRef={formikRef}
             onSubmit={async (vals, { setSubmitting, resetForm }) => {
+                try {
+                    selectionSchema.parse(vals);
+                } catch (error) {
+                    if (error instanceof ZodError) {
+                        error.errors.forEach((err) => toast.error(err.message));
+                        setSubmitting(false);
+                        return;
+                    }
+                }
                 try {
                     const payload = {
                         ...vals,
@@ -261,7 +313,7 @@ export default function DealForm({
                             <SearchableDropdown
                                 name="company"
                                 value={values.company}
-                                options={getCompanyOptions()}
+                                options={companyOptions}
                                 onChange={(val) => setFieldValue("company", val)}
                                 placeholder="Search or create a company"
                             />
@@ -271,7 +323,7 @@ export default function DealForm({
                             <SearchableDropdown
                                 name="contact"
                                 value={values.contact}
-                                options={getContactOptions()}
+                                options={contactOptions}
                                 onChange={(val) => setFieldValue("contact", val)}
                                 placeholder="Add Contact"
                                 showIcon={false}

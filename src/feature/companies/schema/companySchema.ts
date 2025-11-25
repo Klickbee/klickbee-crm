@@ -13,7 +13,7 @@ export const createCompanySchema = z.object({
   assing: z.array(z.string().trim().min(1)).optional().default([]),
   notes: z.string().optional().or(z.literal("")),
   files: z.any().optional(),
-  ownerId: z.string(),
+  ownerId: z.string().uuid({ message: "Select a valid owner" }),
   userId: z.string(),
 });
 
@@ -29,7 +29,7 @@ export const updateCompanySchema = z.object({
   assing: z.array(z.string().trim().min(1)).optional(),
   notes: z.string().optional(),
   files: z.any().optional(),
-  ownerId: z.string(),
+  ownerId: z.string().uuid({ message: "Select a valid owner" }),
 });
 
 export type CreateCompanyInput = z.infer<typeof createCompanySchema>;

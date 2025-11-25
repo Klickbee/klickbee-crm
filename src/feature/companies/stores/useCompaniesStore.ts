@@ -11,11 +11,13 @@ interface CompanyStore {
   filteredCompanies: Company[];
   loading: boolean;
   error: string | null;
+  lastCreatedCompanyId: string | null;
   filters: FilterData;
   searchTerm: string;
 
   fetchCompanies: (ownerId?: string) => Promise<void>;
   setSearchTerm: (search: string) => void;
+  clearLastCreatedCompany: () => void;
   setFilters: (filters: FilterData) => void;
   applyFilters: () => Promise<void>;
   resetFilters: () => void;
@@ -36,6 +38,7 @@ export const useCompaniesStore = create<CompanyStore>((set, get) => ({
   filteredCompanies: [],
   loading: false,
   error: null,
+  lastCreatedCompanyId: null,
   filters: {
     status: [
       { id: "all", label: "All Status", checked: true },
@@ -80,6 +83,8 @@ export const useCompaniesStore = create<CompanyStore>((set, get) => ({
       },
     }));
   },
+
+  clearLastCreatedCompany: () => set({ lastCreatedCompanyId: null }),
 
   // Filter management methods
   setFilters: (newFilters: FilterData) => {
@@ -216,7 +221,7 @@ export const useCompaniesStore = create<CompanyStore>((set, get) => ({
 
       const created: Company = await res.json();
       // Mirror customers pattern: keep server-created fields but inject owner from submitted payload
-      set({ companies: [...get().companies, created] });
+      set({ companies: [...get().companies, created], lastCreatedCompanyId: created.id });
       get().applyFilters(); // Apply filters after adding company
     } catch (err: any) {
       console.error("addCompany error:", err);

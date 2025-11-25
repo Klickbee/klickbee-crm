@@ -10,6 +10,7 @@ import { Customer } from "../types/types"
 import toast from "react-hot-toast"
 import { useUserStore } from "@/feature/user/store/userStore"
 import { useEffect } from "react"
+import { useSession } from "next-auth/react"
 
 type DealSlideOverProps = {
   open: boolean
@@ -21,6 +22,7 @@ type DealSlideOverProps = {
 export default function CustomerSlideOver({ open, onClose, mode = 'add', customer }: DealSlideOverProps) {
   const { addCustomer, updateCustomer } = useCustomersStore();
   const { users, loading: usersLoading, fetchUsers } = useUserStore();
+  const { data: session } = useSession();
 
   useEffect(() => {
       if (users.length === 0) {
@@ -103,6 +105,7 @@ export default function CustomerSlideOver({ open, onClose, mode = 'add', custome
             initialData={customer}
             usersLoading={usersLoading}
             userOptions={userOptions}
+            currentUserId={session?.user?.id}
           />
         </div>
       </aside>

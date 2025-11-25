@@ -2,8 +2,8 @@
 
 import type React from "react"
 
-import { useEffect, useState } from "react"
-import { Formik, Form, Field, ErrorMessage } from "formik"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { Formik, Form, Field, ErrorMessage, type FormikProps } from "formik"
 import * as Yup from "yup"
 import { Button } from "@/components/ui/Button"
 import SearchableDropdown from "@/components/ui/SearchableDropdown"
@@ -12,6 +12,8 @@ import { Prospect } from "../types/types"
 import { getCompanyOptions } from "../libs/companyData"
 import TagInput from "@/components/ui/TagInput"
 import CustomDropdown from "@/components/ui/CustomDropdown"
+import { z, ZodError } from "zod"
+import toast from "react-hot-toast"
 type ProspectFormValues = {
     fullName: string
     company: string
@@ -45,6 +47,18 @@ const initialValues: ProspectFormValues = {
     notes: "",
 }
 
+    const companyOptions = getCompanyOptions();
+    const ownerIds = useMemo(() => userOptions.map((u) => u.id), [userOptions]);
+
+    const selectionSchema = useMemo(() => z.object({
+        owner: z.string().optional().refine((val) => !val || ownerIds.includes(val), {
+            message: "Select a valid owner",
+        }),
+        company: z.string().optional().refine((val) => !val || companyOptions.some((o) => o.value === val && o.value !== "add-company"), {
+            message: "Select a valid company",
+        }),
+    }), [companyOptions, ownerIds]);
+
 export default function ProspectForm({
     onSubmit,
     onCancel,
@@ -52,6 +66,7 @@ export default function ProspectForm({
     initialData,
     usersLoading,
     userOptions,
+    currentUserId,
 }: {
     onSubmit: (values: ProspectFormValues) => void
     onCancel: () => void
@@ -59,12 +74,22 @@ export default function ProspectForm({
     initialData?: Prospect
     usersLoading: boolean
     userOptions: { id: string; value: string; label: string }[]
+    currentUserId?: string
 }) {
+    const formikRef = useRef<FormikProps<ProspectFormValues>>(null)
     const [tagInput, setTagInput] = useState("")
     // Fetch companies for company dropdown
     useEffect(() => {
         useCompaniesStore.getState().fetchCompanies();
     }, []);
+    const { lastCreatedCompanyId, clearLastCreatedCompany } = useCompaniesStore();
+
+    useEffect(() => {
+        if (lastCreatedCompanyId) {
+            formikRef.current?.setFieldValue("company", lastCreatedCompanyId);
+            clearLastCreatedCompany();
+        }
+    }, [clearLastCreatedCompany, lastCreatedCompanyId]);
     const getOptionLabel = (options: { id: string, label: string }[], value: string) => {
         // First try to find by ID
         const optionById = options.find(opt => opt.id === value);
@@ -132,7 +157,12 @@ export default function ProspectForm({
             };
             return initialVals;
         }
-        return initialValues;
+        return {
+            ...initialValues,
+            owner: currentUserId && ownerIds.includes(currentUserId)
+                ? currentUserId
+                : userOptions[0]?.id || "",
+        };
     };
 
 
@@ -143,7 +173,17 @@ export default function ProspectForm({
             enableReinitialize
             initialValues={getInitialValues()}
             validationSchema={schema}
+            innerRef={formikRef}
             onSubmit={async (vals, { setSubmitting, resetForm }) => {
+                try {
+                    selectionSchema.parse(vals);
+                } catch (error) {
+                    if (error instanceof ZodError) {
+                        error.errors.forEach((err) => toast.error(err.message));
+                        setSubmitting(false);
+                        return;
+                    }
+                }
                 try {
                     const payload = {
                         ...vals,
@@ -190,7 +230,7 @@ export default function ProspectForm({
                             <SearchableDropdown
                                 name="company"
                                 value={values.company}
-                                options={getCompanyOptions()}
+                                options={companyOptions}
                                 onChange={(val) => setFieldValue("company", val)}
                                 placeholder="Search or create a company"
                             />
