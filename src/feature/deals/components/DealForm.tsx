@@ -4,6 +4,7 @@ import type React from "react"
 import { useState, useEffect, type KeyboardEvent } from "react"
 import { Formik, Form, Field, ErrorMessage } from "formik"
 import * as Yup from "yup"
+import { z } from "zod"
 import { Button } from "@/components/ui/Button"
 import { Trash2, UploadCloud } from "lucide-react"
 import SearchableDropdown from "@/components/ui/SearchableDropdown"
@@ -12,6 +13,7 @@ import UploadButton from "@/components/ui/UploadButton"
 import { getCompanyOptions, getContactOptions } from "../libs/companyData";
 import { useCompaniesStore } from '@/feature/companies/stores/useCompaniesStore';
 import { useCustomersStore } from '@/feature/customers/stores/useCustomersStore';
+import { useCompanySelectionStore } from "@/feature/companies/stores/useCompanySelectionStore";
 import InputWithDropDown from "@/components/ui/InputWithDropDown"
 import toast from "react-hot-toast"
 import { Deal } from '../types'
@@ -68,6 +70,7 @@ export default function DealForm({
     const [tagInput, setTagInput] = useState("")
     const [uploading, setUploading] = useState(false);
     const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
+    const { selectedCompanyId, clearSelectedCompany } = useCompanySelectionStore();
 
     // Fetch companies and customers data
     useEffect(() => {
@@ -207,13 +210,33 @@ export default function DealForm({
         files: Yup.array().of(Yup.mixed<File>()),
     });
 
+    const companySelectionSchema = z.object({
+        company: z
+            .string()
+            .optional()
+            .refine((val) => {
+                if (!val || val.trim() === "") return true;
+                const allowedValues = getCompanyOptions()
+                    .map((opt) => opt.value)
+                    .filter((value) => value !== "add-company");
+                return allowedValues.includes(val);
+            }, { message: "Please select an existing company" }),
+    });
+
     return (
         <Formik<DealFormValues>
             enableReinitialize
             initialValues={getInitialValues()}
             validationSchema={schema}
-            onSubmit={async (vals, { setSubmitting, resetForm }) => {
+            onSubmit={async (vals, { setSubmitting, resetForm, setFieldError }) => {
                 try {
+                    const companyValidation = companySelectionSchema.safeParse({ company: vals.company });
+                    if (!companyValidation.success) {
+                        const message = companyValidation.error.errors[0]?.message || "Please select an existing company";
+                        setFieldError("company", message);
+                        toast.error(message);
+                        return;
+                    }
                     const payload = {
                         ...vals,
                         tags: vals.tags ? vals.tags.map((t) => t.trim()).filter(Boolean) : [],
@@ -244,7 +267,15 @@ export default function DealForm({
             }}
 
         >
-            {({ values, setFieldValue, resetForm }) => (
+            {({ values, setFieldValue, resetForm }) => {
+                useEffect(() => {
+                    if (selectedCompanyId) {
+                        setFieldValue("company", selectedCompanyId);
+                        clearSelectedCompany();
+                    }
+                }, [selectedCompanyId, setFieldValue, clearSelectedCompany]);
+
+                return (
                 <Form className="flex min-h-full flex-col gap-4">
                     {/* Fields container */}
                     <div className="px-4 py-4 flex flex-col gap-4 ">
@@ -386,7 +417,8 @@ export default function DealForm({
                         </Button>
                     </div>
                 </Form>
-            )}
+                );
+            }
         </Formik>
     )
 }

@@ -5,6 +5,7 @@ import { exportCompaniesToExcel, exportCompaniesWithColumns, exportSingleCompany
 import { importCompaniesFromExcel, generateCompanyImportTemplate } from "../libs/excelImport";
 import { FilterData } from "../libs/fillterData";
 import { useUserStore } from "../../user/store/userStore";
+import { useCompanySelectionStore } from "./useCompanySelectionStore";
 
 interface CompanyStore {
   companies: Company[];
@@ -21,7 +22,7 @@ interface CompanyStore {
   resetFilters: () => void;
   generateOwnerOptions: () => any[];
   initializeOwnerOptions: () => void;
-  addCompany: (company: Omit<Company, "id" | "ownerId" | "createdAt">) => Promise<void>;
+  addCompany: (company: Omit<Company, "id" | "ownerId" | "createdAt">) => Promise<Company | null>;
   updateCompany: (id: string, company: Partial<Company>) => Promise<void>;
   deleteCompany: (id: string) => Promise<void>;
   exportAllCompanies: (filename?: string) => void;
@@ -218,10 +219,13 @@ export const useCompaniesStore = create<CompanyStore>((set, get) => ({
       // Mirror customers pattern: keep server-created fields but inject owner from submitted payload
       set({ companies: [...get().companies, created] });
       get().applyFilters(); // Apply filters after adding company
+      useCompanySelectionStore.getState().setSelectedCompany(created.id);
+      return created;
     } catch (err: any) {
       console.error("addCompany error:", err);
       toast.error(err.message);
       set({ error: err.message });
+      return null;
     }
   },
 
