@@ -47,18 +47,6 @@ const initialValues: ProspectFormValues = {
     notes: "",
 }
 
-    const companyOptions = getCompanyOptions();
-    const ownerIds = useMemo(() => userOptions.map((u) => u.id), [userOptions]);
-
-    const selectionSchema = useMemo(() => z.object({
-        owner: z.string().optional().refine((val) => !val || ownerIds.includes(val), {
-            message: "Select a valid owner",
-        }),
-        company: z.string().optional().refine((val) => !val || companyOptions.some((o) => o.value === val && o.value !== "add-company"), {
-            message: "Select a valid company",
-        }),
-    }), [companyOptions, ownerIds]);
-
 export default function ProspectForm({
     onSubmit,
     onCancel,
@@ -78,6 +66,17 @@ export default function ProspectForm({
 }) {
     const formikRef = useRef<FormikProps<ProspectFormValues>>(null)
     const [tagInput, setTagInput] = useState("")
+    const companyOptions = useMemo(() => getCompanyOptions(), [])
+    const ownerIds = useMemo(() => userOptions.map((u) => u.id), [userOptions])
+
+    const selectionSchema = useMemo(() => z.object({
+        owner: z.string().optional().refine((val) => !val || ownerIds.includes(val), {
+            message: "Select a valid owner",
+        }),
+        company: z.string().optional().refine((val) => !val || companyOptions.some((o) => o.value === val && o.value !== "add-company"), {
+            message: "Select a valid company",
+        }),
+    }), [companyOptions, ownerIds])
     // Fetch companies for company dropdown
     useEffect(() => {
         useCompaniesStore.getState().fetchCompanies();
