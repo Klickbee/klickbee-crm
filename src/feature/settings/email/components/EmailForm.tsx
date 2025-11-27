@@ -40,7 +40,7 @@ export default function EmailForm() {
                 </div>
             )}
             <div className="border-[#E4E4E7] border-[1px] rounded-xl">
-                <h2 className="text-base font-semibold leading-6 tracking-0 text-[#09090B] px-3 py-4">AI Settings</h2>
+                <h2 className="text-base font-semibold leading-6 tracking-0 text-[#09090B] px-3 py-4">Mail Settings</h2>
                 <hr className="text-[#E4E4E7] " />
                 <div className="px-3 py-4">
                     <h5 className="font-medium text-sm leading-[20px] tracking-[0px] text-black mb-1.5">E-mail Host</h5>
