@@ -1,7 +1,7 @@
 "use client"
 
-import React, { useEffect, useRef, useState } from 'react'
-import { ChevronUp, ChevronDown, MoreHorizontal } from 'lucide-react'
+import React, {useEffect, useRef, useState} from 'react'
+import {MoreHorizontal} from 'lucide-react'
 import AvatarInitials from '@/components/ui/AvatarInitials'
 import Loading from '@/components/ui/Loading'
 
@@ -67,8 +67,7 @@ const Badge: React.FC<{
 const formatCellValue = (value: any) => {
   if (value === null || value === undefined) return '-'
   if (typeof value === 'string' && value.trim() === '') return '-'
-  const str = String(value)
-  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
+  return String(value)
 }
 
 // Table Row Component
@@ -115,7 +114,7 @@ const TableRow = <T,>({
       {columns.map((column) => (
         <td 
           key={column.key} 
-          className="px-6 py-3 text-sm text-[var(--foreground)] whitespace-nowrap capitalize"
+          className="px-6 py-3 text-sm text-[var(--foreground)] whitespace-nowrap"
           style={{ width: column.width }}
         >
           {column.avatar ? (
