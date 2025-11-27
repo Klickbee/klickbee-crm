@@ -73,6 +73,7 @@ export default function ProspectForm({
     userOptions: { id: string; value: string; label: string }[]
 }) {
     const [tagInput, setTagInput] = useState("")
+    const { lastCompanyId } = useCompaniesStore();
 
     useEffect(() => {
         useCompaniesStore.getState().fetchCompanies()
@@ -84,18 +85,14 @@ export default function ProspectForm({
 
             let companyValue = ""
             if (initialData.company) {
-                if (typeof initialData.company === "string") {
-                    const companyById = companies.find((c) => c.id === initialData.company)
-                    if (companyById) {
-                        companyValue = companyById.id
-                    } else {
-                        const companyByName = companies.find(
-                            (c) => c.fullName?.toLowerCase() === initialData.company?.toLowerCase()
-                        )
-                        companyValue = companyByName ? companyByName.id : ""
-                    }
-                } else if (typeof initialData.company === "object" && initialData.company && "id" in initialData.company) {
-                    companyValue = (initialData.company as { id: string }).id
+                const companyById = companies.find((c) => c.id === initialData.company)
+                if (companyById) {
+                    companyValue = companyById.id
+                } else {
+                    const companyByName = companies.find(
+                        (c) => c.fullName?.toLowerCase() === initialData.company?.toLowerCase()
+                    )
+                    companyValue = companyByName ? companyByName.id : ""
                 }
             }
 
@@ -129,6 +126,7 @@ export default function ProspectForm({
 
         return {
             ...baseInitialValues,
+            company: lastCompanyId || "",
             owner: userOptions.length > 0 ? userOptions[0].id : "",
         }
     }

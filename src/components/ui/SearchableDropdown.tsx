@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Search } from "lucide-react";
 import { useCompanyModalStore } from "@/feature/companies/stores/useCompanyModalStore";
 import { useCustomerModalStore } from "@/feature/customers/stores/useCustomersModel";
+import { useCompaniesStore } from "@/feature/companies/stores/useCompaniesStore";
 
 interface Option {
   id: string;
@@ -37,16 +38,39 @@ export default function SearchableDropdown({
 
   const [query, setQuery] = useState(() => {
     const displayLabel = getDisplayLabel(value);
-    return typeof displayLabel === 'string' ? displayLabel : "";
+    return displayLabel || "";
   });
   const [isOpen, setIsOpen] = useState(false);
+  const [isAddingCompany, setIsAddingCompany] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Subscribe to lastCompanyId from companies store to auto-select newly created company
+  const lastCompanyId = useCompaniesStore(state => state.lastCompanyId);
 
   // ✅ Sync query state with value prop changes
   useEffect(() => {
-    const displayLabel = getDisplayLabel(value);
-    setQuery(typeof displayLabel === 'string' ? displayLabel : "");
+    // compute display label inline to avoid depending on `getDisplayLabel` reference
+    const displayLabel = options.find(opt => opt.value === value)?.label ?? value ?? "";
+    setQuery(displayLabel);
   }, [value, options]);
+
+  // When we opened the add-company modal and lastCompanyId is set, select it
+  useEffect(() => {
+    if (!isAddingCompany) return;
+    if (!lastCompanyId) return;
+
+    // Try to find the option that matches the created company id
+    const createdOption = options.find(o => o.id === lastCompanyId || o.value === lastCompanyId);
+    if (createdOption) {
+      onChange(lastCompanyId);
+      setQuery(createdOption.label);
+      setIsOpen(false);
+    }
+
+    // Reset the adding flag whether we matched or not - we only want to react once
+    setIsAddingCompany(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastCompanyId]);
 
   const filteredOptions = options
     .filter((opt) => opt.label.toLowerCase().includes(query.toLowerCase()))
@@ -90,13 +114,15 @@ export default function SearchableDropdown({
                 className="px-3 py-2 cursor-pointer text-sm hover:bg-gray-100"
               onMouseDown={() => {
                 if (option.value === "add-company") {
+                  // Mark that we opened add company modal so we can react when it's submitted
+                  setIsAddingCompany(true);
                   // ✅ Instead of router.push, open modal via Zustand
                   useCompanyModalStore.getState().openModal("add");
                 } 
                 if(option.value === "add-contact") {
                       useCustomerModalStore.getState().openModal("add");
                 } 
-            // ✅ onMouseDown fires before onBlur, so selection wo  rks properly
+            // ✅ onMouseDown fires before onBlur, so selection works properly
             onChange(option.value);
             setQuery(option.label);
             setIsOpen(false);

@@ -12,6 +12,7 @@ import SearchableDropdown from "@/components/ui/SearchableDropdown"
 import {Company} from "../types/types"
 import CustomDropdown from "@/components/ui/CustomDropdown"
 import {validateOwner} from "@/feature/forms/lib/formValidation"
+import {useCompaniesStore} from "@/feature/companies/stores/useCompaniesStore";
 
 type CompanyFormValues = z.infer<typeof zodSchema>;
 
@@ -74,6 +75,7 @@ export default function CompaniesForm({
     const [assignInput, setAssignInput] = useState("")
     const [uploading, setUploading] = useState(false)
     const [uploadedFiles, setUploadedFiles] = useState<any[]>([])
+
 
     // 🧩 Compute initial values like avant
     const getInitialValues = (): CompanyFormValues => {

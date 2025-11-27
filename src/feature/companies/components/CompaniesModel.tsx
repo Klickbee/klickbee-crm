@@ -1,7 +1,6 @@
 "use client"
 
 import { X } from "lucide-react"
-import { Button } from "@/components/ui/Button"
 import { cn } from "@/libs/utils"
 import Modal from "@/components/ui/Modal"
 import CompaniesForm from "./CompaniesForm"
@@ -50,6 +49,7 @@ export default function CompanySlideOver({ open, onClose, mode = 'add', company 
           : { id: '', name: '' },
         }
         await addCompany(payload);
+
         toast.success("Company created successfully!", { id: "create-company" });
       }
       onClose();
@@ -90,7 +90,7 @@ export default function CompanySlideOver({ open, onClose, mode = 'add', company 
             onSubmit={(values) => handleSubmit(values)}
             mode={mode}
             initialData={company}
-              usersLoading={usersLoading}
+            usersLoading={usersLoading}
             userOptions={userOptions}
           />
         </div>
