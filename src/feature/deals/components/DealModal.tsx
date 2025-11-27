@@ -16,9 +16,10 @@ type DealSlideOverProps = {
   onClose: () => void
   mode?: 'add' | 'edit'
   deal?: Deal
+  defaultStage?: Deal["stage"]
 }
 
-export default function DealSlideOver({ open, onClose, mode = 'add', deal }: DealSlideOverProps) {
+export default function DealSlideOver({ open, onClose, mode = 'add', deal, defaultStage }: DealSlideOverProps) {
 
   const addDeal = useDealStore((s) => s.addDeal);
   const updateDeal = useDealStore((s) => s.updateDeal);
@@ -107,6 +108,7 @@ useEffect(() => {
             usersLoading={usersLoading}
             userOptions={userOptions}
   currentUserId={currentUserId?.user?.id ?? undefined} // ✅ fixes the type
+            defaultStage={defaultStage}
 
           />
         </div>

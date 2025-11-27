@@ -17,6 +17,9 @@ export default function DealsGridView() {
   const [isDetailOpen, setIsDetailOpen] = React.useState(false)
   const [showModal, setShowModal] = React.useState<boolean>(false);
   const [editDeal, setEditDeal] = React.useState<Deal | null>(null);
+  const [defaultStage, setDefaultStage] = React.useState<Deal["stage"] | undefined>(
+    undefined,
+  );
   const [isDeleting, setIsDeleting] = React.useState(false);
   const [isEditing, setIsEditing] = React.useState(false);
   const [isExporting, setIsExporting] = React.useState(false);
@@ -85,6 +88,13 @@ const handleMove = React.useCallback(async  ({ itemId, fromKey, toKey }: { itemI
     setIsDetailOpen(true)
   }
 
+  const openAddModalWithStage = (columnKey: string) => {
+    const stage = toStageFromColumn(columnKey, "New")
+    setDefaultStage(stage)
+    setEditDeal(null)
+    setShowModal(true)
+  }
+
   const closeDetail = () => {
     setIsDetailOpen(false)
     setSelectedDeal(null)
@@ -131,6 +141,7 @@ const handleMove = React.useCallback(async  ({ itemId, fromKey, toKey }: { itemI
           <button
             className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-[#E4E4E7] text-xs font-medium text-primary-foreground cursor-pointer"
             aria-label={`Add to ${key}`}
+            onClick={() => openAddModalWithStage(String(key))}
           >
             <Plus className="h-3 w-3" />
           </button>
@@ -187,9 +198,16 @@ const handleMove = React.useCallback(async  ({ itemId, fromKey, toKey }: { itemI
             setIsEditing(false);
           }
         }}
-        onAddNotes={() => {
-        
-          toast("Add notes functionality coming soon!");
+        onAddNotes={(id: string) => {
+          const dealToEdit = filteredDeals.find((d) => d.id === id)
+          if (!dealToEdit) {
+            toast.error("Deal not found")
+            return
+          }
+          setDefaultStage(undefined)
+          setEditDeal(dealToEdit)
+          setShowModal(true)
+          setIsDetailOpen(false)
         }}
         onExport={async (id: string) => {
           setIsExporting(true);
@@ -206,7 +224,17 @@ const handleMove = React.useCallback(async  ({ itemId, fromKey, toKey }: { itemI
         isExporting={isExporting}
       />
 
-      <DealModal open={showModal} onClose={() => setShowModal(false)} mode={editDeal ? 'edit' : 'add'} deal={editDeal || undefined} />
+      <DealModal
+        open={showModal}
+        onClose={() => {
+          setShowModal(false)
+          setEditDeal(null)
+          setDefaultStage(undefined)
+        }}
+        mode={editDeal ? 'edit' : 'add'}
+        deal={editDeal || undefined}
+        defaultStage={defaultStage}
+      />
     </main>
   )
 }
