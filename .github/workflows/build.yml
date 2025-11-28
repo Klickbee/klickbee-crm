@@ -1,17 +1,28 @@
 name: Build Check
 
 on:
+  # Build quand on ouvre / met à jour une PR vers main
+  pull_request:
+    branches:
+      - main
+
+  # Build quand on push (merge) sur main
   push:
+    branches:
+      - main
 
 jobs:
   build:
+    name: Build Project
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Use Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -20,5 +31,5 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run build
+      - name: Build
         run: npm run build
