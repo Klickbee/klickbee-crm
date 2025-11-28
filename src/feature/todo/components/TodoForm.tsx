@@ -18,12 +18,10 @@ const todoSchema = z.object({
   taskName: z.string().trim().min(1, "Task name is required"),
   linkedTo: z.string().trim().optional().default(""),
   assignedId: z.string().trim().optional().default(""),
-  status: z.enum(["to-do", "in-progress", "on-hold", "done"], {
-    errorMap: () => ({ message: "Status is required" }),
-  }),
-  priority: z.enum(["urgent", "high", "medium", "low"], {
-    errorMap: () => ({ message: "Priority is required" }),
-  }),
+  status: z.enum(["to-do", "in-progress", "on-hold", "done"], { message: "Status is required" }),
+  priority: z.enum(["urgent", "high", "medium", "low"],
+    { message: "Priority is required" },
+  ),
   dueDate: z.string().optional(),
   notes: z.string().optional(),
   files: z.array(z.any()).optional(),
@@ -35,8 +33,8 @@ const initialValues: TodoFormValues = {
   taskName: "",
   linkedTo: "",
   assignedId: "",
-  status: "",
-  priority: "",
+  status: "to-do",
+  priority: "low",
   dueDate: "",
   notes: "",
   files: [],
@@ -82,8 +80,8 @@ export default function TodoForm({
               ? "in-progress"
               : initialData.status === "OnHold"
                 ? "on-hold"
-                : initialData.status.toLowerCase(),
-        priority: initialData.priority.toLowerCase(),
+                : initialData.status.toLowerCase() as "done",
+        priority: initialData.priority.toLowerCase() as "urgent" | "high" | "medium" | "low",
         dueDate: initialData.dueDate ? new Date(initialData.dueDate).toISOString().split("T")[0] : "",
         notes: initialData.notes || "",
         files: [],
