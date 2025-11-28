@@ -19,7 +19,6 @@
     "bcryptjs": "^3.0.2",
     "clsx": "^2.1.1",
     "formidable": "^3.5.4",
-    
     "lucide-react": "^0.544.0",
     "next": "^15.5.4",
     "next-auth": "^4.24.11",
@@ -35,6 +34,11 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@saithodev/semantic-release-gitea": "^2.1.0",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^11.0.6",
+    "@semantic-release/npm": "^12.0.2",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20.19.15",
     "@types/nodemailer": "^7.0.2",
@@ -44,6 +48,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.5.3",
     "prisma": "^6.17.0",
+    "semantic-release": "^24.2.9",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
