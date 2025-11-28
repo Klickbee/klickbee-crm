@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation"
 import toast from "react-hot-toast"
 
 const baseSchema = z.object({
-  email: z.string().email("Invalid email"),
+  email: z.email("Invalid email"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 })
 
@@ -23,8 +23,8 @@ const signupSchema = baseSchema.extend({
 })
 
 const loginSchema = baseSchema.extend({
-  name: z.string().optional(),
-  confirmPassword: z.string().optional(),
+  name: z.string(),
+  confirmPassword: z.string(),
 })
 
 type AuthFormValues = z.infer<typeof signupSchema>
