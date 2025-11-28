@@ -28,22 +28,21 @@ const meetingSchema = z
     link: z
       .string()
       .optional()
-      .or(z.literal(""))
       .refine((val) => !val || (() => { try { new URL(val); return true } catch { return false } })(), {
         message: "Meeting link must be a valid URL if provided",
       }),
-    assignedTo: z.string().optional().or(z.literal("")),
-    linkedTo: z.string().optional().or(z.literal("")),
-    participants: z.array(z.string().trim().min(1, "Participant name cannot be empty").max(100)).default([]),
-    status: z.enum(["scheduled", "confirmed", "cancelled"], { required_error: "Status is required" }),
-    tags: z.array(z.string().trim().min(1, "Tag cannot be empty").max(30)).default([]),
+    assignedTo: z.string().optional(),
+    linkedTo: z.string().optional(),
+    participants: z.array(z.string().trim().min(1, "Participant name cannot be empty").max(100)),
+    status: z.enum(["scheduled", "confirmed", "cancelled"], { error: "Status is required" }),
+    tags: z.array(z.string()).optional(),
     notes: z.string().max(1000, "Notes must not exceed 1000 characters").optional().or(z.literal("")),
     repeatMeeting: z.boolean(),
     frequency: z.string().optional().or(z.literal("")),
     repeatEvery: z.number().optional(),
     repeatOn: z.string().optional().or(z.literal("")),
     ends: z.string().optional().or(z.literal("")),
-    files: z.array(z.instanceof(File)).optional().or(z.literal(undefined)).transform((val) => val ?? []),
+    files: z.array(z.instanceof(File)).optional(),
   })
   .superRefine((val, ctx) => {
     if (val.endTime && val.startTime && val.endTime <= val.startTime) {
@@ -144,14 +143,14 @@ export default function MeetingForm({ onSubmit, onClose, mode = "add", initialDa
             : (initialData.assignedTo as { id: string })?.id || "",
         participants: initialData.participants || [],
         status:
-          initialData.status && typeof initialData.status === "string"
+          initialData.status
             ? (initialData.status === "Confirmed"
                 ? "confirmed"
                 : initialData.status === "Cancelled"
                   ? "cancelled"
                   : initialData.status === "Scheduled"
                     ? "scheduled"
-                    : (initialData.status as string).toLowerCase())
+                    : (initialData.status as string).toLowerCase()) as "scheduled" | "confirmed" | "cancelled"
             : "scheduled",
         tags: initialData.tags || [],
         notes: initialData.notes || "",
