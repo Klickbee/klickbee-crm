@@ -22,6 +22,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Debug env
+        env:
+          GITEA_TOKEN: ${{ secrets.GITEATOKEN }}
+        run: |
+          echo "TOKEN RAW=[$GITEA_TOKEN]"
+          echo "TOKEN LENGTH=$(printf "%s" "$GITEA_TOKEN" | wc -c)"  
+
       - name: Run Semantic Release
         env:
           GITEA_TOKEN: ${{ secrets.GITEATOKEN }} # IMPORTANT
