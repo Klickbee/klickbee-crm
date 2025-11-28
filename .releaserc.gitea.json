@@ -19,7 +19,6 @@
     [
       "@saithodev/semantic-release-gitea",
       {
-        "giteaUrl": "https://git.stralya.com",
         "assets": []
       }
     ]

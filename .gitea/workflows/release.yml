@@ -22,13 +22,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Configure Git auth safely
-        run: |
-          git config --global credential.helper store
-          printf "https://julien.mauclair:${GITEA_TOKEN}@git.stralya.com\n" > ~/.git-credentials
-        env:
-          GITEA_TOKEN: ${{ secrets.GITEATOKEN }}
-
       - name: Run Semantic Release
         env:
           GITEA_TOKEN: ${{ secrets.GITEATOKEN }}
