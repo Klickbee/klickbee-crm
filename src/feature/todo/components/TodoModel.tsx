@@ -97,7 +97,6 @@ export default function TodoSlideOver({ open, onClose, mode = 'add', task }: Tod
             }}
             mode={mode}
             initialData={task}
-            usersLoading={usersLoading}
             userOptions={userOptions}
           />
         </div>
