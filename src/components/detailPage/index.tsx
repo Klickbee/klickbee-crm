@@ -222,7 +222,7 @@ const DetailModal: React.FC<DetailModalProps> = ({
                                         ) : (
                                             <Edit size={15}/>
                                         )}
-                                        {editLabel || "Edit Deal"}
+                                        {editLabel || "Edit Task"}
                                     </Button>
                                 )}
                                 {onReschedule && (
