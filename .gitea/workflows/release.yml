@@ -30,5 +30,6 @@ jobs:
           GIT_AUTHOR_EMAIL: "bot@stralya.com"
           GIT_COMMITTER_NAME: "Semantic Release Bot"
           GIT_COMMITTER_EMAIL: "bot@stralya.com"
+          GIT_CREDENTIALS: "julien.mauclair:${{ secrets.GITEATOKEN }}"
         run: |
           npx semantic-release --extends ./.releaserc.gitea.json
