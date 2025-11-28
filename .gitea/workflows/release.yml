@@ -26,5 +26,9 @@ jobs:
         env:
           GITEA_TOKEN: ${{ secrets.GITEATOKEN }}
           GITEA_URL: "https://git.stralya.com"
+          GIT_AUTHOR_NAME: "Bot Klickbee"
+          GIT_AUTHOR_EMAIL: "klickbee"
+          GIT_COMMITTER_NAME: "Bot Klickbee"
+          GIT_COMMITTER_EMAIL: "klickbee"
         run: |
           npx semantic-release --extends ./.releaserc.gitea.json
