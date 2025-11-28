@@ -1,18 +1,19 @@
 "use client"
 
 import type React from "react"
-import { useEffect, useState } from "react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
-import { Button } from "@/components/ui/Button"
+import {useEffect, useState} from "react"
+import {useForm} from "react-hook-form"
+import {zodResolver} from "@hookform/resolvers/zod"
+import {z} from "zod"
+import {Button} from "@/components/ui/Button"
 import SearchableDropdown from "@/components/ui/SearchableDropdown"
-import { useCompaniesStore } from "@/feature/companies/stores/useCompaniesStore"
-import { Prospect } from "../types/types"
-import { getCompanyOptions } from "../libs/companyData"
+import {useCompaniesStore} from "@/feature/companies/stores/useCompaniesStore"
+import {Prospect} from "../types/types"
+import {getCompanyOptions} from "../libs/companyData"
 import TagInput from "@/components/ui/TagInput"
 import CustomDropdown from "@/components/ui/CustomDropdown"
 import {validateCompany, validateOwner} from "@/feature/forms/lib/formValidation";
+import {useSession} from "next-auth/react";
 
 const prospectSchema = z.object({
     fullName: z.string().trim().min(1, "Full name is required"),
@@ -34,13 +35,13 @@ const prospectSchema = z.object({
         .trim()
         .refine(
             (val) => ["New", "Qualified", "Converted", "Cold", "Warmlead", "Notintrested"].includes(val),
-            { message: "Status is required" }
+            {message: "Status is required"}
         ),
     owner: z.string().refine(async (id) => {
         return await validateOwner(id);
     }, {
         message: "User does not exist"
-    }),    tags: z.array(z.string().trim().min(1)).max(10, "Up to 10 tags allowed"),
+    }), tags: z.array(z.string().trim().min(1)).max(10, "Up to 10 tags allowed"),
     notes: z.string().optional().or(z.literal("")),
 })
 
@@ -58,13 +59,13 @@ const baseInitialValues: ProspectFormValues = {
 }
 
 export default function ProspectForm({
-    onSubmit,
-    onCancel,
-    mode = "add",
-    initialData,
-    usersLoading: _usersLoading,
-    userOptions,
-}: {
+                                         onSubmit,
+                                         onCancel,
+                                         mode = "add",
+                                         initialData,
+                                         usersLoading: _usersLoading,
+                                         userOptions,
+                                     }: {
     onSubmit: (values: ProspectFormValues) => void
     onCancel: () => void
     mode?: "add" | "edit"
@@ -73,15 +74,16 @@ export default function ProspectForm({
     userOptions: { id: string; value: string; label: string }[]
 }) {
     const [tagInput, setTagInput] = useState("")
-    const { lastCompanyId } = useCompaniesStore();
+    const {lastCompanyId} = useCompaniesStore();
+    const {data: userData} = useSession();
 
     useEffect(() => {
         useCompaniesStore.getState().fetchCompanies()
     }, [])
 
-    const getInitialValues = (): ProspectFormValues => {
+    const getInitialValues = (userData: { user: { id: string } | null } | null): ProspectFormValues => {
         if (mode === "edit" && initialData) {
-            const { companies } = useCompaniesStore.getState()
+            const {companies} = useCompaniesStore.getState()
 
             let companyValue = ""
             if (initialData.company) {
@@ -127,7 +129,7 @@ export default function ProspectForm({
         return {
             ...baseInitialValues,
             company: lastCompanyId || "",
-            owner: userOptions.length > 0 ? userOptions[0].id : "",
+            owner: userData?.user?.id || "",
         }
     }
 
@@ -137,14 +139,14 @@ export default function ProspectForm({
         setValue,
         reset,
         watch,
-        formState: { errors, isSubmitting },
+        formState: {errors, isSubmitting},
     } = useForm<ProspectFormValues>({
         resolver: zodResolver(prospectSchema),
-        defaultValues: getInitialValues(),
+        defaultValues: getInitialValues(userData),
     })
 
     useEffect(() => {
-        reset(getInitialValues())
+        reset(getInitialValues(userData))
     }, [initialData, mode, userOptions, reset])
 
     const values = watch()
@@ -158,7 +160,7 @@ export default function ProspectForm({
         onSubmit(payload)
 
         if (mode === "add") {
-            reset(getInitialValues())
+            reset(getInitialValues(userData))
             setTagInput("")
         }
     })
@@ -180,7 +182,7 @@ export default function ProspectForm({
                         name="company"
                         value={values.company}
                         options={getCompanyOptions()}
-                        onChange={(val) => setValue("company", val, { shouldValidate: true })}
+                        onChange={(val) => setValue("company", val, {shouldValidate: true})}
                         placeholder="Search or create a company"
                     />
                 </FieldBlock>
@@ -208,7 +210,7 @@ export default function ProspectForm({
                         name="owner"
                         value={values.owner}
                         options={userOptions}
-                        onChange={(val) => setValue("owner", val, { shouldValidate: true })}
+                        onChange={(val) => setValue("owner", val, {shouldValidate: true})}
                         placeholder="Select Owner"
                         showIcon={false}
                         maxOptions={20}
@@ -219,15 +221,15 @@ export default function ProspectForm({
                     <CustomDropdown
                         name="status"
                         value={values.status}
-                        onChange={(val) => setValue("status", val, { shouldValidate: true })}
+                        onChange={(val) => setValue("status", val, {shouldValidate: true})}
                         placeholder="Select Status"
                         options={[
-                            { value: "New", label: "New" },
-                            { value: "Cold", label: "Cold" },
-                            { value: "Qualified", label: "Qualified" },
-                            { value: "Warmlead", label: "Warm Lead" },
-                            { value: "Converted", label: "Converted" },
-                            { value: "Notintrested", label: "Not Interested" },
+                            {value: "New", label: "New"},
+                            {value: "Cold", label: "Cold"},
+                            {value: "Qualified", label: "Qualified"},
+                            {value: "Warmlead", label: "Warm Lead"},
+                            {value: "Converted", label: "Converted"},
+                            {value: "Notintrested", label: "Not Interested"},
                         ]}
                     />
                 </FieldBlock>
@@ -235,7 +237,7 @@ export default function ProspectForm({
                 <TagInput
                     name="Tags"
                     values={values.tags}
-                    setValue={(vals: string[]) => setValue("tags", vals, { shouldValidate: true })}
+                    setValue={(vals: string[]) => setValue("tags", vals, {shouldValidate: true})}
                     input={tagInput}
                     setInput={(value: string) => setTagInput(value)}
                 />
@@ -257,7 +259,7 @@ export default function ProspectForm({
                     type="button"
                     className="flex-1"
                     onClick={() => {
-                        reset(getInitialValues())
+                        reset(getInitialValues(userData))
                         onCancel()
                     }}
                 >
@@ -272,11 +274,11 @@ export default function ProspectForm({
 }
 
 function FieldBlock({
-    name,
-    label,
-    children,
-    error,
-}: {
+                        name,
+                        label,
+                        children,
+                        error,
+                    }: {
     name: string
     label: string
     children: React.ReactNode

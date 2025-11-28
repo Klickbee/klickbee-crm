@@ -1,26 +1,27 @@
 "use client"
 
 import type React from "react"
-import { useEffect, useState } from "react"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { Button } from "@/components/ui/Button"
+import {useEffect, useState} from "react"
+import {useForm} from "react-hook-form"
+import {z} from "zod"
+import {zodResolver} from "@hookform/resolvers/zod"
+import {Button} from "@/components/ui/Button"
 import SearchableDropdown from "@/components/ui/SearchableDropdown"
 import TagInput from "@/components/ui/TagInput"
 import UploadButton from "@/components/ui/UploadButton"
 import CustomDropdown from "@/components/ui/CustomDropdown"
-import { useCompaniesStore } from "@/feature/companies/stores/useCompaniesStore"
-import { getCompanyOptions } from "@/feature/deals/libs/companyData"
-import { Customer } from "../types/types"
-import { validateCompany, validateOwner } from "@/feature/forms/lib/formValidation"
+import {useCompaniesStore} from "@/feature/companies/stores/useCompaniesStore"
+import {getCompanyOptions} from "@/feature/deals/libs/companyData"
+import {Customer} from "../types/types"
+import {validateCompany, validateOwner} from "@/feature/forms/lib/formValidation"
+import {useSession} from "next-auth/react";
 
 const customerSchema = z.object({
     fullName: z.string().trim().min(1, "Full name is required"),
     company: z
         .string()
         .trim()
-        .refine(async (id) => await validateCompany(id), { message: "Company does not exist" }),
+        .refine(async (id) => await validateCompany(id), {message: "Company does not exist"}),
     email: z.email("Please enter a valid email address"),
     phone: z.union([
         z.string().trim().regex(/^[\+]?[0-9\-\(\)\s]+$/, "Please enter a valid phone number"),
@@ -29,11 +30,11 @@ const customerSchema = z.object({
     status: z
         .string()
         .trim()
-        .refine((val) => ["Active", "FollowUp", "inactive"].includes(val), { message: "Status is required" }),
+        .refine((val) => ["Active", "FollowUp", "inactive"].includes(val), {message: "Status is required"}),
     owner: z
         .string()
         .trim()
-        .refine(async (id) => await validateOwner(id), { message: "User does not exist" }),
+        .refine(async (id) => await validateOwner(id), {message: "User does not exist"}),
     tags: z.array(z.string().trim().min(1)).max(10, "Up to 10 tags"),
     notes: z.string().optional().or(z.literal("")),
     files: z.array(z.instanceof(File)).optional(),
@@ -42,13 +43,13 @@ const customerSchema = z.object({
 type CustomerFormValues = z.infer<typeof customerSchema>
 
 export default function CustomerForm({
-    onSubmit,
-    onCancel,
-    mode = "add",
-    initialData,
-    usersLoading: _usersLoading,
-    userOptions,
-}: {
+                                         onSubmit,
+                                         onCancel,
+                                         mode = "add",
+                                         initialData,
+                                         usersLoading: _usersLoading,
+                                         userOptions,
+                                     }: {
     onSubmit: (values: CustomerFormValues) => void
     onCancel: () => void
     mode?: "add" | "edit"
@@ -59,15 +60,16 @@ export default function CustomerForm({
     const [tagInput, setTagInput] = useState("")
     const [uploading, setUploading] = useState(false)
     const [uploadedFiles, setUploadedFiles] = useState<any[]>([])
-    const { lastCompanyId } = useCompaniesStore()
+    const {lastCompanyId} = useCompaniesStore()
+    const {data: userData} = useSession();
 
     useEffect(() => {
         useCompaniesStore.getState().fetchCompanies()
     }, [])
 
-    const getInitialValues = (): CustomerFormValues => {
+    const getInitialValues = (userData: { user: { id: string } | null } | null): CustomerFormValues => {
         if (mode === "edit" && initialData) {
-            const { companies } = useCompaniesStore.getState()
+            const {companies} = useCompaniesStore.getState()
 
             let companyValue = ""
             if (initialData.company) {
@@ -123,20 +125,27 @@ export default function CustomerForm({
             email: "",
             status: "",
             phone: "",
-            owner: userOptions.length > 0 ? userOptions[0].id : "",
+            owner: userData?.user ? userData.user.id : "",
             tags: [],
             notes: "",
             files: [],
         }
     }
 
-    const { register, handleSubmit, setValue, reset, watch, formState: { errors, isSubmitting } } = useForm<CustomerFormValues>({
+    const {
+        register,
+        handleSubmit,
+        setValue,
+        reset,
+        watch,
+        formState: {errors, isSubmitting}
+    } = useForm<CustomerFormValues>({
         resolver: zodResolver(customerSchema),
-        defaultValues: getInitialValues(),
+        defaultValues: getInitialValues(userData),
     })
 
     useEffect(() => {
-        reset(getInitialValues())
+        reset(getInitialValues(userData))
     }, [initialData, mode, userOptions, lastCompanyId, reset])
 
     const values = watch()
@@ -148,7 +157,7 @@ export default function CustomerForm({
         for (let i = 0; i < files.length; i++) form.append("file", files[i])
 
         setUploading(true)
-        const res = await fetch("/api/uploadFile", { method: "POST", body: form })
+        const res = await fetch("/api/uploadFile", {method: "POST", body: form})
         setUploading(false)
         if (res.ok) {
             const json = await res.json()
@@ -166,7 +175,7 @@ export default function CustomerForm({
         }
         onSubmit(payload)
         if (mode === "add") {
-            reset(getInitialValues())
+            reset(getInitialValues(userData))
             setTagInput("")
             setUploadedFiles([])
         }
@@ -189,7 +198,7 @@ export default function CustomerForm({
                         name="company"
                         value={values.company}
                         options={getCompanyOptions()}
-                        onChange={(val) => setValue("company", val, { shouldValidate: true })}
+                        onChange={(val) => setValue("company", val, {shouldValidate: true})}
                         placeholder="Search or create a company"
                     />
                 </FieldBlock>
@@ -217,7 +226,7 @@ export default function CustomerForm({
                         name="owner"
                         value={values.owner}
                         options={userOptions}
-                        onChange={(val) => setValue("owner", val, { shouldValidate: true })}
+                        onChange={(val) => setValue("owner", val, {shouldValidate: true})}
                         placeholder="Select Owner"
                         showIcon={false}
                         maxOptions={20}
@@ -227,12 +236,12 @@ export default function CustomerForm({
                     <CustomDropdown
                         name="status"
                         value={values.status}
-                        onChange={(val) => setValue("status", val, { shouldValidate: true })}
+                        onChange={(val) => setValue("status", val, {shouldValidate: true})}
                         placeholder="Select Status"
                         options={[
-                            { value: "Active", label: "Active" },
-                            { value: "FollowUp", label: "Follow Up" },
-                            { value: "inactive", label: "Inactive" },
+                            {value: "Active", label: "Active"},
+                            {value: "FollowUp", label: "Follow Up"},
+                            {value: "inactive", label: "Inactive"},
                         ]}
                     />
                 </FieldBlock>
@@ -240,7 +249,7 @@ export default function CustomerForm({
                 <TagInput
                     name="Tags"
                     values={values.tags}
-                    setValue={(vals: string[]) => setValue("tags", vals, { shouldValidate: true })}
+                    setValue={(vals: string[]) => setValue("tags", vals, {shouldValidate: true})}
                     input={tagInput}
                     setInput={(value: string) => setTagInput(value)}
                 />
@@ -255,7 +264,9 @@ export default function CustomerForm({
                         className="w-full text-sm resize-y shadow-sm rounded-md border  border-[var(--border-gray)] bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-gray-400 focus:outline-none"
                     />
                 </FieldBlock>
-                <UploadButton values={values.files ?? []} setValue={(vals) => setValue("files", vals, { shouldValidate: true })} uploading={uploading} uploadFile={(e) => handleFileChange(e)} />
+                <UploadButton values={values.files ?? []}
+                              setValue={(vals) => setValue("files", vals, {shouldValidate: true})} uploading={uploading}
+                              uploadFile={(e) => handleFileChange(e)}/>
                 {errors.files && <p className="text-sm text-red-600">{errors.files.message as string}</p>}
 
             </div>
@@ -265,7 +276,7 @@ export default function CustomerForm({
                     type="button"
                     className="flex-1"
                     onClick={() => {
-                        reset(getInitialValues())
+                        reset(getInitialValues(userData))
                         onCancel()
                     }}
                 >
@@ -280,11 +291,11 @@ export default function CustomerForm({
 }
 
 function FieldBlock({
-    name,
-    label,
-    children,
-    error,
-}: {
+                        name,
+                        label,
+                        children,
+                        error,
+                    }: {
     name: string
     label: string
     children: React.ReactNode

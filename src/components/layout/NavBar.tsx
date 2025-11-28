@@ -55,7 +55,7 @@ export default function NavBar() {
       case 'settings/ai':
         return {
           title: 'AI Settings',
-          description: 'Edit the content and SEO of your page.'
+          description: 'Setup AI settings for your account.'
         };
       case 'settings/users':
         return {

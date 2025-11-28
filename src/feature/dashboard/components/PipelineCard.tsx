@@ -1,9 +1,9 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import React, {useEffect, useState} from "react"
+import {useRouter} from "next/navigation"
 import Loading from "@/components/ui/Loading"
-import type { PipelineChartData } from "../types/Types"
+import type {PipelineChartData} from "../types/Types"
 
 const CHART_HEIGHT = 236
 
@@ -39,11 +39,11 @@ export function PipelineCard({ range = "this_month" }: { range?: string }) {
         const mappedData: PipelineChartData = {
           title: "Pipeline",
           stages: [
-            { stage: "New Leads", count: stats.newDeals },
-            { stage: "Contacted", count: stats.contactedDeals },
-            { stage: "Proposal Sent", count: stats.proposalDeals },
-            { stage: "Negotiation", count: stats.negotiationDeals },
-            { stage: "Won", count: stats.wonDeals },
+              {stage: "New Leads", count: stats.newDeals, color: "bg-purple-500"},
+              {stage: "Contacted", count: stats.contactedDeals, color: "bg-purple-400"},
+              {stage: "Proposal Sent", count: stats.proposalDeals, color: "bg-purple-300"},
+              {stage: "Negotiation", count: stats.negotiationDeals, color: "bg-purple-200"},
+              {stage: "Won", count: stats.wonDeals, color: "bg-purple-100"},
           ],
           conversionRates: [
             stats.totalDeals > 0 ? (stats.contactedDeals / stats.totalDeals) * 100 : 0,
@@ -139,23 +139,44 @@ export function PipelineCard({ range = "this_month" }: { range?: string }) {
             ))}
           </div>
 
-          <div className="grid grid-cols-5 text-sm mt-15 gap-1">
+            <div className="grid grid-cols-5 text-sm mt-15">
             {stages.map((stage, index) => {
               // Calculate bar height as percentage of max stage count (increased scaling for more prominent bars)
               const maxCount = Math.max(...stages.map(s => s.count));
-              const barHeight = maxCount > 0 ? (stage.count / maxCount) * 250 : 0; // Increased from 150 to 250 for maximum prominence
+                let barHeight = maxCount > 0 ? (stage.count / maxCount) * 250 : 0; // Increased from 150 to 250 for maximum prominence
+                // Hauteur actuelle
+                const h = Math.max(barHeight, 8);
 
+                // hauteur du prochain (ou égal si dernier)
+                const nextH =
+                    index < stages.length - 1
+                        ? ((stages[index + 1].count / maxCount) * 250)
+                        : h;
+                // Déterminer le clip-path pour créer l'effet 3D
+                let clipPath = "";
+                if (h < nextH) {
+                    const percentageDiff = (Math.abs(nextH - h) / nextH) * 100;
+                    // Si la barre actuelle est plus courte que la suivante, incliner vers la droite
+                    clipPath = `polygon(0% ${percentageDiff}%, 100% 0%, 100% 100%, 0% 100%)`;
+                    barHeight = nextH;
+                } else if (h > nextH) {
+                    const percentageDiff = ((Math.abs(nextH - h) / h) * 100) - 2;
+                    // Si la barre actuelle est plus haute que la suivante, incliner vers la gauche
+                    clipPath = `polygon(0% 0%, 100% ${percentageDiff}%, 100% 100%, 0% 100%)`;
+                } else {
+                    // Si les hauteurs sont égales, pas d'inclinaison
+                    clipPath = `polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)`;
+                }
               return (
                 <div key={stage.stage} className="flex flex-col items-center relative">
                   {/* Container for bottom-up growth */}
                   <div className="w-full flex flex-col justify-end" style={{ height: '240px' }}>
                     {/* 3D Effect Graph Bar - grows from bottom up */}
                     <div
-                      className="w-full bg-gradient-to-t from-purple-400 to-purple-600  shadow-md hover:from-purple-500 hover:to-purple-700 relative"
+                        className={`w-full ${stage.color}`}
                       style={{
-                        height: `${Math.max(barHeight, 8)}px`,
-                        minHeight: '8px',
-                        clipPath: 'polygon(0 0, 100% 15%, 100% 100%, 0% 100%)', // Left high, right low slope
+                          height: `${barHeight}px`,
+                          clipPath: clipPath,
                       }}
                     >
                       {/* 3D depth effect */}
@@ -163,7 +184,7 @@ export function PipelineCard({ range = "this_month" }: { range?: string }) {
                       <div className="absolute inset-y-0 left-0 w-1  opacity-40"></div>
                     </div>
                   </div>
-                
+
                 </div>
               );
             })}

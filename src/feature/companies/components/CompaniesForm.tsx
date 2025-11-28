@@ -1,7 +1,7 @@
 "use client"
 
-import type React from "react"
-import {useState, useEffect} from "react"
+import React, {useEffect} from "react"
+import {useState} from "react"
 import {useForm} from "react-hook-form"
 import {zodResolver} from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -12,7 +12,7 @@ import SearchableDropdown from "@/components/ui/SearchableDropdown"
 import {Company} from "../types/types"
 import CustomDropdown from "@/components/ui/CustomDropdown"
 import {validateOwner} from "@/feature/forms/lib/formValidation"
-import {useCompaniesStore} from "@/feature/companies/stores/useCompaniesStore";
+import {getSession, useSession} from "next-auth/react";
 
 type CompanyFormValues = z.infer<typeof zodSchema>;
 
@@ -28,15 +28,13 @@ const zodSchema = z.object({
     phone: z
         .union([
             z.literal(""), // chaîne vide acceptée
-            z.string().regex(/^\+?[0-9]{6,15}$/, { message: "Invalid phone number" })
+            z.string().regex(/^\+?[0-9]{6,15}$/, {message: "Invalid phone number"})
         ])
         .optional(),
     owner: z
         .string()
-        .optional()
-        .refine(async (id) => !id || (await validateOwner(id)), {
-            message: "User does not exist",
-        }),
+        .trim()
+        .refine(async (id) => await validateOwner(id), {message: "User does not exist"}),
     tags: z.array(z.string().min(1)).max(10, "Up to 10 tags allowed").optional(),
     assign: z.array(z.string().min(1)).max(10, "Up to 10 assignments allowed").optional(),
     notes: z.string().optional(),
@@ -75,10 +73,10 @@ export default function CompaniesForm({
     const [assignInput, setAssignInput] = useState("")
     const [uploading, setUploading] = useState(false)
     const [uploadedFiles, setUploadedFiles] = useState<any[]>([])
-
+    const {data: userData} = useSession();
 
     // 🧩 Compute initial values like avant
-    const getInitialValues = (): CompanyFormValues => {
+    const getInitialValues = (userData: { user: { id: string } | null } | null): CompanyFormValues => {
         if (mode === "edit" && initialData) {
             return {
                 fullName: initialData.fullName || "",
@@ -116,8 +114,12 @@ export default function CompaniesForm({
                 notes: "",
                 files: [],
             }
+        } else {
+            return {
+                ...initialValues,
+                owner: userData?.user?.id || "",
+            }
         }
-        return initialValues
     }
 
     const {
@@ -129,13 +131,13 @@ export default function CompaniesForm({
         watch,
     } = useForm<CompanyFormValues>({
         resolver: zodResolver(zodSchema),
-        defaultValues: getInitialValues(),
+        defaultValues: getInitialValues(userData),
     })
 
     const values = watch()
 
     useEffect(() => {
-        reset(getInitialValues())
+        reset(getInitialValues(userData))
     }, [mode, initialData])
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -237,12 +239,12 @@ export default function CompaniesForm({
                     setInput={setAssignInput}
                 />
 
-                <FieldBlock name="owner" label="Owner">
+                <FieldBlock name="owner" label="Owner" error={errors.owner?.message}>
                     <SearchableDropdown
                         name="owner"
                         value={values.owner || ""}
                         options={userOptions}
-                        onChange={(val) => setValue("owner", val)}
+                        onChange={(val) => setValue("owner", val, {shouldValidate: true})}
                         placeholder="Select Owner"
                         showIcon={false}
                         maxOptions={20}

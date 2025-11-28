@@ -5,7 +5,6 @@ import {prisma} from "@/libs/prisma";
 
 type Params = { params: Promise<{ id: string }> };
 
-
 export async function GET(req: NextRequest, context: Params) {
     try {
         const session = await getServerSession(authOptions);

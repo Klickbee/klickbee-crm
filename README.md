@@ -1,11 +1,4 @@
-
 <h1 align="center">Klickbee CRM</h1>
-
-<h1 align="center">
-  
-  Due to GitHub Politics and the fact that [JMauclair](https://github.com/JMauclair) has been recently suspended for no reasons, all our projects will be only on [Stralya Gitea](https://git.stralya.com/Klickbee/klickbee-crm)
-
-  </h1>
 
 <p align="center">
   <a href="https://app.supademo.com/demo/cmhvs1cli17ry17y0j39gcp3n?utm_source=github">

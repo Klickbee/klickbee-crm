@@ -1,5 +1,6 @@
 import type React from "react"
-import { ReactNode } from "react"
+import {ReactNode} from "react"
+
 export interface MetricData {
   title: string
   value: string
@@ -11,12 +12,13 @@ export interface MetricData {
 export interface PipelineStage {
   stage: string
   count: number
+    color?: string
 }
 
 export interface PipelineChartData {
-  title: string
-  stages: PipelineStage[]
-  conversionRates: number[]
+    title: string
+    stages: PipelineStage[]
+    conversionRates: number[]
 }
 
 export interface Activity {
