@@ -1,0 +1,18 @@
+# -------- BUILD JOB ----------
+build_job:
+  stage: build
+  image: node:20
+  script:
+    - npm ci
+    - npm run build
+  only:
+    - branches
+  except:
+    - main   # ou ajuste selon ton workflow
+  artifacts:
+    when: always
+    paths:
+      - dist/
+      - .next/
+      - build/
+    expire_in: 1 week

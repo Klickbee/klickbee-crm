@@ -1,0 +1,14 @@
+
+# -------- RELEASE JOB ----------
+release_job:
+  stage: release
+  image: node:20
+  script:
+    - npm ci
+    - npx semantic-release --extends ./.releaserc.gitlab.json
+  only:
+    - main
+  variables:
+    GITLAB_TOKEN: "${GITLAB_TOKEN}"  # ou ton deploy token
+    GIT_AUTHOR_NAME: "Bot Klickbee"
+    GIT_AUTHOR_EMAIL: "bot@klickbee.com"
