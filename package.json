@@ -12,6 +12,7 @@
     "@hookform/resolvers": "^5.2.2",
     "@next-auth/prisma-adapter": "^1.0.7",
     "@prisma/client": "^6.16.3",
+    "@semantic-release/gitlab": "^13.2.9",
     "@tanstack/react-query": "^5.89.0",
     "@tanstack/react-query-devtools": "^5.89.0",
     "@types/next": "^9.0.0",
