@@ -28,7 +28,3 @@ release_job:
     - npx semantic-release --extends ./.releaserc.gitlab.json
   only:
     - main
-  variables:
-    GITLAB_TOKEN: "${GITLAB_TOKEN}"  # ou ton deploy token
-    GIT_AUTHOR_NAME: "Bot Klickbee"
-    GIT_AUTHOR_EMAIL: "bot@klickbee.com"
