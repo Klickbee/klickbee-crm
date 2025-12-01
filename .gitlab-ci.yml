@@ -5,7 +5,6 @@ stages:
 # -------- BUILD JOB ----------
 build_job:
   stage: build
-  tags : ["build"]
   image: node:20
   script:
     - npm ci
@@ -23,7 +22,6 @@ build_job:
 # -------- RELEASE JOB ----------
 release_job:
   stage: release
-  tags : ["release"]
   image: node:20
   script:
     - npm ci
